@@ -1,0 +1,439 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+   <head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Voice Settings)_ - _(Voice Debug Setting)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript" SRC="js/util.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript" type="text/javascript">  
+
+var maxLines = new Array();
+var maxSp = '<%ejGetVoice(maxSp)%>';
+
+for (var i = 0; i < maxSp; i++) {
+   eval( "var la" + i + " \= \"\" " );
+   eval( "var lp" + i + " \= \"\" " );
+   eval( "var ml" + i + " \= \"\" " );
+
+   var tmpml = '<%ejGetVoice(maxLines)%>';
+   eval(tmpml);
+
+   eval("maxLines[" + i + "] = ml" + i);
+
+   for (var j = 0; j < maxLines[i]; j++) {
+      eval( "var ve" + i + "_" + j + " \= \"\" " );
+      eval( "var ig" + i + "_" + j + " \= \"\" " );
+      eval( "var eg" + i + "_" + j + " \= \"\" " );
+   }
+}
+
+var cLogLvl  = '<%ejGetVoice(consolelogLvl)%>';
+var voiceRunning = '<%ejGetVoice(voiceStatus)%>';
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+var tmpla = '<%ejGetVoice(sipLogAddr)%>';
+var tmplp = '<%ejGetVoice(sipLogPort)%>';
+
+var tmpve = '<%ejGetVoice(vadEnable)%>';
+var tmpig = '<%ejGetVoice(ingressGain)%>';
+var tmpeg = '<%ejGetVoice(egressGain)%>';
+
+eval( tmpla );
+eval( tmplp );
+
+if ( tmpve.search("ejGetVoice") < 0 ) {
+   eval( tmpve );
+}
+if ( tmpig.search("ejGetVoice") < 0 ) {
+   eval( tmpig );
+}
+if ( tmpeg.search("ejGetVoice") < 0 ) {
+   eval( tmpeg );
+}
+
+
+// Initialize array that contains possible gain values (need for the drop-down list)
+var minGain = -20;
+var maxGain = 20;
+var gainSelectOptions = Array();
+for ( var i = minGain; i <= maxGain; i++ ) {
+   gainSelectOptions[i-minGain] = "<option value=" + i + " selected>" + i;
+}
+
+
+function btnStartSip() {
+   var loc = 'voicesipstart.cmd?';
+   
+   loc += addParamsToQuery( loc, "debug" );
+   
+   //Stripping quotes and spaces
+   loc = loc.replace(/['" ]/g,'');
+
+   loc += '&sessionKey=' + sessionKey;
+
+   postSubmit(loc);
+}
+
+
+function btnStopSip() {
+   var loc = 'voicesipstop.cmd?';
+   loc += addParamsToQuery( loc, "debug" );
+
+   //Stripping quotes and spaces
+   loc = loc.replace(/['" ]/g,'');
+
+   loc += '&sessionKey=' + sessionKey;
+
+   postSubmit(loc);
+}
+
+
+function btnApplySip() {
+   var loc = 'voicesipapply.cmd?';
+   loc += addParamsToQuery( loc, "debug" );
+
+   //Stripping quotes and spaces
+   loc = loc.replace(/['" ]/g,'');
+
+   loc += '&sessionKey=' + sessionKey;
+
+   postSubmit(loc);
+}
+
+
+function addParamsToQuery( loc_init, current_view) {
+
+   var loc = loc_init;
+
+   with ( document.forms[0] ) {
+   
+      loc += 'currentview=' + current_view;
+
+      for (var sp = 0; sp < maxSp; sp++) {
+	     if ( selectedTab == -1 )
+		 {
+		    selectedTab = 0;
+		 }
+         eval( "loc += \'&sipLogAddr" + sp + "=\' + sipLogAddr" + selectedTab + ".value.replace(/[\'\" ]/g,\'\')" );
+         eval( "loc += \'&sipLogPort" + sp + "=\' + sipLogPort" + selectedTab + ".value.replace(/[\'\" ]/g,\'\')" );
+         
+         for (var i = 0; i < maxLines[sp]; i++) {
+         
+            var checkMarkTest = eval("vadEnable" + sp + "_" + i + ".checked == true");
+            
+            if ( checkMarkTest ){
+               loc+= "&vadEnable" + sp + "_" + i + "=on";
+            } else {
+               loc+= "&vadEnable" + sp + "_" + i + "=off";
+            }
+            
+            eval( "loc += \'&ingressGain" + sp + "_" + i + "=\' + ingressGain" + sp + "_" + i + ".value.replace(/[\'\" ]/g,\'\')" );
+            eval( "loc += \'&egressGain" + sp + "_" + i + "=\' + egressGain" + sp + "_" + i + ".value.replace(/[\'\" ]/g,\'\')" );
+         }
+      }
+      
+      eval( "loc += \'&consolelogLvl=\' + conLogLvl.value.replace(/[\'\" ]/g,\'\')" );
+         
+   }
+   //alert(loc);
+   return loc;
+}
+
+
+function generatePerLineTable(index)
+{
+   // Generate the table
+   if (document.body.innerHTML) {
+      var tableHtmlOutput = "<table id='perLineTable" + index + "' border='0' cellpadding='5' cellspacing='0' class='sipCall_style'><tbody id='perLineTbody" + index + "'>";
+
+      // Line row
+      tableHtmlOutput += "<tr>";
+      tableHtmlOutput += "<td class='hd'>_(Line)_<\/td>"
+      for (var line = 1; line <= maxLines[index]; line++) {
+         var data = line;
+         tableHtmlOutput += "<td align=center>" + data + "</td>";
+      }
+      tableHtmlOutput += "</tr>";
+
+      // VAD support row
+      tableHtmlOutput += "<tr>";
+      tableHtmlOutput += "<td class='hd'>_(VAD support)_<\/td>"
+      for (var line = 0; line < maxLines[index]; line++) {
+         var data = "<input type='checkbox' size=10 name=\'vadEnable" + index + "_" + line + "\' id=\'vadEnable" + index + "_" + line + "\'>";
+         tableHtmlOutput += "<td align=center>" + data + "</td>";
+      }
+      tableHtmlOutput += "</tr>";
+
+      // Ingress gain row
+      tableHtmlOutput += "<tr>";
+      tableHtmlOutput += "<td class='hd'>_(Ingress gain)_<\/td>"
+      for (var line = 0; line < maxLines[index]; line++) {
+         var data = "<select name='ingressGain" + index + "_" + line + "' id='ingressGain" + index + "_" + line + "'>" + gainSelectOptions.join("") + "<\/select>";
+         tableHtmlOutput += "<td align=center>" + data + "</td>";
+      }
+      tableHtmlOutput += "</tr>";
+
+      // Egress gain row
+      tableHtmlOutput += "<tr>";
+      tableHtmlOutput += "<td class='hd'>_(Egress gain)_ <\/td>"
+      for (var line = 0; line < maxLines[index]; line++) {
+         var data = "<select name='egressGain" + index + "_" + line + "' id='egressGain" + index + "_" + line + "'>" + gainSelectOptions.join("") + "<\/select>";
+         tableHtmlOutput += "<td align=center>" + data + "</td>";
+      }
+      tableHtmlOutput += "</tr>";
+
+      tableHtmlOutput += "</tbody></table>";
+      document.getElementById( "perLineTablePlaceholder" + index ).innerHTML = tableHtmlOutput;
+   } else {
+      alert("_(Cannot create per line table in this browser.)_");
+   }
+}
+
+function frmLoad(current_view) {
+   side_nav("advancedsetup_voicesip_debug");
+   init();
+
+   for (var i = 0; i < maxSp; i++) {
+      generatePerLineTable(i);
+   }
+
+   with ( document.forms[0] ) {
+      for (var i = -1; i < maxSp; i++) {
+         enableButtons(i);
+      }
+      
+      /* Initialize global parameters */
+      conLogLvl.value = cLogLvl;
+	  
+      for (var i = 0; i < maxSp; i++) 
+      {
+         eval("sipLogAddr" + i + ".value = la" + i);
+         eval("sipLogPort" + i + ".value = lp" + i);         
+         
+         for (var j = 0; j < maxLines[i]; j++) 
+         {
+            temp = eval("ve" + i + "_" + j + "==1");
+
+            if ( temp )
+            {
+               eval( "vadEnable" + i + "_" + j + ".checked = true" );
+            } 
+            else 
+            {
+               eval( "vadEnable" + i + "_" + j + ".checked = false" );
+            }
+            eval("ingressGain" + i + "_" + j + ".value = ig" + i + "_" + j);
+            eval("egressGain" + i + "_" + j + ".value = eg" + i + "_" + j);
+         }
+      }
+   }
+
+ //    getHeight();
+//  htmlDecode_hidden();
+}
+
+
+function enableButtons(index){
+   var idName = "StartButton" + index;
+   var buttonStart = document.getElementById( idName );
+   idName = "StopButton" + index;
+   var buttonStop = document.getElementById( idName );
+   idName = "ApplyButton" + index;
+   var buttonApply = document.getElementById( idName );
+
+   if ( voiceRunning == 1 ) {
+      buttonStart.setAttribute("class","button2");
+      buttonStart.onclick=function(){};
+      buttonStop.setAttribute("class","button1");
+      buttonStop.onclick=function(){btnStopSip()};
+      buttonApply.setAttribute("class","button1");
+      buttonApply.onclick=function(){btnApplySip()};
+   } else {
+		buttonStart.setAttribute("class","button1");
+      buttonStart.onclick=function(){btnStartSip()};
+      buttonStop.setAttribute("class","button2");
+      buttonStop.onclick=function(){};
+      buttonApply.setAttribute("class","button1");
+      buttonApply.onclick=function(){btnApplySip()};
+   }
+}
+
+var tabLinks = new Array();
+var contentDivs = new Array();
+var selectedTab;
+
+function init() {
+
+  // Grab the tab links and content divs from the page
+  var tabListItems = document.getElementById('tabs').childNodes;
+  for ( var i = 0; i < tabListItems.length; i++ ) {
+    if ( tabListItems[i].nodeName == "LI" ) {
+      var tabLink = getFirstChildWithTagName( tabListItems[i], 'A' );
+      var id = getHash( tabLink.getAttribute('href') );
+      tabLinks[id] = tabLink;
+      contentDivs[id] = document.getElementById( id );
+    }
+  }
+
+  // Assign onclick events to the tab links, and
+  // highlight the first tab
+  var i = 0;
+  selectedTab = 0;
+
+  for ( var id in tabLinks ) {
+    tabLinks[id].onclick = showTab;
+    tabLinks[id].onfocus = function() { this.blur() };
+    if ( i == 0 ) tabLinks[id].className = 'selected';
+    i++;
+  }
+
+  // Hide all content divs except the first
+  var i = 0;
+  
+  for ( var id in contentDivs ) {
+    if ( i != 0 ) contentDivs[id].className = 'tabContent hide';
+    i++;
+  }
+}
+
+
+function showTab() {
+   var selectedId = getHash( this.getAttribute('href') );
+
+   // Highlight the selected tab, and dim all others.
+   // Also show the selected content div, and hide all others.
+   for ( var id in contentDivs ) {
+     if ( id == selectedId ) {
+        selectedTab = selectedId;
+        tabLinks[id].className = 'selected';
+        contentDivs[id].className = 'tabContent';
+     } else {
+        tabLinks[id].className = '';
+        contentDivs[id].className = 'tabContent hide';
+     }
+   }
+   
+  // getHeight();
+   // Stop the browser following the link
+   return false;
+}
+
+function getFirstChildWithTagName( element, tagName ) {
+  for ( var i = 0; i < element.childNodes.length; i++ ) {
+    if ( element.childNodes[i].nodeName == tagName ) return element.childNodes[i];
+  }
+}
+
+function getHash( url ) {
+  var hashPos = url.lastIndexOf ( '#' );
+  return url.substring( hashPos + 1 );
+}
+
+function createTabs() {
+  document.writeln("<ul id='tabs'>");
+  document.writeln("<li><a href='#" + -1 + "'>_(Global parameters)_</a></li>");
+  for ( var i = 0; i < maxSp; i++ ) {
+     document.writeln("<li><a href='#" + i + "'>_(Service Provider)_ " + i + "</a></li>");
+  } 
+}
+
+function createGlobal() {
+   document.writeln("<div class='tabContent' id='" + -1 + "'>");
+   document.writeln("   <p></p>");
+   document.writeln("   <div id='consoleLogLevel'>");
+   document.writeln("      <table border='0' cellpadding='0' cellspacing='0' class='voip_table'>");
+   document.writeln("         <tr>");
+   document.writeln("            <td class='txt' width='150'>_(Vodsl Console Log Level)_: </td>");
+   document.writeln("            <td><select name='conLogLvl' id='conLogLvl' size='1'>");
+   document.writeln("               <option value='Error' >");
+   document.writeln("               _(Error)_");
+   document.writeln("               <option value='Notice' >");
+   document.writeln("               _(Notice)_");
+   document.writeln("               <option value='Debug' selected>");
+   document.writeln("               _(Debug)_");
+   document.writeln("            </select></td>");
+   document.writeln("         </tr>");
+   document.writeln("      </table>");
+   document.writeln("   </div>");
+   document.writeln("      <p><a class='button2' id='StartButton" + -1 + "'><span>_(Start SIP client)_</span></a></p><br>");
+   document.writeln("      <p><a class='button2' id='StopButton" + -1 + "'><span>_(Stop SIP client)_</span></a></p><br>");
+   document.writeln("      <p><a class='button2' id='ApplyButton" + -1 + "'><span>_(Apply)_</span></a></p>");
+   document.writeln("   <br>");
+   document.writeln("</div>");
+}  
+
+function createContent() {
+   for (var index = 0; index < maxSp; index++) {
+      document.writeln("<div class='tabContent' id='" + index + "'>");
+      document.writeln("   <p></p>");
+      document.writeln("   <div id='logInfo" + index + "'>");
+      document.writeln("      <table border='0' cellpadding='0' cellspacing='0' id='table_logInfo_" + index + "_1'>");
+      document.writeln("         <tr>");
+      document.writeln("            <td class='txt' width='150'>_(SIP log server IP Address)_*:</td>");
+      document.writeln("            <td><input type='text' name='sipLogAddr" + index + "' id='sipLogAddr" + index + "'></td>");
+      document.writeln("         </tr>");
+      document.writeln("         <tr>");
+      document.writeln("            <td class='txt'>_(SIP log server port)_*:</td>");
+      document.writeln("            <td><input type='text' name='sipLogPort" + index + "' id='sipLogPort" + index + "'></td>");
+      document.writeln("         </tr>");
+      document.writeln("      </table>");
+      document.writeln("   </div>");
+      document.writeln("   <div class='tableWrapper' id='perLineTablePlaceholder" + index + "'>");
+      document.writeln("      <table></table>");
+      document.writeln("   </div>");
+      document.writeln("     <p><a class='button2' id='StartButton" + index + "'><span>_(Start SIP client)_</span></a></p><br>");
+      document.writeln("      <p><a class='button2' id='StopButton" + index + "'><span>_(Stop SIP client)_</span></a></p><br>");
+      document.writeln("      <p><a class='button2' id='ApplyButton" + index + "'><span>_(Apply)_</span></a></p>");
+      document.writeln("   <br>");
+      document.writeln("   <p>_(* Changing this parameter for one service provider affects all other service providers.)_</p>");
+      document.writeln("</div>");
+   }
+}
+
+</script>
+
+
+<body onLoad="frmLoad('debug')">
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+  <!-- MAIN CONTENT AREA -->
+  <div id="content_right">
+    <div id="content_right_header"></div>
+    <div id="content_right_contentarea">
+      <h1 class="supportconsole_toolbox">_(Voice Debug Setting)_</h1>
+   <blockquote>
+      <form>
+      
+      <script TYPE="text/javascript">
+        createTabs();
+        createGlobal();
+        createContent();
+     </script>  
+
+      </form>
+   </blockquote>
+  </div>
+    <div id="content_right_footer">
+    </div>
+</div>
+  <div class="clear_left">
+  </div>
+    <div id="footer">&nbsp;</div>
+</div>
+<link href="css/pop_up.css" rel="stylesheet" type="text/css" />
+<script language="javascript">document.write("<script src='js/jquery.js'><\/script>");</script>
+<script language="javascript">document.write("<script src='js/pop_up.js'><\/script>");</script>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(frmLoad);
+</SCRIPT>
+</body>
+
+</html>

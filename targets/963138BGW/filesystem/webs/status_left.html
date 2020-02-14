@@ -1,0 +1,78 @@
+<script type="text/javascript">
+var user_id='<%ejGet(userID)%>';
+var board_id='<%ejGet(boardID)%>';
+var isbond = '<%ejGetOther(isDslBondingEnabled)%>';
+var curport='<%ejGetOther(dslcurport)%>';
+var   glbWanL2IfName = htmlDecodeStr('<%ejGet(wanL2IfName)%>');
+
+function showWanStatus(line){
+   var lochead = 'modemstatus_wanstatus.cgi?bondingLineNum='+line;
+   lochead += '&sessionKey=' + sessionKey;
+   postSubmit(lochead);
+}
+</script>
+ <div id="left_column">
+	<div id="left_column_header"></div>
+	<div id="left_column_content">
+		<ul id="subnav">
+		<li><a href="#" class="link" onClick="return goThere('modemstatus_home.html');">_(Internet Services)_</a></li>
+                     <ul>
+                        <li><a  href="#" id="home" class="link" onClick="return goThere('modemstatus_home.html');">_(Connection Status)_</a></li>
+			<script type="text/javascript">
+                        if( board_id == "V2000H" || board_id == "T2200H" || board_id == 'T3200' || board_id == 'T3200BM' || board_id == 'T3200B' || board_id == "T3200M")
+                        {
+                            if( isbond == 0 && curport == 1)
+                            {
+                                document.write("<li><a  href=\"#\" id=\"wanstatus\" class=\"link\" onClick=\"showWanStatus(1)\">_(Line 1 Status)_</a></li>");
+                                document.write("<li><a  href=\"#\" id=\"wanstatus2\" class=\"link\" onClick=\"showWanStatus(0)\">_(Line 2 Status)_</a></li>");
+                            }
+                            else
+                            {
+                                document.write("<li><a  href=\"#\" id=\"wanstatus\" class=\"link\" onClick=\"showWanStatus(0)\">_(Line 1 Status)_</a></li>");
+                                document.write("<li><a  href=\"#\" id=\"wanstatus2\" class=\"link\" onClick=\"showWanStatus(1)\">_(Line 2 Status)_</a></li>");
+                            }
+                        }
+                        else
+                        {
+                             document.write("<li><a  href=\"#\" id=\"wanstatus\" class=\"link\" onClick=\"showWanStatus(0)\">_(xDSL Status)_</a></li>" );
+                        }
+                        </script>
+                        <li><a  href="#" id="wanethstatus" class="link" onClick="return goThere('modemstatus_wanethstatus.html');">_(WAN Ethernet Status)_</a></li>
+                        <script type="text/javascript">
+                        if (glbWanL2IfName=="ewan1")
+                        {
+                            document.write("<li><a  href=\"#\" id=\"wansfpstatus\" class=\"link\" onClick=\"return goThere('modemstatus_wansfpstatus.html');\">_(WAN SFP Status)_</a></li>");
+                        }
+                        </script>
+
+                        <script type="text/javascript">
+                        if (user_id==3)
+                        {
+                             document.write("<li><a  href=\"#\" id=\"qosstatus\" class=\"link\" onClick=\"return goThere('modemstatus_qosstatus.html');\">_(QoS Status)_</a></li>");
+                        }
+                        </script>
+                        <li><a  href="#" id="routingtable" class="link" onClick="return goThere('modemstatus_routingtable.html');">_(Routing Table)_</a></li>
+                        <li><a  href="#" id="firewallstatus" class="link" onClick="return goThere('modemstatus_firewallstatus.html');">_(Firewall Status)_</a></li>
+                        <div style="display:<%ejGetOther(Sckipio_Gfast_Stats,gfast_display)%>"><li><a  href="#" id="gfaststatus" class="link" onClick="return goThere('modemstatus_gfaststatus.html');">_(G.fast Status)_</a></li></div>
+                     </ul>
+		<hr/>
+		<li><a href="#" class="link" onClick="return goThere('modemstatus_nattable.html');">_(LAN  Services)_</a></li>
+					<ul>
+						<li><a  href="#" id="nattable" class="link" onClick="return goThere('modemstatus_nattable.html');">_(NAT Table)_</a></li>
+						<li><a  href="#" id="wirelessstatus" class="link" onClick="return goThere('modemstatus_wirelessstatus.html');">_(Wireless Status)_</a></li>
+						<li><a  href="#" id="modemutilization" class="link" onClick="return goThere('modemstatus_modemutilization.html');">_(Modem Utilization)_</a></li>
+						<li><a  href="#" id="lanstatus" class="link" onClick="return goThere('modemstatus_lanstatus.html');">_(LAN Status)_</a></li>
+					</ul>
+	   <hr/>
+		<li><a href="#" class="link" onClick="return goThere('modemstatus_arptable.html');">_(System Monitor)_</a></li>
+					<ul>
+						<li><a  href="#" id="arptable" class="link" onClick="return goThere('modemstatus_arptable.html');">_(ARP Table)_</a></li>
+						<li><a  href="#" id="devicestatus" class="link" onClick="return goThere('connectedhome.html');">_(Network Device Table)_</a></li>
+						<li><a  href="#" id="interfacestatistics" class="link" onClick="return goThere('modemstatus_interfacestatistics.html');">_(Interface Statistics)_</a></li>
+						<li><a  href="#" id="multicaststatistics" class="link" onClick="return goThere('modemstatus_multicaststatistics.html');">_(Multicast Statistics)_</a></li>
+						<li><a  href="#" id="advancedutilities_systemlog" class="link" onClick="return goThere('advancedutilities_systemlog.html');">_(System Log)_</a></li>
+					</ul>
+		</ul>
+	</div>
+	<div id="left_column_footer"></div>
+</div>

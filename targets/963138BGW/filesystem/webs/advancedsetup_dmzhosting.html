@@ -1,0 +1,313 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Firewall)_ - _(DMZ Hosting)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/ipcheck.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+var list_dhcp_ip = new Array();
+var list_dhcp_pc = new Array();
+var dmzinfo = '<%ejGetOther(dmzHost)%>';
+var dmzhost = dmzinfo.split('|');
+var addr = htmlDecodeStr(dmzhost[0]);
+var dmztimer = dmzhost[1];
+var aDaddr = htmlDecodeStr('<%ejGetOther(aDMZ)%>');
+var ethIpAddress= htmlDecodeStr('<%ejGetOther(IPInterfaceIPAddress)%>');
+var ethSubnetMask = htmlDecodeStr('<%ejGetOther(IPInterfaceSubnetMask)%>');
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function get_host_ip(){
+    var form = document.forms[0];
+    if(form.lan_device.selectedIndex==0)
+        return form.ip_address.value;
+    return list_dhcp_ip[form.lan_device.selectedIndex-1];
+}
+
+function show_host_ip()
+{
+	var form = document.forms[0];
+
+	if (form.lan_device.selectedIndex > 0)
+	{
+		form.ip_address.disabled = 1; // disable
+		form.ip_address.value = get_host_ip(); // show the select device ip address
+	}
+	else
+	{
+		form.ip_address.disabled = 0; // enable
+	}
+}
+
+function do_load()
+{
+    /*var dmzPersist = '<%ejGetOther(dmzTimer)%>'; */
+    var pcname = "dEfAuLt_NaMe";
+    /* pc list */
+    var hostinfo = '<%ejGetOther(hostinfo)%>';
+    var info = hostinfo.split('|');
+    var form= document.myform;
+    var table = document.getElementById("dmz_table");
+
+	/*hostinfo='Unknown/192.168.1.78/00:21:27:a2:69:b2/Ethernet/Static/1/0'*/
+    if (info != ''){
+        for (var i = 0; i < info.length; i++) {
+            var details = info[i].split('/');
+            
+            details[0] = htmlDecodeStr(details[0]);
+            details[1] = htmlDecodeStr(details[1]);
+
+			var strhostName = details[0];
+			list_dhcp_pc[i] = strhostName;
+			list_dhcp_ip[i] = details[1];
+			form.lan_device[i+1] = new Option(strhostName+"("+details[1]+")", strhostName);
+
+		    if (details[1] == addr)
+				pcname = strhostName;
+	        }
+    }
+
+ /*   if (dmzPersist == '0')
+    {
+           form.dmzPersistState[1].checked = true;
+           form.dmzPersistState[1].disabled = false;
+    }
+    else
+    {
+           form.dmzPersistState[0].checked = true;
+           form.dmzPersistState[0].disabled = false;
+    }
+*/
+    if (addr == '') {
+        var blank = "_(No Entries Defined)_";
+        form.dmz[1].checked = true;
+        form.dmz[1].disabled = false;
+        appendTableEmptyRow(table, "center", "4", blank);
+    }
+    else {
+	var cols = new Array();
+        form.dmz[0].checked = true;
+        form.dmz[0].disabled = false;
+        form.ip_address.value = addr;
+	cols[0] = '<img src="../images/icon_computer.png" width="39" height="39" />';
+	if (pcname == "dEfAuLt_NaMe")
+	    cols[1] = addr;
+	else
+	    cols[1] = pcname;
+	cols[2] = addr;
+    cols[3] = dmztimer;
+    var btn_remove = "btn_remove";
+        cols[4] = '<a style="text-decoration:none;" class="button1" type="button" onClick=doRemove("'+ addr + '")  id="'+btn_remove+'"><span>_(Remove)_</span></a>'; //remove button
+	appendTableRow(table, "center", cols);
+    }
+    onClickEnable();
+
+	//highlight the button after user click on it
+	side_nav("advancedsetup_dmzhosting");
+}
+
+
+function onClickEnable()
+{
+    var form = document.myform;
+    if (form.dmz[0].checked == true) {
+	form.lan_device.disabled = false;
+	form.ip_address.disabled = false;
+    form.dmz_timer.disabled = false;
+    } else if (form.dmz[1].checked == true) {
+	form.lan_device.disabled = true;
+	form.ip_address.disabled = true;
+    form.dmz_timer.disabled = true;
+    }
+}
+
+function btnApply()
+{
+    var form = document.myform;
+    var ip = get_host_ip();
+    var lochead = 'scdmz.cmd?';
+    var loc = '';
+    if(form.dmz[0].checked)
+    {
+        if (aDaddr != '') {
+            alert ("_(The router is already in Advanced DMZ mode.)_");
+            return false;
+        }
+
+        if (!ip)
+        {
+            alert ("_(You must select a LAN device.)_");
+            return false;
+        }
+
+        if (isValidIpAddress(ip) == false || compareSubNet(ip, ethSubnetMask, ethIpAddress, ethSubnetMask) != 0||ip==ethIpAddress || checkBcastOrSubnet(ethIpAddress, ethSubnetMask, ip) == true) 
+        {
+            alert("_(The DMZ Host IP Address is invalid.)_");
+            return false;
+        }
+
+        //Check DMZ timer
+        var timer = trim(document.getElementById("dmz_timer").value);
+
+        if(timer != "" && !isNumber(timer))
+        {
+            alert("_(The DMZ timer is invalid.)_");
+            return false;
+        }
+
+        if(timer == "")
+            timer = 0;
+
+        //Check the duplicated rule
+        if(ip == addr && timer == dmztimer)
+        {
+            alert("_(This rule you are adding is already existed!)_");
+            return false;
+        }
+
+    }
+
+    with ( form ) {
+        if (dmz[0].checked == true)
+        {
+            loc += 'address=' + ip;
+            dmz[0].disabled = false;
+            loc += '&timer=' + form.dmz_timer.value
+        }
+        else if (dmz[1].checked == true)
+        {
+            loc += 'address=';
+            dmz[1].disabled = false;
+        }
+      /*  if (dmzPersistState[0].checked == true)
+        {
+            loc += '&dmzpersist=1';
+            dmzPersistState[0].disabled = false;
+        }
+        else if (dmzPersistState[1].checked == true)
+        {
+            loc += '&dmzpersist=0';
+            dmzPersistState[1].disabled = false;
+	 }
+       */
+        //    loc += '&dmzpersist=1';
+
+    }
+    loc += '&needthankyou=advancedsetup_dmzhosting.html';
+    loc += '&sessionKey=' + sessionKey;
+    //loc += '&needthankyou=1';
+    lochead+=loc;
+    //var code = 'location="' + loc + '"';
+    //eval(code);
+	postSubmit(lochead);
+}
+
+function doRemove(ip)
+{
+    var lochead = 'scdmz.cmd?';
+    var loc = '';
+    loc += 'address=';
+    //loc += '&dmzpersist=1';
+
+   loc += '&sessionKey=' + sessionKey;
+
+    loc += '&needthankyou=advancedsetup_dmzhosting.html';
+    //loc += '&needthankyou=1';
+    lochead+=loc;
+    //var code = 'location="' + loc + '"';
+    //eval(code);
+	postSubmit(lochead);
+}
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav4.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(fw_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="advancedsetup_dmzhosting">_(DMZ Hosting)_ </h1>
+				<form name="myform" onSubmit="return false;">
+					<p>_(DMZ hosting enables a LAN device to use the modem's WAN IP address as its own. DMZ places the LAN device outside the firewall.)_</p>
+					<p>_(WARNING! Using a device in DMZ mode creates a security risk by exposing the device to outside intrusion.)_ </p>
+					<p><strong>1. _(Set the DMZ state.)_ </strong> </p>
+					<p>&nbsp;&nbsp;&nbsp;&nbsp;_(DMZ)_:
+						<input name="dmz" type="radio" value="on" id="on" onClick="onClickEnable();"/>
+						  _(Enable)_
+						<input name="dmz" type="radio" value="off" id="off" onClick="onClickEnable();" checked="checked"/>
+						  _(Disable)_</p>
+		<!--
+					<p><strong>2. Set the DMZ Persist State. </strong> </p>
+					<p>&nbsp;&nbsp;&nbsp;&nbsp;
+						<input name="dmzPersistState" type="radio" value="Persist" id="dmzon" " checked="checked"/>
+						  Enable
+						<input name="dmzPersistState" type="radio" value="Temporary" id="dmzoff" "/>
+						Disable</p> -->
+					<p><strong>2. _(Select a device.)_</strong></p>
+					<table border="0" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td>&nbsp;&nbsp;&nbsp;_(Select Device)_:</td>
+                        <td>&nbsp;</td>
+                        <td>_(Enter IP Address)_:</td>
+                      </tr>
+                      <tr>
+                        <td>&nbsp;&nbsp;
+                                <select name="lan_device" id="lan_device" onchange="show_host_ip()">
+                                    <option>_(Manually Enter IP)_</option>
+				</select>
+                        </td>
+                        <td>&nbsp;</td>
+                        <td>
+                            <input type="text" name="ip_address" id="ip_address" size="25" style="height:18px;"/>
+                        </td>
+                      </tr>
+                    </table>
+					<p><strong>3. _(DMZ Timer)_.</strong></p>
+					<table border="0" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td>&nbsp;&nbsp;&nbsp;_(DMZ timer)_:</td>
+                        <td>&nbsp;</td>
+                        <td>
+                            <input type="text" name="dmz_timer" id="dmz_timer" value="0" size="25" style="height:18px;"/>
+                        </td>
+                      </tr>
+                    </table>
+					<p>&nbsp;					</p>
+					<p><strong>4. _(Click Apply to save changes.)_ </strong></p>
+					<p><a class="button1" onclick="btnApply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+					<!-- <p><a href="#" id="apply_btn" class="btn" onClick="btnApply()"></a></p> -->
+					<p align="center"><strong>_(DMZ Hosted Device)_</strong></p>
+				    <table id="dmz_table" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;">
+                      <tr>
+                        <th width="39" height="28" align="center">&nbsp;</th>
+                        <th width="102">_(DEVICE NAME)_</th>
+                        <th width="101">_(IP ADDRESS)_</th>
+                        <th width="101">_(DMZ Timer)_</th>
+                        <th width="87">_(EDIT)_</th>
+                      </tr>
+                    </table>
+				    <p>&nbsp;</p>
+				</form>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

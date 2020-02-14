@@ -1,0 +1,462 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(IP Address)_ - _(MoCA Link Status)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var moca_status = '<%ejGetOther(lanMocaStatus)%>';
+function do_load()
+{
+    side_nav("advancedsetup_moca");
+    showMocaStatus();
+}
+
+function showMocaStatus(){
+    var list_status = moca_status.split("/");
+    if (list_status.length < 2)     return;
+
+    var list_adapter = list_status[0].split("|");
+    if (list_adapter.length < 4)    return;
+
+    document.getElementById("adapter_mac").innerHTML = trim(list_adapter[2]);
+
+    var _id = "";
+    var iNodeCount = parseInt(trim(list_adapter[0]), 10);
+    for (var i=1; i<iNodeCount; i++){
+        var list_device = list_status[i].split("|");
+        if (list_device.length < 3)    continue;
+        
+        _id = "d" + i +"_mac";
+        var list_device_mac = trim(list_device[2]).split("  ");
+        if(list_device_mac.length < 2)    continue;
+
+        document.getElementById(_id).innerHTML = trim(list_device_mac[1]);
+
+        _id = "adapter_d" + i;
+        document.getElementById(_id).innerHTML = trim(list_device[0]);
+        _id = "d" + i + "_adapter";
+        document.getElementById(_id).innerHTML = trim(list_device[1]);
+    }
+}
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <%ejInclude(top_btn_nav5.html)%>
+    <%ejInclude(adv_left.html)%>
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+        <div id="content_right_header"></div>
+        <div id="content_right_contentarea">
+            <h1 class="advancedsetup_security">_(MoCA Link Status)_ </h1>
+            <div style="width:90%; overflow-x:scroll; overflow-y:hidden;margin: 10px auto 0pt;">
+            <table class="status_moca" style="margin: 10px auto 0pt;"  border="0" cellpadding="5" cellspacing="0" width="1500px">
+                <tr>
+                    <th colspan="17" style="padding-left:230px;">_(MoCA Device Details)_ </th>
+                </tr>
+                <tr bgcolor="#e0e5f1">
+                    <td></td>
+                    <td id="adapter_name">_(This Device)_</td>
+                    <td id="d1_name">_(Device 1)_</td>
+                    <td id="d2_name">_(Device 2)_</td>
+                    <td id="d3_name">_(Device 3)_</td>
+                    <td id="d4_name">_(Device 4)_</td>
+                    <td id="d5_name">_(Device 5)_</td>
+                    <td id="d6_name">_(Device 6)_</td>
+                    <td id="d7_name">_(Device 7)_</td>
+                    <td id="d8_name">_(Device 8)_</td>
+                    <td id="d9_name">_(Device 9)_</td>
+                    <td id="d10_name">_(Device 10)_</td>
+                    <td id="d11_name">_(Device 11)_</td>
+                    <td id="d12_name">_(Device 12)_</td>
+                    <td id="d13_name">_(Device 13)_</td>
+                    <td id="d14_name">_(Device 14)_</td>
+                    <td id="d15_name">_(Device 15)_</td>
+                </tr>
+                <tr bgcolor="#e0e5f1">
+                    <td>_(MAC Address)_</td>
+                    <td id="adapter_mac">_(N/A)_</td>
+                    <td id="d1_mac">_(N/A)_</td>
+                    <td id="d2_mac">_(N/A)_</td>
+                    <td id="d3_mac">_(N/A)_</td>
+                    <td id="d4_mac">_(N/A)_</td>
+                    <td id="d5_mac">_(N/A)_</td>
+                    <td id="d6_mac">_(N/A)_</td>
+                    <td id="d7_mac">_(N/A)_</td>
+                    <td id="d8_mac">_(N/A)_</td>
+                    <td id="d9_mac">_(N/A)_</td>
+                    <td id="d10_mac">_(N/A)_</td>
+                    <td id="d11_mac">_(N/A)_</td>
+                    <td id="d12_mac">_(N/A)_</td>
+                    <td id="d13_mac">_(N/A)_</td>
+                    <td id="d14_mac">_(N/A)_</td>
+                    <td id="d15_mac">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(IP Address)_</td>
+                    <td id="adapter_ip">_(N/A)_</td>
+                    <td id="d1_ip">_(N/A)_</td>
+                    <td id="d2_ip">_(N/A)_</td>
+                    <td id="d3_ip">_(N/A)_</td>
+                    <td id="d4_ip">_(N/A)_</td>
+                    <td id="d5_ip">_(N/A)_</td>
+                    <td id="d6_ip">_(N/A)_</td>
+                    <td id="d7_ip">_(N/A)_</td>
+                    <td id="d8_ip">_(N/A)_</td>
+                    <td id="d9_ip">_(N/A)_</td>
+                    <td id="d10_ip">_(N/A)_</td>
+                    <td id="d11_ip">_(N/A)_</td>
+                    <td id="d12_ip">_(N/A)_</td>
+                    <td id="d13_ip">_(N/A)_</td>
+                    <td id="d14_ip">_(N/A)_</td>
+                    <td id="d15_ip">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <th colspan="17" style="padding-left:230px;">_(MoCA PHY Rates)_</th>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td id="adapter_name2">_(This Device)_</td>
+                    <td id="d1_name2">_(Device 1)_</td>
+                    <td id="d2_name2">_(Device 2)_</td>
+                    <td id="d3_name2">_(Device 3)_</td>
+                    <td id="d4_name2">_(Device 4)_</td>
+                    <td id="d5_name2">_(Device 5)_</td>
+                    <td id="d6_name2">_(Device 6)_</td>
+                    <td id="d7_name2">_(Device 7)_</td>
+                    <td id="d8_name2">_(Device 8)_</td>
+                    <td id="d9_name2">_(Device 9)_</td>
+                    <td id="d10_name2">_(Device 10)_</td>
+                    <td id="d11_name2">_(Device 11)_</td>
+                    <td id="d12_name2">_(Device 12)_</td>
+                    <td id="d13_name2">_(Device 13)_</td>
+                    <td id="d14_name2">_(Device 14)_</td>
+                    <td id="d15_name2">_(Device 15)_</td>
+                </tr>
+                <tr>
+                    <td>_(This Device)_</td>
+                    <td id="adapter_adapter">_(N/A)_</td>
+                    <td id="adapter_d1">_(N/A)_</td>
+                    <td id="adapter_d2">_(N/A)_</td>
+                    <td id="adapter_d3">_(N/A)_</td>
+                    <td id="adapter_d4">_(N/A)_</td>
+                    <td id="adapter_d5">_(N/A)_</td>
+                    <td id="adapter_d6">_(N/A)_</td>
+                    <td id="adapter_d7">_(N/A)_</td>
+                    <td id="adapter_d8">_(N/A)_</td>
+                    <td id="adapter_d9">_(N/A)_</td>
+                    <td id="adapter_d10">_(N/A)_</td>
+                    <td id="adapter_d11">_(N/A)_</td>
+                    <td id="adapter_d12">_(N/A)_</td>
+                    <td id="adapter_d13">_(N/A)_</td>
+                    <td id="adapter_d14">_(N/A)_</td>
+                    <td id="adapter_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 1)_</td>
+                    <td id="d1_adapter">_(N/A)_</td>
+                    <td id="d1_d1">_(N/A)_</td>
+                    <td id="d1_d2">_(N/A)_</td>
+                    <td id="d1_d3">_(N/A)_</td>
+                    <td id="d1_d4">_(N/A)_</td>
+                    <td id="d1_d5">_(N/A)_</td>
+                    <td id="d1_d6">_(N/A)_</td>
+                    <td id="d1_d7">_(N/A)_</td>
+                    <td id="d1_d8">_(N/A)_</td>
+                    <td id="d1_d9">_(N/A)_</td>
+                    <td id="d1_d10">_(N/A)_</td>
+                    <td id="d1_d11">_(N/A)_</td>
+                    <td id="d1_d12">_(N/A)_</td>
+                    <td id="d1_d13">_(N/A)_</td>
+                    <td id="d1_d14">_(N/A)_</td>
+                    <td id="d1_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 2)_</td>
+                    <td id="d2_adapter">_(N/A)_</td>
+                    <td id="d2_d1">_(N/A)_</td>
+                    <td id="d2_d2">_(N/A)_</td>
+                    <td id="d2_d3">_(N/A)_</td>
+                    <td id="d2_d4">_(N/A)_</td>
+                    <td id="d2_d5">_(N/A)_</td>
+                    <td id="d2_d6">_(N/A)_</td>
+                    <td id="d2_d7">_(N/A)_</td>
+                    <td id="d2_d8">_(N/A)_</td>
+                    <td id="d2_d9">_(N/A)_</td>
+                    <td id="d2_d10">_(N/A)_</td>
+                    <td id="d2_d11">_(N/A)_</td>
+                    <td id="d2_d12">_(N/A)_</td>
+                    <td id="d2_d13">_(N/A)_</td>
+                    <td id="d2_d14">_(N/A)_</td>
+                    <td id="d2_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 3)_</td>
+                    <td id="d3_adapter">_(N/A)_</td>
+                    <td id="d3_d1">_(N/A)_</td>
+                    <td id="d3_d2">_(N/A)_</td>
+                    <td id="d3_d3">_(N/A)_</td>
+                    <td id="d3_d4">_(N/A)_</td>
+                    <td id="d3_d5">_(N/A)_</td>
+                    <td id="d3_d6">_(N/A)_</td>
+                    <td id="d3_d7">_(N/A)_</td>
+                    <td id="d3_d8">_(N/A)_</td>
+                    <td id="d3_d9">_(N/A)_</td>
+                    <td id="d3_d10">_(N/A)_</td>
+                    <td id="d3_d11">_(N/A)_</td>
+                    <td id="d3_d12">_(N/A)_</td>
+                    <td id="d3_d13">_(N/A)_</td>
+                    <td id="d3_d14">_(N/A)_</td>
+                    <td id="d3_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 4)_</td>
+                    <td id="d4_adapter">_(N/A)_</td>
+                    <td id="d4_d1">_(N/A)_</td>
+                    <td id="d4_d2">_(N/A)_</td>
+                    <td id="d4_d3">_(N/A)_</td>
+                    <td id="d4_d4">_(N/A)_</td>
+                    <td id="d4_d5">_(N/A)_</td>
+                    <td id="d4_d6">_(N/A)_</td>
+                    <td id="d4_d7">_(N/A)_</td>
+                    <td id="d4_d8">_(N/A)_</td>
+                    <td id="d4_d9">_(N/A)_</td>
+                    <td id="d4_d10">_(N/A)_</td>
+                    <td id="d4_d11">_(N/A)_</td>
+                    <td id="d4_d12">_(N/A)_</td>
+                    <td id="d4_d13">_(N/A)_</td>
+                    <td id="d4_d14">_(N/A)_</td>
+                    <td id="d4_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 5)_</td>
+                    <td id="d5_adapter">_(N/A)_</td>
+                    <td id="d5_d1">_(N/A)_</td>
+                    <td id="d5_d2">_(N/A)_</td>
+                    <td id="d5_d3">_(N/A)_</td>
+                    <td id="d5_d4">_(N/A)_</td>
+                    <td id="d5_d5">_(N/A)_</td>
+                    <td id="d5_d6">_(N/A)_</td>
+                    <td id="d5_d7">_(N/A)_</td>
+                    <td id="d5_d8">_(N/A)_</td>
+                    <td id="d5_d9">_(N/A)_</td>
+                    <td id="d5_d10">_(N/A)_</td>
+                    <td id="d5_d11">_(N/A)_</td>
+                    <td id="d5_d12">_(N/A)_</td>
+                    <td id="d5_d13">_(N/A)_</td>
+                    <td id="d5_d14">_(N/A)_</td>
+                    <td id="d5_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 6)_</td>
+                    <td id="d6_adapter">_(N/A)_</td>
+                    <td id="d6_d1">_(N/A)_</td>
+                    <td id="d6_d2">_(N/A)_</td>
+                    <td id="d6_d3">_(N/A)_</td>
+                    <td id="d6_d4">_(N/A)_</td>
+                    <td id="d6_d5">_(N/A)_</td>
+                    <td id="d6_d6">_(N/A)_</td>
+                    <td id="d6_d7">_(N/A)_</td>
+                    <td id="d6_d8">_(N/A)_</td>
+                    <td id="d6_d9">_(N/A)_</td>
+                    <td id="d6_d10">_(N/A)_</td>
+                    <td id="d6_d11">_(N/A)_</td>
+                    <td id="d6_d12">_(N/A)_</td>
+                    <td id="d6_d13">_(N/A)_</td>
+                    <td id="d6_d14">_(N/A)_</td>
+                    <td id="d6_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 7)_</td>
+                    <td id="d7_adapter">_(N/A)_</td>
+                    <td id="d7_d1">_(N/A)_</td>
+                    <td id="d7_d2">_(N/A)_</td>
+                    <td id="d7_d3">_(N/A)_</td>
+                    <td id="d7_d4">_(N/A)_</td>
+                    <td id="d7_d5">_(N/A)_</td>
+                    <td id="d7_d6">_(N/A)_</td>
+                    <td id="d7_d7">_(N/A)_</td>
+                    <td id="d7_d8">_(N/A)_</td>
+                    <td id="d7_d9">_(N/A)_</td>
+                    <td id="d7_d10">_(N/A)_</td>
+                    <td id="d7_d11">_(N/A)_</td>
+                    <td id="d7_d12">_(N/A)_</td>
+                    <td id="d7_d13">_(N/A)_</td>
+                    <td id="d7_d14">_(N/A)_</td>
+                    <td id="d7_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 8)_</td>
+                    <td id="d8_adapter">_(N/A)_</td>
+                    <td id="d8_d1">_(N/A)_</td>
+                    <td id="d8_d2">_(N/A)_</td>
+                    <td id="d8_d3">_(N/A)_</td>
+                    <td id="d8_d4">_(N/A)_</td>
+                    <td id="d8_d5">_(N/A)_</td>
+                    <td id="d8_d6">_(N/A)_</td>
+                    <td id="d8_d7">_(N/A)_</td>
+                    <td id="d8_d8">_(N/A)_</td>
+                    <td id="d8_d9">_(N/A)_</td>
+                    <td id="d8_d10">_(N/A)_</td>
+                    <td id="d8_d11">_(N/A)_</td>
+                    <td id="d8_d12">_(N/A)_</td>
+                    <td id="d8_d13">_(N/A)_</td>
+                    <td id="d8_d14">_(N/A)_</td>
+                    <td id="d8_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 9)_</td>
+                    <td id="d9_adapter">_(N/A)_</td>
+                    <td id="d9_d1">_(N/A)_</td>
+                    <td id="d9_d2">_(N/A)_</td>
+                    <td id="d9_d3">_(N/A)_</td>
+                    <td id="d9_d4">_(N/A)_</td>
+                    <td id="d9_d5">_(N/A)_</td>
+                    <td id="d9_d6">_(N/A)_</td>
+                    <td id="d9_d7">_(N/A)_</td>
+                    <td id="d9_d8">_(N/A)_</td>
+                    <td id="d9_d9">_(N/A)_</td>
+                    <td id="d9_d10">_(N/A)_</td>
+                    <td id="d9_d11">_(N/A)_</td>
+                    <td id="d9_d12">_(N/A)_</td>
+                    <td id="d9_d13">_(N/A)_</td>
+                    <td id="d9_d14">_(N/A)_</td>
+                    <td id="d9_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 10)_</td>
+                    <td id="d10_adapter">_(N/A)_</td>
+                    <td id="d10_d1">_(N/A)_</td>
+                    <td id="d10_d2">_(N/A)_</td>
+                    <td id="d10_d3">_(N/A)_</td>
+                    <td id="d10_d4">_(N/A)_</td>
+                    <td id="d10_d5">_(N/A)_</td>
+                    <td id="d10_d6">_(N/A)_</td>
+                    <td id="d10_d7">_(N/A)_</td>
+                    <td id="d10_d8">_(N/A)_</td>
+                    <td id="d10_d9">_(N/A)_</td>
+                    <td id="d10_d10">_(N/A)_</td>
+                    <td id="d10_d11">_(N/A)_</td>
+                    <td id="d10_d12">_(N/A)_</td>
+                    <td id="d10_d13">_(N/A)_</td>
+                    <td id="d10_d14">_(N/A)_</td>
+                    <td id="d10_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 11)_</td>
+                    <td id="d11_adapter">_(N/A)_</td>
+                    <td id="d11_d1">_(N/A)_</td>
+                    <td id="d11_d2">_(N/A)_</td>
+                    <td id="d11_d3">_(N/A)_</td>
+                    <td id="d11_d4">_(N/A)_</td>
+                    <td id="d11_d5">_(N/A)_</td>
+                    <td id="d11_d6">_(N/A)_</td>
+                    <td id="d11_d7">_(N/A)_</td>
+                    <td id="d11_d8">_(N/A)_</td>
+                    <td id="d11_d9">_(N/A)_</td>
+                    <td id="d11_d10">_(N/A)_</td>
+                    <td id="d11_d11">_(N/A)_</td>
+                    <td id="d11_d12">_(N/A)_</td>
+                    <td id="d11_d13">_(N/A)_</td>
+                    <td id="d11_d14">_(N/A)_</td>
+                    <td id="d11_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 12)_</td>
+                    <td id="d12_adapter">_(N/A)_</td>
+                    <td id="d12_d1">_(N/A)_</td>
+                    <td id="d12_d2">_(N/A)_</td>
+                    <td id="d12_d3">_(N/A)_</td>
+                    <td id="d12_d4">_(N/A)_</td>
+                    <td id="d12_d5">_(N/A)_</td>
+                    <td id="d12_d6">_(N/A)_</td>
+                    <td id="d12_d7">_(N/A)_</td>
+                    <td id="d12_d8">_(N/A)_</td>
+                    <td id="d12_d9">_(N/A)_</td>
+                    <td id="d12_d10">_(N/A)_</td>
+                    <td id="d12_d11">_(N/A)_</td>
+                    <td id="d12_d12">_(N/A)_</td>
+                    <td id="d12_d13">_(N/A)_</td>
+                    <td id="d12_d14">_(N/A)_</td>
+                    <td id="d12_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 13)_</td>
+                    <td id="d13_adapter">_(N/A)_</td>
+                    <td id="d13_d1">_(N/A)_</td>
+                    <td id="d13_d2">_(N/A)_</td>
+                    <td id="d13_d3">_(N/A)_</td>
+                    <td id="d13_d4">_(N/A)_</td>
+                    <td id="d13_d5">_(N/A)_</td>
+                    <td id="d13_d6">_(N/A)_</td>
+                    <td id="d13_d7">_(N/A)_</td>
+                    <td id="d13_d8">_(N/A)_</td>
+                    <td id="d13_d9">_(N/A)_</td>
+                    <td id="d13_d10">_(N/A)_</td>
+                    <td id="d13_d11">_(N/A)_</td>
+                    <td id="d13_d12">_(N/A)_</td>
+                    <td id="d13_d13">_(N/A)_</td>
+                    <td id="d13_d14">_(N/A)_</td>
+                    <td id="d13_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 14)_</td>
+                    <td id="d14_adapter">_(N/A)_</td>
+                    <td id="d14_d1">_(N/A)_</td>
+                    <td id="d14_d2">_(N/A)_</td>
+                    <td id="d14_d3">_(N/A)_</td>
+                    <td id="d14_d4">_(N/A)_</td>
+                    <td id="d14_d5">_(N/A)_</td>
+                    <td id="d14_d6">_(N/A)_</td>
+                    <td id="d14_d7">_(N/A)_</td>
+                    <td id="d14_d8">_(N/A)_</td>
+                    <td id="d14_d9">_(N/A)_</td>
+                    <td id="d14_d10">_(N/A)_</td>
+                    <td id="d14_d11">_(N/A)_</td>
+                    <td id="d14_d12">_(N/A)_</td>
+                    <td id="d14_d13">_(N/A)_</td>
+                    <td id="d14_d14">_(N/A)_</td>
+                    <td id="d14_d15">_(N/A)_</td>
+                </tr>
+                <tr>
+                    <td>_(Device 15)_</td>
+                    <td id="d15_adapter">_(N/A)_</td>
+                    <td id="d15_d1">_(N/A)_</td>
+                    <td id="d15_d2">_(N/A)_</td>
+                    <td id="d15_d3">_(N/A)_</td>
+                    <td id="d15_d4">_(N/A)_</td>
+                    <td id="d15_d5">_(N/A)_</td>
+                    <td id="d15_d6">_(N/A)_</td>
+                    <td id="d15_d7">_(N/A)_</td>
+                    <td id="d15_d8">_(N/A)_</td>
+                    <td id="d15_d9">_(N/A)_</td>
+                    <td id="d15_d10">_(N/A)_</td>
+                    <td id="d15_d11">_(N/A)_</td>
+                    <td id="d15_d12">_(N/A)_</td>
+                    <td id="d15_d13">_(N/A)_</td>
+                    <td id="d15_d14">_(N/A)_</td>
+                    <td id="d15_d15">_(N/A)_</td>
+                </tr>
+            </table>
+        </div>
+        </div>
+        <div id="content_right_footer"></div>
+    </div>
+    <div class="clear_left"></div>
+    <div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

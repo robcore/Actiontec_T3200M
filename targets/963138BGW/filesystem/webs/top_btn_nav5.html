@@ -1,0 +1,47 @@
+<script type="text/javascript">
+	var langState="<%ejGet(guiShowLang)%>";//1 is English; 2 is French
+	var user_id='<%ejGet(userID)%>';
+</script>
+<div id="logo_wrap">
+	<a href="http://www.telus.com">
+	<script language="Javascript">
+		if(langState==2)
+			document.write('<img src="images/fr_logo.png" />');
+		else
+			document.write('<img src="images/logo.png" />');
+	</script>
+
+	</a>
+</div>
+<div id="top_nav">
+	<div id="top_nav_header"></div>
+	<div id="top_nav_content">
+		<ul id="navigation">
+		<script type="text/javascript">
+
+			if(langState==2){
+				document.write('<li class="Homepage"><a href="#" onClick="return goThere(\'index.html\');"></a><div class="title_word_fr" style="width:116px;">_(Home)_</div></li>');
+				document.write('<li class="Status"><a href="#" onClick="return goThere(\'modemstatus_home.html\');"></a><div class="title_word_fr" style="width:116px;">_(Status)_</div></li>');
+				document.write('<li class="WirelessSetup"><a href="#" onClick="return goThere(\'wirelesssetup_basic.html\');"></a><div class="title_word_fr">_(Wireless Setup</div>)_</li>');
+				document.write('<li class="SecuritySetup"><a href="#" onClick="return goThere(\'advancedsetup_firewallsettings.html\');"></a><div class="title_word_fr" style="width:116px;">_(Firewall)_</div></li>');
+				if(user_id == 1){
+					document.write('<li class="AdvancedSetup"><a href="#" id="selected" onClick="return goThere(\'advancedsetup_warning.html\');"></a><div class="title_word_fr">_(Advanced Setup)_</div></li>');
+				}else{
+					document.write('<li class="AdvancedSetup"><a href="#" id="selected" onClick="return goThere(\'advancedsetup_servicesblocking.html\');"></a><div class="title_word_fr">_(Advanced Setup)_</div></li>');
+				}
+			}else{
+				document.write('<li class="Homepage"><a href="#" onClick="return goThere(\'index.html\');"></a><div class="title_word" style="width:116px;">_(Home)_</div></li>');
+				document.write('<li class="Status"><a href="#" onClick="return goThere(\'modemstatus_home.html\');"></a><div class="title_word" style="width:116px;">_(Status)_</div></li>');
+				document.write('<li class="WirelessSetup"><a href="#" onClick="return goThere(\'wirelesssetup_basic.html\');"></a><div class="title_word">_(Wireless Setup</div>)_</li>');
+				document.write('<li class="SecuritySetup"><a href="#" onClick="return goThere(\'advancedsetup_firewallsettings.html\');"></a><div class="title_word" style="width:116px;">_(Firewall)_</div></li>');
+				if(user_id == 1){
+					document.write('<li class="AdvancedSetup"><a href="#" id="selected" onClick="return goThere(\'advancedsetup_warning.html\');"></a><div class="title_word">_(Advanced Setup)_</div></li>');
+				}else{
+					document.write('<li class="AdvancedSetup"><a href="#" id="selected" onClick="return goThere(\'advancedsetup_servicesblocking.html\');"></a><div class="title_word">_(Advanced Setup)_</div></li>');
+				}
+			}
+		</script>
+		</ul>
+	</div>
+	<div id="top_nav_footer"></div>
+</div>

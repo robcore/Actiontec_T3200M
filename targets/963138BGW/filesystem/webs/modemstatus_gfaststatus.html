@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="javascript" src="js/functions.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script type="text/javascript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var board_id=htmlDecodeStr('<%ejGet(boardID)%>');
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+var sessionKey='<%ejGetOther(sessionKey)%>';
+function do_load()
+{
+     side_nav("gfaststatus");
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+            <h1 class="modemstatus_firewallstatus">_(G.fast Status)_  </h1>
+                     <table id='link_table' width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                     <tr>
+                        <th width="50%" style="text-align:left">_(DSL Link)_</th>
+                        <th width="50%" style="text-align:left">_(Status)_</th>
+                      </tr>
+                     <tr>
+                        <td>_(G.fast Status)_:</td>
+                        <td><span id='retains_time'><%ejGetOther(Sckipio_Gfast_Stats, gfast_link_status)%></span></td>
+                      </tr>
+                     </table>
+                     <table id='levels_table' width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                     <tr>
+                        <th width="150" align="left">_(Levels)_</th>
+                        <th align="left">_(Downstream)_</th>
+                        <th align="left">_(Upstream)_</th>
+                      </tr>
+                     <tr>
+                        <td width="150">_(Line Rate)_:</td>
+                        <td align="left"><span id='speed_d'><%ejGetOther(Sckipio_Gfast_Stats, gfast_downstreamRate)%></span> Mbps</td>
+                        <td align="left"><span id='speed_u'><%ejGetOther(Sckipio_Gfast_Stats, gfast_upstreamRate)%></span> Mbps</td>
+                      </tr>
+                     <tr>
+                        <td width="150">_(Attainable Line Rate)_:</td>
+                        <td align="left"><span id='a_speed_d'><%ejGetOther(Sckipio_Gfast_Stats, gfast_downstreamRate)%></span> Mbps</td>
+                        <td align="left"><span id='a_speed_u'><%ejGetOther(Sckipio_Gfast_Stats, gfast_upstreamRate)%></span> Mbps</td>
+                      </tr>
+                     <tr>
+                        <td width="150">_(SNR)_:</td>
+                        <td align="left"><span id='snr_margin'>0</span> dB</td>
+                        <td align="left"><span id='snr_margin_u'>0</span> dB</td>
+                      </tr>
+                     <tr>
+                        <td width="150">_(Attenuation)_:</td>
+                        <td align="left"><span id='attenuation'>0</span> dB</td>
+			<td align="left"><span id='attenuation_u'>0</span> dB</td>
+                      </tr>
+                     <tr>
+                        <td width="150">_(Power)_:</td>
+                        <td align="left"><span id="down_power" >0</span> dBm</td>
+			<td align="left"><span id="up_power" >0</span> dBm</td>
+                      </tr>
+                  </table>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<script type="text/javascript">
+var foobar = new domFunction(dom_load);
+</script>
+</body>
+</html>

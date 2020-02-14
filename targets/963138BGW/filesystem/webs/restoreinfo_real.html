@@ -1,0 +1,56 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Modem Reboot)_</title>
+<script language="JavaScript" src="js/nav.js"></script>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript">
+function do_load()
+{
+    document.getElementById("load_done").value = 1;
+     setTimeout("do_retry()", 80000);
+}
+
+function do_replace()
+{
+    parent.location.href= "index.html";
+	setTimeout("do_retry()", 5000);
+}
+
+function do_retry()
+{
+    do_replace();
+}
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+<body>
+<div id="wrapper">
+	<%ejInclude(top_btn_nav.html)%>
+	<div id="content_left">
+        <%ejInclude(connect_left.html)%>
+	</div>
+	<!-- END SIDE NAV -->
+
+	<div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="thankyou">_(Modem Reboot)_ </h1>
+            <form >
+			<p>_(The DSL Router is rebooting.)_<br><br>
+                   _(Close the DSL Router Configuration window and wait for 2 minutes before
+                   reopening your web browser.)_
+                 </p>
+            </form>
+        </div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+	<input type="hidden" name="load_done" id="load_done" value="0">
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>_(Status)_ - _(System Monitor)_ - _(Multicast Statistics)_</title>
+  <link href="css/basic.css" rel="stylesheet" type="text/css" />
+  <SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript">
+  </SCRIPT>
+  <script language="JavaScript" src="js/nav.js"></script>
+  <script language="JavaScript" src="js/util.js"></script>
+  <script language="JavaScript" src="js/htmldecode.js"></script>
+  <script language="Javascript">
+
+var list_dhcp_pc = new Array();
+var list_dhcp_ip = new Array();
+var list_dhcp_mac = new Array();
+var hostinfo = "<%ejGetOther(hostinfoAll)%>";
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function get_host_name(pc_ip)
+{
+    var form = document.forms[0];
+    var i;
+    for (i = 0; i<=list_dhcp_ip.length; i++) {
+        if (pc_ip == list_dhcp_ip[i]) {
+            return list_dhcp_pc[i];
+        }
+    }
+    return pc_ip;
+}
+
+function showRule(param_list, table)
+{
+
+    /* append in multicast_list_table */
+    var newTR = table.insertRow(-1);
+    var newTDchannel = newTR.insertCell(-1);
+    var newTDhost = newTR.insertCell(-1);
+    var newTDip = newTR.insertCell(-1);
+    var newTDdays = newTR.insertCell(-1);
+    var newTDhours = newTR.insertCell(-1);
+    var newTDminutes = newTR.insertCell(-1);
+    var newTDseconds = newTR.insertCell(-1);
+
+    newTDchannel.align = "center";
+    newTDhost.align = "center";
+    newTDip.align = "center";
+    newTDdays.align = "center";
+    newTDhours.align = "center";
+    newTDminutes.align = "center";
+    newTDseconds.align = "center";
+
+    //newTDchannel.width = "20%" ;
+
+    newTDchannel.innerHTML = param_list[0];
+    newTDhost.innerHTML = get_host_name(param_list[1]);
+    newTDip.innerHTML = param_list[1];
+    newTDdays.innerHTML = param_list[2];
+    newTDhours.innerHTML = param_list[3];
+    newTDminutes.innerHTML = param_list[4];
+    newTDseconds.innerHTML = param_list[5];
+
+}
+
+  function do_load()
+  {
+	var statis_table = '<%ejGetOther(mulStatis)%>';
+
+    var table_id = document.getElementById("multicast_list_table");
+    var mul_status = statis_table.split('|');
+	var i = 0;
+    var info = hostinfo.split('|');
+
+    if (info != ''){
+        for ( i = 0; i < info.length; i++) {
+            var details = info[i].split('/');
+            list_dhcp_pc[i] = htmlDecodeStr(details[0]);
+            list_dhcp_ip[i] = htmlDecodeStr(details[1]);
+            list_dhcp_mac[i] = htmlDecodeStr(details[2]);
+        }
+    }
+
+    if (mul_status != '')
+    {
+        for (i=0; i<mul_status.length; i++)
+        {
+            var details = mul_status[i].split('/');
+            showRule(details, table_id);
+        }
+    }
+    else
+    {
+        var blank = "_(No Entries Defined)_";
+        appendTableEmptyRow(table_id, "center", "7", blank);
+    }
+
+	side_nav("multicaststatistics");
+
+  }
+
+
+function dom_load(){ do_load(); }
+
+  </script>
+</head>
+
+<body>
+<div id="wrapper">
+  <!-- TOP NAV -->
+  <%ejInclude(top_btn_nav1.html)%>
+  <!-- END TOP NAV -->
+  <!-- SIDE NAV -->
+  <%ejInclude(status_left.html)%>
+  <!-- END SIDE NAV -->
+  <!-- MAIN CONTENT AREA -->
+  <div id="content_right">
+    <div id="content_right_header">
+    </div>
+    <div id="content_right_contentarea">
+
+      <h1 class="modemstatus_wanstatus">_(Multicast Statistics)_ </h1>
+      <form>
+
+<table id="multicast_list_table" width="80%" border="0" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+ <tr>
+  <td rowspan=2>
+  _(Channel)_
+  </td>
+  <td colspan=2>
+  _(Joined Clients)_
+  </td>
+  <td colspan=4>
+  _(Time Out Value)_
+  </td>
+ </tr>
+ <tr>
+  <td>
+  _(Host)_
+  </td>
+  <td>
+  _(IP)_
+  </td>
+  <td>
+  _(Days)_
+  </td>
+  <td>
+  _(Hour(s))_
+  </td>
+  <td>
+  _(Minutes)_
+  </td>
+  <td>
+  _(Seconds)_
+  </td>
+ </tr>
+</table>
+
+      </form>
+    </div>
+    <div id="content_right_footer">
+    </div>
+</div>
+<div class="clear_left">
+</div>
+<div id="footer">
+  &nbsp;
+</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

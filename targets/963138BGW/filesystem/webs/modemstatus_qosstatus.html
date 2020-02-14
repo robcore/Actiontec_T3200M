@@ -1,0 +1,183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Status)_ - _(Internet Services)_ - _(QoS Status)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="Javascript" src="js/functions.js" type="text/javascript"></script>
+<script language="Javascript" src="js/nav.js" type="text/javascript"></script>
+<script language="Javascript" src="js/util.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var interval = 2; /* second */
+var sessionKey='<%ejGetOther(sessionKey)%>';
+function http_refresh()
+{
+   if (xmlhttp != null)
+   {
+      //SW-Bug #127719
+      var curTime = new Date();
+      curTime = curTime.getTime();
+      xmlhttp.open("GET", "./modemstatus_qosstatus_refresh.html?time="+curTime, true);
+      xmlhttp.onreadystatechange = function()
+      {
+         if (xmlhttp.readyState == 4)
+         {
+            var statusval = xmlhttp.responseText;
+            update_status(statusval);
+         }
+      }
+
+      xmlhttp.send(null);
+   }
+}
+
+function update_status(val)
+{
+   if (val != "")
+   {
+      var stats = val.split(',');
+
+      for (var i = 0; i < stats.length; i++)
+      {
+         var items = stats[i].split('|');
+         var table = document.getElementById("queue_stats_table");
+         var found_queue = 0;
+
+         for (var j = 0; j < table.rows.length; j++)
+         {
+            if (items[1] == table.rows[j].cells[0].innerHTML)
+            {
+               found_queue = 1;
+               break;
+            }
+         }
+
+         if (found_queue)
+         {
+            table.rows[j].cells[0].innerHTML = items[1];
+            if (items[2] == "WAN")
+               table.rows[j].cells[1].innerHTML = "_(Upstream)_";
+            else if (items[2] == "LAN")
+               table.rows[j].cells[1].innerHTML = "_(Downstream)_";
+            table.rows[j].cells[2].innerHTML = "0 _(bps)_";
+            table.rows[j].cells[3].innerHTML = items[4];
+            table.rows[j].cells[4].innerHTML = items[5];
+
+            if (table.rows[j].cells[5].innerHTML != "")
+            {
+               var bytes = (parseInt(items[5]) - parseInt(table.rows[j].cells[5].innerHTML));
+               if (bytes >= 0)
+               {
+                  if (bytes >= 1000)
+                     table.rows[j].cells[2].innerHTML = (bytes / (1000 * interval)) + " _(kbps)_";
+                  else
+                     table.rows[j].cells[2].innerHTML = (bytes / interval) + " _(bps)_";
+               }
+            }
+
+            table.rows[j].cells[5].style.display = "none";
+            table.rows[j].cells[5].innerHTML = items[5];
+         }
+      }
+   }
+
+   setTimeout("http_refresh()", (interval * 1000));
+}
+
+function do_load(val)
+{
+   //highlight the button after user click on it
+   side_nav("qosstatus");
+   if (val != "")
+   {
+      var stats = val.split(',');
+      var table = document.getElementById("queue_stats_table");
+
+      for (var i = 0; i < stats.length; i++)
+      {
+         var cols = new Array();
+         var items = stats[i].split('|');
+
+         /* QueueEnable|QueueName|QueueInterface|QueuePrecedence|PacketsSent|BytesSent */
+
+         items[1] = htmlDecodeStr(items[1]);
+         items[2] = htmlDecodeStr(items[2]);
+
+         cols[0] = items[1];
+         if (items[2] == "WAN")
+            cols[1] = "_(Upstream)_";
+         else if (items[2] == "LAN")
+            cols[1] = "_(Downstream)_";
+         cols[2] = "0 bps";
+         cols[3] = items[4];
+         cols[4] = items[5];
+         cols[5] = "";
+
+         var tr = table.insertRow(-1);
+         for (var j = 0; j < cols.length; j++)
+         {
+            var td = tr.insertCell(-1);
+
+            if (j == (cols.length - 1))
+            {
+               td.style.display = "none";
+            }
+            td.innerHTML = cols[j];
+         }
+      }
+   }
+
+   setTimeout("http_refresh()", (interval * 1000));
+}
+
+function dom_load()
+{
+   var queueStats = '<%ejGetOther(qosQueueStats)%>';
+
+   do_load(queueStats);
+}
+
+</script>
+</head>
+
+<body id="modemstatus_qosstatus">
+<div id="wrapper">
+  <!-- TOP NAV -->
+  <%ejInclude(top_btn_nav1.html)%>
+  <!-- END TOP NAV -->
+
+  <!-- SIDE NAV -->
+  <%ejInclude(status_left.html)%>
+  <!-- END SIDE NAV -->
+
+  <div id="content_right">
+    <div id="content_right_header"></div>
+    <div id="content_right_contentarea">
+      <h1 class="modemstatus_qosstatus">_(QoS Status)_</h1>
+      <p>_(Displays traffic information on a queue basis.)_</p>
+        <div class="stepWrapper">
+          <table class="status_style" style="margin: 10px auto 0pt;" id="queue_stats_table" align="center" border="0" cellpadding="5" cellspacing="0" width="85%">
+            <tr>
+              <th align="left">_(Queue Name)_</th>
+              <th align="left">_(Direction)_</th>
+              <th align="left">_(Real Time Queue Rate)_</th>
+              <th align="left">_(Packets Sent)_</th>
+              <th align="left">_(Bytes Sent)_</th>
+              <th align="left" style="display:none"></th> <!-- store previous bytes sent data -->
+            </tr>
+          </table>
+        </div>
+    </div>
+    <div id="content_right_footer"></div>
+  </div>
+
+  <div class="clear_left"></div>
+  <div id="footer">&nbsp;</div>
+</div>
+<script language="JavaScript">
+var foobar = new domFunction(dom_load);
+</script>
+</body>
+</html>

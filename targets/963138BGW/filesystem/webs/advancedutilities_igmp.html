@@ -1,0 +1,296 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(IGMP Setting)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+<!-- hide
+var venblIgmpSnp = '<%ejGetOther(sysInfo, enblIgmpSnp)%>';
+var venblIgmpMode = '<%ejGetOther(sysInfo, enblIgmpMode)%>';
+var venblIgmpLanToLanMcast = '<%ejGetOther(sysInfo, enblIgmpLanToLanMcast)%>';
+
+var multicast = '<%ejGetOther(multicast)%>';
+var vigmpFastLeaveEnable = htmlDecodeStr('<%ejGet(igmpFastLeaveEnable)%>');
+
+var vigmpVer = htmlDecodeStr('<%ejGet(igmpVer)%>');
+
+var igmpQI = htmlDecodeStr("<%ejGet(igmpQI)%>");
+var igmpQRI = htmlDecodeStr("<%ejGet(igmpQRI)%>");
+var igmpLMQI = htmlDecodeStr("<%ejGet(igmpLMQI)%>");
+var igmpRV = htmlDecodeStr("<%ejGet(igmpRV)%>");
+var igmpMaxGroups = htmlDecodeStr("<%ejGet(igmpMaxGroups)%>");
+var igmpMaxSources = htmlDecodeStr("<%ejGet(igmpMaxSources)%>");
+var igmpMaxMembers = htmlDecodeStr("<%ejGet(igmpMaxMembers)%>");
+
+function frmLoad() {
+   htmlDecode();
+   side_nav("advancedutilities_igmp");
+   with ( document.forms[0] ) {
+      if ( venblIgmpSnp == '1' )
+        chkIgmpSnp.checked = true;
+      else
+        chkIgmpSnp.checked = false;
+
+      if ( venblIgmpMode == '1' ) {
+	enblIgmpMode[0].checked = false;
+	enblIgmpMode[1].checked = true;
+      }
+      else {
+        enblIgmpMode[0].checked = true;
+        enblIgmpMode[1].checked = false;
+      }
+
+      if ( vigmpFastLeaveEnable == '1' )
+        igmpFastLeaveEnable.checked = true;
+      else
+        igmpFastLeaveEnable.checked = false;
+
+      if ( venblIgmpLanToLanMcast == '1' )
+        igmpLan2LanMulticastEnable.checked = true;
+      else
+        igmpLan2LanMulticastEnable.checked = false;
+
+      if (vigmpVer == '1')
+        igmpVer.selectedIndex=0;
+      else if (vigmpVer == '2')
+        igmpVer.selectedIndex=1;
+      else if (vigmpVer == '3')
+        igmpVer.selectedIndex=2;
+   }
+
+   document.getElementById("igmpQI").value = igmpQI;
+   document.getElementById("igmpQRI").value = igmpQRI;
+   document.getElementById("igmpLMQI").value = igmpLMQI;
+   document.getElementById("igmpRV").value = igmpRV;
+   document.getElementById("igmpMaxGroups").value = igmpMaxGroups;
+   document.getElementById("igmpMaxSources").value = igmpMaxSources;
+   document.getElementById("igmpMaxMembers").value = igmpMaxMembers;
+
+}
+
+
+function btnSave(reboot) {
+   with ( document.forms[0] ) {
+      if ( isNaN(parseInt(igmpVer.value)) == true ) {
+         alert("_(IGMP Version\"" + igmpVer.value + "\" is invalid.)_");
+         return;
+      }
+      iVer = parseInt(igmpVer.value);
+      if ( iVer < 1 || iVer > 3 ) {
+         alert("_(IGMP Version\"" + igmpVer.value + "\" is out of range [1-3].)_");
+         return;
+      }
+
+      if ( isNaN(parseInt(igmpQI.value)) == true ) {
+         alert("_(IGMP Query Interval \"" + igmpQI.value + "\" is invalid.)_");
+         return;
+      }
+      iQI = parseInt(igmpQI.value);
+      if ( iQI < 1 ) {
+         alert("_(IGMP Query Interval\"" + igmpQI.value + "\" is out of range [1-].)_");
+         return;
+      }
+
+      if ( isNaN(parseInt(igmpQRI.value)) == true ) {
+         alert("_(IGMP Query Response Interval\"" + igmpQRI.value + "\" is invalid.)_");
+         return;
+      }
+
+      iQRI = parseInt(igmpQRI.value);
+      if ( iQRI < 1 ) {
+         alert("_(IGMP Query Response Interval\"" + igmpQRI.value + "\" is out of range [1-].)_");
+         return;
+      }
+
+      if ( isNaN(parseInt(igmpLMQI.value)) == true ) {
+         alert("_(IGMP Last Member Query Interval\"" + igmpLMQI.value + "\" is invalid.)_");
+         return;
+      }
+
+      iLMQI = parseInt(igmpLMQI.value);
+      if ( iLMQI < 1 ) {
+         alert("_(IGMP Last Member Query Interval\"" + igmpLMQI.value + "\" is out of range [1-].)_");
+         return;
+      }
+
+      if ( isNaN(parseInt(igmpRV.value)) == true ) {
+         alert("_(IGMP Robustness Value\"" + igmpRV.value + "\" is invalid.)_");
+         return;
+      }
+      iRV = parseInt(igmpRV.value);
+      if ( iRV < 1 ) {
+         alert("_(IGMP Robustness Value\"" + igmpRV.value + "\" is out of range [1-].)_");
+         return;
+      }
+
+      if ( isNaN(parseInt(igmpMaxGroups.value)) == true ) {
+         alert("_(IGMP Maximum Groups\"" + igmpMaxGroups.value + "\" is invalid.)_");
+         return;
+      }
+      iMaxGroups = parseInt(igmpMaxGroups.value);
+      if ( iMaxGroups < 1 ) {
+         alert("_(IGMP Maximum Groups\"" + igmpMaxGroups.value + "\" is out of range [1-].)_");
+         return;
+      }
+
+      if ( isNaN(parseInt(igmpMaxSources.value)) == true && iVer==3) {
+         alert("_(IGMP Maximum Sources\"" + igmpMaxSources.value + "\" is invalid.)_");
+         return;
+      }
+
+      iMaxSources = parseInt(igmpMaxSources.value);
+      if ( iMaxSources < 1 && iVer==3) {
+         alert("_(IGMP maximum Sources\"" + igmpMaxSources.value + "\" is out of range [1-].)_");
+         return;
+      }
+
+      //if (iVer==1 || iVer==2)
+         //igmpMaxSources.value = 0;
+
+      if ( isNaN(parseInt(igmpMaxMembers.value)) == true ) {
+         alert("_(IGMP Maximum Members\"" + igmpMaxMembers.value + "\" is invalid.)_");
+         return;
+      }
+
+      iMaxMembers = parseInt(igmpMaxMembers.value);
+      if ( iMaxMembers < 1 ) {
+         alert("_(IGMP Maximum Members\"" + igmpMaxMembers.value + "\" is out of range [1-].)_");
+         return;
+      }
+
+      if (chkIgmpSnp.checked == true)
+         henblIgmpSnp.value = 1;
+      else
+         henblIgmpSnp.value = 0;
+
+      if (igmpFastLeaveEnable.checked == true)
+         igmpFastLeaveEnable.value = 1;
+      else
+         igmpFastLeaveEnable.value = 0;
+
+      if (igmpLan2LanMulticastEnable.checked == true)
+         igmpLan2LanMulticastEnable.value = 1;
+      else
+         igmpLan2LanMulticastEnable.value = 0;
+      submit();
+   }
+
+}
+
+
+// done hiding -->
+
+
+function dom_load(){ frmLoad(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="advancedsetup_ipaddressing_igmpsnooping">_(IGMP Configuration)_</h1>
+                <form method="POST" action="igmp.cmd" onSubmit="return btnSave(0);">
+            <!--input type="hidden" name="getpage" value="advancedsetup_igmpsnooping.html"-->
+            <input type="hidden" name="getpage" value="advancedutilities_igmp.html">
+            <input type="hidden" name="henblIgmpSnp" value="0">
+         <input type="hidden" name="sessionKey" value='<%ejGetOther(sessionKey)%>' >
+            <!-- <input type="hidden" name="henblIgmpMode" value="0"> -->
+            <div id='igmpSnpInfo'>
+            <p><strong>_(IGMP Snooping)_</strong></p>
+            <table border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td width="160">_(IGMP Snooping Enable)_:</td>
+                  <td><input type='checkbox' name='chkIgmpSnp' id='chkIgmpSnp'></td>
+               <tr>
+                  <td>_(Standard Mode)_</td>
+                  <td><input type='radio' name='enblIgmpMode' id='enblIgmpMode_standard' value='0'></td>
+               </tr>
+               <tr>
+                  <td>_(Blocking Mode)_</td>
+                  <td><input type='radio' name='enblIgmpMode' id='enblIgmpMode_blocking' value='1'></td>
+               </tr>
+            </table>
+            <br>
+            <p><strong>_(IGMP Protocol)_</strong></p>
+            <table border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                  <td width="160">_(Default Version)_:</td>
+		  <td><select name="igmpVer" id="igmpVer" width="100" style="width: 100px">
+                      <option value="1">_(version 1)_ </option>
+                      <option value="2">_(version 2)_ </option>
+                      <option value="3">_(version 3)_ </option>
+		      </select>
+                  </td>
+               </tr>
+               <tr>
+                  <td>_(Query Interval)_:</td>
+                  <td><input type='text' name='igmpQI' id='igmpQI'></td>
+               </tr>
+               <tr>
+                  <td>_(Query Response Interval)_:</td>
+                  <td><input type='text' name='igmpQRI' id='igmpQRI'></td>
+               </tr>
+               <tr>
+                  <td>_(Last Member Query Interval)_:</td>
+                  <td><input type='text' name='igmpLMQI' id='igmpLMQI'></td>
+               </tr>
+               <tr>
+                  <td>_(Robustness Value)_:</td>
+                  <td><input type='text' name='igmpRV' id='igmpRV'></td>
+               </tr>
+               <tr>
+                  <td>_(Maximum Multicast Groups)_:</td>
+                  <td><input type='text' name='igmpMaxGroups' id='igmpMaxGroups'></td>
+               </tr>
+               <tr>
+                  <td>_(Maximum Multicast Data Sources (for IGMPv3))_:</td>
+                  <td><input type='text' name='igmpMaxSources' id='igmpMaxSources'></td>
+               </tr>
+               <tr>
+                  <td>_(Maximum Multicast Group Members)_:</td>
+                  <td><input type='text' name='igmpMaxMembers' id='igmpMaxMembers'></td>
+               </tr>
+               <tr>
+                  <td>_(Fast Leave Enable)_:</td>
+                  <td><input type='checkbox' name='igmpFastLeaveEnable' id='igmpFastLeaveEnable'></td>
+               </tr>
+               <tr>
+                  <td>_(LAN to LAN (Intra LAN) Multicast Enable)_:</td>
+                  <td><input type='checkbox' name='igmpLan2LanMulticastEnable' id='igmpLan2LanMulticastEnable'></td>
+               </tr>
+            </table>
+            <br>
+            </div>
+            <br>
+            <center>
+                <p align="center"><a class="button1" onclick="btnSave(0);" id="btn_apply"><span>_(Apply)_</span></a></p>
+            </center>
+
+				</form>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+
+</SCRIPT>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

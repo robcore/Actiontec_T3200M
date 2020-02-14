@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Modem Reboot)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="javascript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+var ethIpAddress = htmlDecodeStr('<%ejGet(ethIpAddress_tmp)%>');
+var ethSubnetMask = htmlDecodeStr('<%ejGet(ethSubnetMask_tmp)%>');
+var dhcpStart = htmlDecodeStr('<%ejGet(dhcpEthStart_tmp)%>');
+var dhcpEnd = htmlDecodeStr('<%ejGet(dhcpEthEnd_tmp)%>');
+var new_addr = 'http://';
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+var sessionKey='<%ejGetOther(sessionKey)%>';
+new_addr += ethIpAddress;
+new_addr += '/index.html';
+function do_load()
+{
+	document.getElementById("newAddress").innerHTML = new_addr;
+    onApply();
+}
+function onApply()
+{
+    //need to reboot
+    //var loc = 'advancedsetup_lanipaddress.cgi?';
+    var lochead='advancedsetup_lanipaddress.cgi?';
+    var loc="";
+    loc += 'ethIpAddress=' + ethIpAddress;
+    loc += '&dhcpEthStart=' + dhcpStart;
+    loc += '&dhcpEthEnd=' + dhcpEnd;
+    loc += '&ethSubnetMask=' + ethSubnetMask;
+	loc += '&sessionKey=' + sessionKey;
+    loc += '&nothankyou=1';
+    //var code = 'location="' + loc + '"';
+    //eval(code);
+   loc = encrypt_query(loc, key);
+   lochead += loc;
+   postSubmit(lochead);
+    setTimeout("do_retry()", 50000);
+}
+function do_jump()
+{
+    parent.location.href = new_addr;
+}
+function do_replace()
+{
+    parent.location.href = new_addr;
+	setTimeout("do_retry()", 2000);
+}
+function do_retry()
+{
+    do_replace();
+}
+function dom_load(){ do_load(); }
+</script>
+</head>
+<body>
+<div id="wrapper">
+	<%ejInclude(top_btn_nav.html)%>
+	<div id="content_left">
+        <%ejInclude(connect_left.html)%>
+	</div>
+	<!-- END SIDE NAV -->
+	<div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="thankyou">_(Modem Reboot)_ </h1>
+				<p>_(The modem is rebooting after LAN IP address has been changed.<br><br>Close the DSL Router Configuration window and wait for <strong>2 minutes</strong> before<br />reopening your web browser. Then you can access DSL Router Configuration window<br />the following new address:)_  <a href="#" onClick="do_jump();" target="_self" style="color:#000000"><span id='newAddress'>index.html</span></a>
+                </p>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

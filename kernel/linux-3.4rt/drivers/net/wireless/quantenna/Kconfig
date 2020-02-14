@@ -1,0 +1,15 @@
+#
+# Kconfig for the quantenna 11ac driver module - qdpc-host.ko
+#
+
+#add a line in ../Kconfig
+#source "drivers/net/wireless/quantenna/Kconfig"
+
+config QUANTENNA_11AC
+        tristate "Quantenna PCIe 11ac WiFi card"
+       ---help---
+          Say Y here if you intend to attach an Quantenna PCIe
+          wireless Ethernet networking card to your computer.
+
+          To compile this driver as a module, choose M here, If unsure, say N.
+

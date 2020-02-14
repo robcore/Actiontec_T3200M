@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Status)_ - _(LAN  Services)_ - _(NAT Table)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="Javascript">
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function do_load()
+{
+     draw_nat_table();
+
+	//highlight the button after user click on it
+	side_nav("nattable");
+}
+
+function draw_nat_table()
+{
+	var i;
+	var SRC_IP, SRC_port;
+	var DST_IP, DST_port;
+	var init_value="<%ejGetOther(nattable)%>";
+/* for debug only	*/
+/*  init_value = "tcp      6 3 CoS6 TIME_WAIT src=192.168.0.4 dst=192.168.0.1 sport=2592 dport=80 src=192.168.0.1 dst=192.168.0.4 sport=80 dport=2592 use=1\x0atcp      6 1 CoS6 TIME_WAIT src=192.168.0.4 dst=192.168.0.1 sport=1917 dport=80 src=192.168.0.1 dst=192.168.0.4 sport=80 dport=1917 use=1\x0atcp      6 5 CoS6 TIME_WAIT src=192.168.0.4 dst=192.168.0.1 sport=1918 dport=80 src=192.168.0.1 dst=192.168.0.4 sport=80 dport=1918 use=1";
+	 */
+	var input_value = init_value.split("|");
+    var len = input_value.length;
+    var getTb= document.getElementById("natDetails");
+
+    if ((input_value[0] == " ") || (input_value[0] == ""))
+    {
+        var blank = "_(No Entries Defined)_";
+        appendTableEmptyRow(getTb, "center", "6", blank);
+        return true;
+    }
+    /* Start parse */
+    for (i=0; i < len; i++)
+    {
+	var j;
+	var display_number = 8;
+	/* error checking */
+	if(input_value[i].length < 10) continue;
+	if(input_value[i].indexOf("unknown") != -1) continue;
+
+	/* Drop the first 8 character */
+	var pstr = input_value[i].substring(9, input_value[i].length);
+	var pitem = pstr.split(" ");
+	var plen = pitem.length;
+	SRC_IP="";
+	SRC_port="";
+	DST_IP="";
+	DST_port="";
+	if( plen < 8)
+	    display_number = plen;
+	/* devide each input_value to several pitem */
+
+
+	for (j=0; j< display_number; j++)
+	{
+	    if(SRC_IP=="" && pitem[j].indexOf("src=") != -1) {
+		SRC_IP = pitem[j].substring(pitem[j].indexOf("src=")+4, pitem[j].length);
+	    }
+	    else if(DST_IP=="" && pitem[j].indexOf("dst=") != -1) {
+		DST_IP = pitem[j].substring(pitem[j].indexOf("dst=")+4, pitem[j].length);
+	    }
+	    else if(SRC_port=="" && pitem[j].indexOf("sport=") != -1) {
+		SRC_port = pitem[j].substring(pitem[j].indexOf("sport=")+6, pitem[j].length);
+	    }
+	    else if(DST_port=="" && pitem[j].indexOf("dport=") != -1) {
+		DST_port = pitem[j].substring(pitem[j].indexOf("dport=")+6, pitem[j].length);
+	    }
+	}
+        if(SRC_IP==DST_IP) continue;
+        if(SRC_IP=="" || DST_IP=="" || SRC_port=="" || DST_port=="") continue;
+
+	/* append in real_nat_table */
+	var crTR = getTb.insertRow(-1);
+	var crTDa = crTR.insertCell(-1);
+	var crTDb = crTR.insertCell(-1);
+	var crTDc = crTR.insertCell(-1);
+	var crTDd = crTR.insertCell(-1);
+	var crTDe = crTR.insertCell(-1);
+	var crTDf = crTR.insertCell(-1);
+
+	/*crTDa.align="center";
+	crTDb.align="center";
+	crTDc.align="center";
+	crTDd.align="center";
+	crTDe.align="center";
+	crTDf.align="center";*/
+
+	crTDa.style.padding="10px";
+	crTDb.style.padding="10px";
+	crTDc.style.padding="10px";
+	crTDd.style.padding="10px";
+	crTDe.style.padding="10px";
+	crTDf.style.padding="10px";
+
+	crTDa.innerHTML=pitem[0];
+	crTDb.innerHTML=pitem[1];
+	crTDc.innerHTML=SRC_IP;
+	crTDd.innerHTML=SRC_port;
+	crTDe.innerHTML=DST_IP;
+	crTDf.innerHTML=DST_port;
+
+	crTR.style.fontSize="6pt"
+	crTR.className="nattable";
+	crTR.align="center";
+    }
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="modemstatus_nattable">_(NAT Table)_ </h1>
+				<table id="natDetails" width="86%" border="0" align="center" cellpadding="5" cellspacing="0" class="nat_style">
+					<tr align="center">
+						<th style="padding-left:10px;text-transform:none;">_(Protocol)_ </th>
+						<th style="padding-left:10px;text-transform:none;">_(Timeout)_ </th>
+						<th style="padding-left:10px;text-transform:none;">_(Source IP)_ </th>
+						<th style="padding-left:10px;text-transform:none;">_(Source Port)_ </th>
+						<th style="padding-left:10px;text-transform:none;">_(Destination IP)_ </th>
+						<th style="padding-left:10px;text-transform:none;">_(Destination Port)_ </th>
+					</tr>
+				</table>
+				<p>&nbsp;</p>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

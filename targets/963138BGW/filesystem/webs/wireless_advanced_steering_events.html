@@ -1,0 +1,113 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Wireless Setup)_ - _(SmartSteering&#8482 Events)_</title>
+<link href="../css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/functions.js"></script>
+<script language="JavaScript" src="../js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function goBack()
+{
+    goThere("wirelesssetup_band_steering.html");
+    return;
+}
+
+function do_clear()
+{
+    var lochead = 'wireless_advanced_steering_events.wl?';
+    var loc = '';
+
+    loc += '&sessionKey=' + sessionKey;
+    loc += '&clearEvts=1';
+    lochead += loc;
+    postSubmit(lochead);
+}
+
+function do_load()
+{
+    side_nav("wirelesssetup_band_steering");
+}
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav3.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_center">
+      <div id="content_center_header"></div>
+        <div id="content_center_contentarea">
+          <h1 class="advancedsetup_security">_(SmartSteering&#8482 Events)_</h1>
+             <form id="myform" name="myform">
+              <table class="status_absEvt" style="margin:5px auto;" id="bandSteeringTable" align="center" border="0" cellpadding="0" cellspacing="0">
+                <tr align="center">
+                  <th rowspan="2" bgcolor="#AAAAAA"><div class="div_rotate">_(Class)_</div></th>
+                  <th rowspan="2" bgcolor="#D8D7D8"><div class="div_rotate">_(Time)_</div></th>
+                  <th colspan="3" bgcolor="#AAAAAA">_(Station)_</th>
+                  <th colspan="2" bgcolor="#D8D7D8">_(SSID)_</th>
+                  <th colspan="5" bgcolor="#AAAAAA">_(FromAP)_</th>
+                  <th colspan="5" bgcolor="#D8D7D8">_(ToAP_intended)_</th>
+                  <th colspan="5" bgcolor="#AAAAAA">_(ToAP_actual)_</th>
+                  <th rowspan="2" bgcolor="#D8D7D8"><div class="div_rotate">_(SteerEnd)_</div></th>
+                  <th rowspan="2" bgcolor="#AAAAAA"><div class="div_rotate">_(SteerTime)_</div></th>
+                  </tr>
+                  <tr>
+                  <th bgcolor="#AAAAAA"><div class="div_rotate">_(StaId)_</div></th>
+                  <th bgcolor="#AAAAAA"><div class="div_rotate">_(Cap)_</div></th>
+                  <th bgcolor="#AAAAAA"><div class="div_rotate">_(Stationary)_</div></th>
+                  <th bgcolor="#D8D7D8"><div class="div_rotate">_(SSID#)_</div></th>
+                  <th bgcolor="#D8D7D8"><div class="div_rotate">_(name)_</div></th>
+                  <th bgcolor="#AAAAAA"><div class="div_rotate">_(Band)_</div></th>
+                  <th bgcolor="#AAAAAA"><div class="div_rotate">_(MAC)_</div></th>
+                  <th bgcolor="#AAAAAA"><div class="div_rotate">_(Id)_</div></th>
+                  <th bgcolor="#AAAAAA"><div class="div_rotate">_(Channel)_</div></th>
+                  <th bgcolor="#AAAAAA"><div class="div_rotate">_(RSSI)_</div></th>
+                  <th bgcolor="#D8D7D8"><div class="div_rotate">_(Band)_</div></th>
+                  <th bgcolor="#D8D7D8"><div class="div_rotate">_(MAC)_</div></th>
+                  <th bgcolor="#D8D7D8"><div class="div_rotate">_(Id)_</div></th>
+                  <th bgcolor="#D8D7D8"><div class="div_rotate">_(Channel)_</div></th>
+                  <th bgcolor="#D8D7D8"><div class="div_rotate">_(RSSI)_</div></th>
+                  <th bgcolor="#AAAAAA"><div class="div_rotate">_(Band)_</div></th>
+                  <th bgcolor="#AAAAAA"><div class="div_rotate">_(MAC)_</div></th>
+                  <th bgcolor="#AAAAAA"><div class="div_rotate">_(Id)_</div></th>
+                  <th bgcolor="#AAAAAA"><div class="div_rotate">_(Channel)_</div></th>
+                  <th bgcolor="#AAAAAA"><div class="div_rotate">_(RSSI)_</div></th>
+                </tr>
+                <%ejGetWlAbsEvents()%>
+              </table>
+              <table border="0" align="center" cellpadding="5" cellspacing="0" style="margin:10px auto 0 auto;">
+                <tr>
+                  <td width="70%">
+                    <a id="id_pageback" class="button1" onclick="goBack();"><span>_(Back)_</span></a>
+                  </td>
+                  <td>
+                    <a id="id_clear" class="button1" onclick="do_clear();"><span>_(Clear)_</span></a>
+                  </td>
+                </tr>
+              </table>
+            </form>
+          <div class="clear_left"></div>
+        </div>
+      <div id="content_center_footer"></div>
+    </div>
+   <div class="clear_left"></div>
+  <div id="footer">&nbsp;</div>
+</div>
+<script language="javascript">
+var foobar = new domFunction(dom_load);
+</script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Time Zone)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/nav.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<SCRIPT LANGUAGE="JavaScript">
+var initTimezoneIndex = "<%ejGetOther(timezone, timezoneindex)%>";
+var initdaylightsaving = "<%ejGetOther(timezone, use_dst)%>";
+
+var index = 0;
+
+function do_load(form){
+
+    htmlDecode();
+    index = initTimezoneIndex;
+    if (initTimezoneIndex>=2)
+        initTimezoneIndex = initTimezoneIndex - 2;
+    document.myform.time_zone[initTimezoneIndex].checked = true;
+
+    if (initdaylightsaving=="1") {
+        document.myform.daylight_savings.checked=true;
+    }
+    else{
+        document.myform.daylight_savings.checked=false;
+    }
+
+    var date = '<%ejGetOther(currentLocalTime)%>'.split(',');
+    var date_latest;
+    var detail_day=date[1].split(' ');
+    var mon = detail_day[1];
+    var day=detail_day[2];
+    var detail_time=date[2].split(' ');
+    var time = detail_time[3];
+    var phase = detail_time[4];
+
+    if (phase == 'PM')
+		phase = "P.M.";
+    else
+		phase = "A.M.";
+
+    document.getElementById("id_current_time").innerHTML
+		= "<strong>_(Current Time)_: &nbsp;" + mon + " " + day + " " + time + " " + phase + "</strong>";
+
+	//highlight the button after user click on it
+	side_nav("timezone");
+}
+
+function change(value)
+{
+    index = value ;
+}
+
+function act_apply()
+{
+    document.myform.timezoneindex.value = index;
+
+    if (document.myform.timezoneindex.value == '0')
+    {
+	if (document.myform.daylight_savings.checked == true)
+	    alert("_(Since Hawaii was selected as the modem's location, and there is no Daylight Saving Time in Hawaii, the Daylight Saving Time checkbox must be left unchecked.)_");
+
+	document.myform.daylight_savings.checked = false;
+	document.myform.use_dst.value = 0;
+    }
+
+    if ( document.myform.daylight_savings.checked == true && document.myform.timezoneindex.value != '0')
+	document.myform.use_dst.value = 1;
+    else
+	document.myform.use_dst.value = 0;
+
+    document.myform.daylight_savings.disabled = true;
+    document.myform.time_zone.disabled = true ;
+    document.myform.submit();
+}
+
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+
+				<h1 class="utilities_timezone">_(Time Zone)_</h1>
+
+				<form name="myform"  method="POST" action="utilities_timezone.cgi" onSubmit="return act_apply();">
+ <!-- 0 --->     	<input  type="hidden" name="timezoneindex" id="timezoneindex" value="<%ejGet(timezoneindex)%>"/>
+ <!-- 1 --->        <input  type="hidden" name="use_dst" id="use_dst" value="<%ejGet(use_dst)%>"/>
+                    <input type="hidden" name="sessionKey" value='<%ejGetOther(sessionKey)%>' >
+					<p><strong>1. _(Please select your Time Zone)_ &nbsp;&nbsp;( <span id="id_current_time"></span> )</strong></p>
+					 <table width="300" border="0" cellpadding="5" cellspacing="0" class="defaultstyle">
+
+					  <tr align="center">
+                        <td><div align="left">(_(GMT)_ - 8:00)</div></td>
+                        <td><div align="left">_(Pacific Time)_</div></td>
+                        <td><input type="radio" name="time_zone" id="pacific" value="2" onclick="change(value)"/></td>
+                      </tr>
+                      <tr align="center">
+                        <td><div align="left">(_(GMT)_ - 7:00)</div></td>
+                        <td><div align="left">_(Mountain Time)_</div></td>
+                        <td><input type="radio" name="time_zone" id="mountain" value="3" onclick="change(value)"/></td>
+                      </tr>
+                      <tr align="center">
+                        <td><div align="left">(_(GMT)_ - 6:00)</div></td>
+                        <td><div align="left">_(Central Time)_</div></td>
+                        <td><input type="radio" name="time_zone" id="central" value="4" onclick="change(value)"/></td>
+                      </tr>
+                      <tr align="center">
+                        <td><div align="left">(_(GMT)_ - 5:00)</div>
+                        </td>
+                        <td><div align="left">_(Eastern Time)_</div>
+                        </td>
+                        <td><input type="radio" name="time_zone" id="eastern" value="5" onclick="change(value)"/></td>
+                        </td>
+                      </tr>
+                      <tr align="center">
+                        <td colspan="3">                          <div align="right">
+                          <input type="checkbox" name="daylight_savings" id="daylight_savings" value="daylight_savings" />
+                        _(Day Light Saving)_</div></td>
+                      </tr>
+                    </table>
+					<p>&nbsp;</p>
+					<p><strong>2. _(Click Apply to save changes.)_ </strong></p>
+					<p><a class="button1" onclick="javascript:act_apply()" id="btn_apply"><span>_(Apply)_</span></a></p>
+				</form>
+
+				<div class="clear_left"></div>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

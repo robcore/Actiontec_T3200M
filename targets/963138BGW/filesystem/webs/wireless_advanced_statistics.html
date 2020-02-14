@@ -1,0 +1,1166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Status)_ - _(Advanced Wireless Statistics)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="javascript" src="js/util.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+
+<script language="javascript" type="text/javascript" src="js/jquery.js"></script>
+<script language="javascript" type="text/javascript" src="js/jquery.flot.js"></script>
+<script language="javascript" type="text/javascript" src="js/jquery.flot.resize.js"></script>
+<script language="javascript" type="text/javascript" src="js/jquery.flot.axislabels.js"></script>
+
+<script language="Javascript">
+
+var raw_data = "<%ejGetOther(aei_cgi_adv_wl_get_state)%>";
+var gv_radioEnabled_2 = htmlDecodeStr("<%ejGetWl(wlRadio_wl0)%>");
+var gv_radioEnabled_5 = htmlDecodeStr("<%ejGetWl(wlRadio_wl1)%>");
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+var raw_array = new Array();
+var ptr = null;
+var wait_time = 1;
+var blank = "_(No Entries Defined)_";
+raw_array = raw_data.split('|');
+var gv_band = "<%ejGetOther(wlBandFrequency)%>"; // 1 for 5G; 0 for 2.4G
+var has_QTN = htmlDecodeStr("<%ejGet(qtnExist)%>");
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+var reftwogchnl = [1,2,3,4,5,6,7,8,9,10,11,12];
+var reffivegchnl = [36,40,44,48,52,56,60,64,68,72,76,80,84,88,92,96,100,104,108,112,116,120,124,128,132,136,140,144,149,153,157,161,165,169];
+
+var twoglabels = [[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9],[10,10],[11,11],
+    [12,12],[13,13]];
+var fiveglabels = [[1,36],[2,40],[3,44],[4,48],[5,52],[6,56],[7,60],[8,64],[9,''],
+    [10,''],[11,''],[12,''],[13,''],[14,''],[15,''],[16,''],[17,100],[18,104],[19,108],
+    [20,112],[21,116],[22,''],[23,''],[24,''],[25,132],[26,136],[27,140],[28,144],[29,149],
+    [30,153],[31,157],[32,161],[33,165],[34,'']];
+var aplistplotgraph;
+
+function drawNeighbourGraph()
+{
+    var graphdata = [];
+    var graphlabel = [];
+    var graphband = [];
+    var xaxislabels = [];
+    for(var i=1;i<raw_array.length;i++)
+    {
+        var ssid = raw_array[i].split("/")[0];
+        var channel_t = parseInt(raw_array[i].split("/")[1]);
+        var signal = parseInt(raw_array[i].split("/")[2]);
+        var band = raw_array[i].split("/")[6];
+        var channel;
+
+        if (gv_band == '0') 
+        {
+             /* If 2.4 GHz */
+            if (channel_t > 14)
+                continue;
+            channel = $.inArray(channel_t,reftwogchnl);
+        } else if (gv_band == '1') {
+            if (channel_t < 14)
+                continue;
+            channel = $.inArray(channel_t,reffivegchnl);
+        }
+
+        channel = channel+1;
+        var temp = [];
+
+        if (gv_band == '0') 
+        {
+            //2.4G
+            if (band == '20MHz') {
+                temp.push([channel-2,-100],[channel-1.5,signal],[channel+1.5,signal],[channel+2,-100]);
+            }
+            else
+            {
+                //40MHz, if the band is 'N/A', it will show 40MHz default.
+                temp.push([channel-4,-100],[channel-3.5,signal],[channel+3.5,signal],[channel+4,-100]);
+            }
+
+        }
+        else
+        {
+            //5G
+            if (band == '20MHz') 
+            {
+                temp.push([channel-2,-100],[channel-1.5,signal],[channel+1.5,signal],[channel+2,-100]);
+            }
+            else
+            {
+                //40MHz is same as 80MHz, if the band is 'N/A', it will show 80MHz default.
+                temp.push([channel-4,-100],[channel-3.5,signal],[channel+3.5,signal],[channel+4,-100]);
+            }
+        }
+        graphdata.push(temp);
+        graphlabel.push(ssid);
+        graphband.push(band);
+    }
+
+    if(gv_band == '0')
+    {
+        xaxislabels = twoglabels;
+        $("#placeholder").width("650px");
+    }
+    else
+    {
+        xaxislabels = fiveglabels;
+        $("#placeholder").width("870px");
+    }
+
+    var curdutidx = 0;
+    drawRssiGraph(graphdata,graphlabel,xaxislabels,curdutidx,graphband);
+}
+
+function drawRssiGraph(graphdata, graphlabel, xaxislabels, curdutidx, graphband)
+{
+    var dataset = [];
+    if (raw_array[1] == "" || raw_array[1] == undefined)
+        return;
+    for (i = 0; i < graphdata.length; i++)
+    {
+        dataset.push({
+            label:graphlabel[i],
+            data:graphdata[i],
+            color:"#006600"
+        });
+    }
+
+    var options = {
+        grid:{
+            hoverable: false,
+            backgroundColor: { colors: ["#D8D7D8", "#D8D7D8"] },
+            markings: function (axes) {
+                var markings = [];
+                for (var x = Math.floor(axes.yaxis.min); x < axes.yaxis.max; x += 20)
+                    markings.push({ yaxis: { from: x, to: x+.25 }, color: "white" });
+                return markings;
+            }
+        },
+        legend:{
+            show:false
+        },
+        xaxis:{
+            
+            axisLabel:'_(Channels)_',
+            tickLength:-1,
+            color: "#000000",
+            autoscaleMargin:.01,
+            axisLabelFontSizePixels: 22,
+            axisLabelUseCanvas: true,
+            axisLabelFontFamily: 'Arial',
+            axisLabelPadding: 20,
+            ticks:xaxislabels
+        },
+        yaxis:{
+            axisLabel:'_(Signal Strength [dBm])_',
+            min:-100,
+            max:0,
+            show:true,
+            tickLength:1,
+            axisLabelFontSizePixels: 22,
+            axisLabelUseCanvas: true,
+            axisLabelFontFamily: 'Arial',
+            axisLabelPadding: 15,
+        },
+    };
+    aplistplotgraph = $.plot($("#placeholder"),dataset,options);
+
+    for (i = 0; i < graphdata.length; i++)
+    {
+        var ssid = graphlabel[i];
+        var lncolor = "#006600";
+        $.each(aplistplotgraph.getData()[i].data, function(i, el) {
+            var o = aplistplotgraph.pointOffset({x:el[0],y:el[1]});
+            if (el[1] != '-100') {
+                    var band = graphband[i];
+                    var xoffset = o.left;
+                    if(band != "20MHz")
+                        xoffset = xoffset+40;
+                    $('<div class="data-point-label fontfamly">'+ssid+'</div>').css({
+                        position:'absolute',
+                        left: xoffset,
+                        top: o.top -20,
+                        color:"#006600",
+                        padding:'5px',
+                    }).appendTo(aplistplotgraph.getPlaceholder());
+                    return false
+                
+            }
+        });
+    }
+}
+
+function drawNeighbourTable(table, cols)
+{
+    if (raw_array[1] == "" || raw_array[1] == undefined)
+    {
+        appendTableEmptyRow(table, "center", cols, blank);
+    }
+    else
+    {
+        var i;
+        var entrys = new Array();
+        var elements = new Array();
+
+        for (i = 1; i < raw_array.length; i++)
+        {
+            if (raw_array[i] != "")
+            {
+                var raw_info_array = raw_array[i].split('/');
+                for(var j=0; j<raw_info_array.length; j++)
+                {
+                    if(j<5)
+                        elements[j] = raw_info_array[j];
+                    else if(j==5)
+                    {
+                        //MIN DATA RATE,MAX DATA RATE
+                        raw_info_array[j] = htmlDecodeStr(raw_info_array[j]);
+                        var rataRateArray = raw_info_array[j].split(',');
+                        elements[5] = rataRateArray[0];
+                        elements[6] = rataRateArray[rataRateArray.length-1];
+                    }
+                    else
+                        break;
+                }
+                if (elements[0] != "")
+                {
+                    var ssid_show = elements[0];
+                    if(ssid_show.length > 15)
+                        ssid_show = ssid_show.substring(0, 15)+" "+ssid_show.substring(15,ssid_show.length);
+                    elements[0] = ssid_show;
+                    appendTableRow(table, "left", elements);
+                }
+            }
+        }
+    }
+}
+
+function hidden_all_content_tr()
+{
+    var wl_tr_array = document.getElementsByTagName("tr");
+
+    document.getElementById("item_select").value = raw_array[0];
+    for (var i=0; i<wl_tr_array.length; i++)
+    {
+        if (wl_tr_array[i].id.indexOf("wl_") != -1)
+        {
+            wl_tr_array[i].style.display = "none";
+        }
+    }
+    document.getElementById("wl_neighbour_diagnostics_graph").style.display = "none";
+    document.getElementById("wl_neighbor_rescan").style.display = "none";
+}
+
+function count_backwards()
+{
+    wait_time--;
+    if (wait_time <= 0)
+    {
+        clearInterval(ptr);
+        window.location.reload();
+    }
+}
+
+function wait_for_data()
+{
+    var wait_tr = document.getElementById("wl_wait_data_tr");
+
+    hidden_all_content_tr();
+    //ptr = setInterval("count_backwards()", 500);
+    wait_tr.style.display = "block";
+}
+
+function do_apply()
+{
+    var lochead = "aei_cgi_adv_wl_get_item.cmd?"
+    var loc = "";
+    var be_selected = document.getElementById("item_select").value;
+
+    loc += "band=" + gv_band;
+    loc += "&select_item=" + be_selected;
+	loc += '&sessionKey=' + sessionKey;
+    loc=encrypt_query(loc,key);
+    lochead += loc;
+    postSubmit(lochead);
+    wait_for_data();
+}
+
+function init_wl_adv_common_info_table(table, cols)
+{
+    if (raw_array[1] != undefined)
+    {
+        var i;
+        var entrys = new Array();
+        var elements = new Array();
+
+        for (i = 1; i < raw_array.length; i++)
+        {
+            if (raw_array[i] != "")
+            {
+                elements = raw_array[i].split('/');
+                if (elements[0] != "")
+                {
+                    appendTableRow(table, "left", elements);
+                }
+            }
+        }
+    }
+    else
+    {
+        appendTableEmptyRow(table, "center", cols, blank);
+    }
+}
+
+function init_wl_adv_client_cnct_info_table()
+{
+    var table = document.getElementById("wl_adv_client_cnct_info_table");
+
+    if (raw_array[1] != undefined)
+    {
+        var i;
+        var entrys = new Array();
+        var elements = new Array();
+
+        for (i = 1; i < raw_array.length; i++)
+        {
+            if (raw_array[i] != "")
+            {
+                elements = raw_array[i].split('/');
+                if (elements[0] != "")
+                {
+                    //elements[2] = elements[3] = "N/A";
+                    appendTableRow(table, "left", elements);
+                }
+            }
+        }
+    }
+    else
+    {
+        appendTableEmptyRow(table, "center", 2, blank);
+    }
+}
+
+function appendTableEmptyRowForDetailPerClient(table, align, colspan, content)
+{
+    var tr = table.insertRow(-1);
+    var td = tr.insertCell(-1);
+
+    if (isNaN(colspan))
+        colspan = 1;
+    td.align = align;
+    td.colSpan = colspan;
+    td.innerHTML = content;
+    td.style = "background: transparent";
+}
+
+var wl_adv_detail_per_client_item_array = new Array("_(Client Mac)_","_(Rate Set)_","_(Idle Time)_","_(In Network)_","_(State)_","_(Flags)_ 0x411a","_(Tx Pkts)_","_(Tx Failures)_","_(Rx Ucast Pkts)_","_(Rx Mcast/Bcast Pkts)_","_(Rate Of Last Tx Pkt)_","_(Rate Of Last Rx Pkt)_","_(Rx Decrypt Succeeds)_","_(Rx Decrypt Failures)_");
+
+function init_wl_adv_detail_per_client_info_table()
+{
+    var table = document.getElementById("wl_adv_detail_per_client_info_table");
+    var delim_line = "";
+
+    if (raw_array[1] != undefined)
+    {
+        var i, j;
+        var entrys = new Array();
+        var elements = new Array();
+        var tmp_array = new Array(2);
+
+        for (i = 1; i < raw_array.length; i++)
+        {
+            if (raw_array[i] != "")
+            {
+                elements = raw_array[i].split('/');
+                for (j = 0; j < elements.length; j++)
+                {
+                    tmp_array[0] = wl_adv_detail_per_client_item_array[j];
+                    tmp_array[1] = elements[j];
+                    if (tmp_array[1] != "")
+                    {
+                        appendTableRow(table, "left", tmp_array);
+                    }
+                }
+            }
+            if (i != raw_array.length-1)
+                appendTableEmptyRowForDetailPerClient(table, "center", 2, delim_line);
+        }
+    }
+    else
+    {
+        appendTableEmptyRow(table, "center", 2, blank);
+    }
+}
+
+var wl_adv_packet_counters_title_array = new Array("_(Receive Good Packets)_", "_(Receive Bad Packets)_", "_(Receive Othercast Good Packets)_", "_(Transmit Good Packets)_", "_(Transmit Bad Packets)_", "_(Lost Frame Count)_", "_(RSSI)_", "_(Signal To Noise Ratio)_");
+
+var wl_adv_current_power_title_array = new Array("_(TxPower)_", "_(Last B phy CCK est. power)_", "_(Last B phy OFDM est. power)_", "_(Last A phy est. power)_");
+
+var wl_adv_version_other_title_array = new Array("_(Wireless Version)_", "_(Resets)_", "_(Perm Etheraddr)_", "_(Cur Etheraddr)_", "_(Board)_", "_(Board Rev)_", "_(Rate Override)_", "_(Ant Rx Ovr)_", "_(Txant)_");
+
+
+function init_wl_adv_two_cols_common_info_table(table, title_array)
+{
+    if (raw_array[1] != undefined)
+    {
+        var i, j;
+        var entrys = new Array();
+        var elements = new Array();
+        var tmp_array = new Array(2);
+
+        for (i = 1; i < raw_array.length; i++)
+        {
+            if (raw_array[i] != "")
+            {
+                elements = raw_array[i].split('/');
+                for (j = 0; j < elements.length; j++)
+                {
+                    tmp_array[0] = title_array[j];
+                    tmp_array[1] = elements[j];
+                    if (tmp_array[1] != "")
+                    {
+                        appendTableRow(table, "left", tmp_array);
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        appendTableEmptyRow(table, "center", 2, blank);
+    }
+}
+
+function appendTableRowForMassiveValues(table, td_align, td_content, num)
+{
+    //QA-Bug #120621: Sometimes the value of the 'Counters', 'WMM statistics/counters' or 'Ignored/Malformed Authentication/Association frame count' is too long to break the table list.
+    if(table.id != "wl_adv_muc_rx_info_table" && td_content.length>90)
+        td_content=td_content.substr(0,90)+"<br>"+td_content.substr(90,td_content.length);
+
+    // keep align
+    if (table.id == "wl_qtn_adv_channel_status_boot_info_table" || table.id == "wl_qtn_adv_channel_status_current_info_table")
+    {
+        //For 'Available Channel Condition Status (Boot)' and 'Available Channel Condition Status (Current)'.
+        if(num == 0)
+        {
+            var tr = table.insertRow(-1);
+            var td = tr.insertCell(-1);
+            td.colSpan="7";
+            td.align = td_align;
+            td.innerHTML = td_content;  
+        }
+        else
+        { 
+            td_content = td_content.replace(/\s+/g, ' ');
+            td_content = td_content.replace(/<pre> /g, '<pre>');
+            var td_array = td_content.split(" ");
+            if(td_array.length <7)
+                return;
+            var tr = table.insertRow(-1);
+            for(var i=0;i<td_array.length;i++)
+            {
+                var td = tr.insertCell(-1);
+                td.align = td_align;
+                td.style.width = 570/td_array.length + "px";
+                td.innerHTML = td_array[i];
+            }
+
+        }
+    }
+    else if(table.id == "wl_adv_muc_tx_info_table")
+    {
+        //For 'Transmit Counters'.
+        td_content = td_content.replace(/\s+/g, ' ');
+        var td_array = td_content.split(" ");
+        if(td_array.length <2)
+                return;
+        var tr = table.insertRow(-1);
+        for(var i=0;i<td_array.length;i++)
+        {
+            var td = tr.insertCell(-1);
+            td.align = td_align;
+            td.style.width =  570/td_array.length + "px";
+            td.innerHTML = td_array[i];
+        }
+    }
+    else
+    {
+        var tr = table.insertRow(-1);
+        var td = tr.insertCell(-1);
+        td.align = td_align;
+        td.innerHTML = td_content;
+    }
+}
+
+function init_wl_adv_massive_values_info_table(table)
+{
+    if (raw_array[1] != undefined)
+    {
+        var i;
+        var len;
+        var entrys = new Array();
+        var elements = new Array();
+
+        elements = raw_array[1].split('/');
+        len = elements.length-1;
+        for (i = 0; i < len; i++)
+        {
+            /* Jump over if begining or end of a text is empty line */
+            //alert("elements[" + i +"]:" + elements[i] + "\n" + "length:" + elements[i].length);
+            if ((elements[i].length == 5 && i == 0) || (elements[i].length == 5 && i == len-1))
+            {
+                continue;
+            }
+            else
+            {
+                appendTableRowForMassiveValues(table, "left", elements[i], i);
+            }
+        }
+    }
+    else
+    {
+        appendTableEmptyRow(table, "center", 1, blank);
+    }
+}
+
+function init_wl_adv_info_table_special_for_power(table)
+{
+    if (raw_array[1] != undefined)
+    {
+        var i, j;
+        var elements = new Array();
+        var tmp_array = new Array(2);
+        var index_s = -1;
+
+        for (i = 1; i < raw_array.length; i++)
+        {
+            if (raw_array[i] != "")
+            {
+                elements = raw_array[i].split('/');
+                for (j = 0; j < elements.length-1; j++)
+                {
+                    if (j < elements.length-5)
+                    {
+                        index_s = elements[j].indexOf("  ");
+                        if (index_s == -1)
+                        {
+                            tmp_array[0] = elements[j];
+                            tmp_array[1] = "&nbsp;";
+                        }
+                        else
+                        {
+                            tmp_array[0] = elements[j].substring(0, index_s);
+                            tmp_array[1] = elements[j].substring(index_s);
+                        }
+                    }
+                    else
+                    {
+                        index_s = elements[j].indexOf(":");
+                        tmp_array[0] = elements[j].substring(0, index_s+1);
+                        tmp_array[1] = elements[j].substring(index_s+1);
+                    }
+                    if (tmp_array[1] != "")
+                    {
+                        appendTableRow(table, "left", tmp_array);
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        appendTableEmptyRow(table, "center", 2, blank);
+    }
+}
+
+var wl_qtn_adv_bssid_noise_title_array = new Array("_(BSSID)_", "_(Noise)_");
+var wl_qtn_adv_packet_counters_title_array = new Array("_(Transmit Total Bytes)_", "_(Receive Total Bytes)_", "_(Transmit Total Packets)_", "_(Receive Total Packets)_", "_(Transmit Discard Packets)_", "_(Receive Discard Packets)_", "_(Transmit Error Packets)_", "_(Receive Error Packets)_");
+var wl_qtn_adv_current_power_title_array = new Array("_(TxPower)_");
+var wl_qtn_adv_wmm_title_array = new Array("_(WMM)_");
+var wl_qtn_adv_version_title_array = new Array("_(Wireless Version)_");
+function init_items_5G()
+{
+    var table_obj;
+    hidden_all_content_tr();
+
+    document.getElementById("item_select").disabled = false;
+    switch(raw_array[0])
+    {
+        case "bssid":
+            document.getElementById("wl_qtn_bssid_noise_tr").style.display = "block";
+            table_obj = document.getElementById("wl_qtn_adv_bssid_noise_info_table");
+            init_wl_adv_two_cols_common_info_table(table_obj, wl_qtn_adv_bssid_noise_title_array);
+            break;
+        case "packet_counter":
+            document.getElementById("wl_packet_counters_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_packet_counters_info_table");
+            init_wl_adv_two_cols_common_info_table(table_obj, wl_qtn_adv_packet_counters_title_array);
+            break;
+        case "muc_tx":
+            document.getElementById("wl_muc_tx_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_muc_tx_info_table");
+            init_wl_adv_massive_values_info_table(table_obj);
+            break;
+        case "muc_rx":
+            document.getElementById("wl_muc_rx_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_muc_rx_info_table");
+            init_wl_adv_massive_values_info_table(table_obj);
+            break;
+        case "current_power":
+            document.getElementById("wl_current_power_values_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_current_power_info_table");
+            init_wl_adv_two_cols_common_info_table(table_obj, wl_qtn_adv_current_power_title_array);
+            break;
+        case "channel_status_boot":
+            document.getElementById("wl_qtn_channel_status_boot_tr").style.display = "block";
+            table_obj = document.getElementById("wl_qtn_adv_channel_status_boot_info_table");
+            init_wl_adv_massive_values_info_table(table_obj);
+            break;
+        case "channel_status_current":
+            document.getElementById("wl_qtn_channel_status_current_tr").style.display = "block";
+            table_obj = document.getElementById("wl_qtn_adv_channel_status_current_info_table");
+            init_wl_adv_massive_values_info_table(table_obj);
+            break;
+        case "channel_status":
+            document.getElementById("wl_qtn_channel_status_tr").style.display = "block";
+            table_obj = document.getElementById("wl_qtn_adv_channel_status_info_table");
+            init_wl_adv_massive_values_info_table(table_obj);
+            break;
+        case "neighbour":
+            document.getElementById("wl_neighbour_diagnostics_table").style.display = "block";
+            document.getElementById("wl_neighbour_diagnostics_graph").style.display = "block";
+            document.getElementById("wl_neighbor_rescan").style.display = "block";
+            table_obj = document.getElementById("wl_adv_neighbour_ap_rssi_channel_info_table");
+            //Draw table for Neighbour
+            drawNeighbourTable(table_obj, 7);
+            //Draw graph for Neighbour
+            drawNeighbourGraph();
+            break;
+        case "wmm":
+            document.getElementById("wl_qtn_wmm_statistics_tr").style.display = "block";
+            table_obj = document.getElementById("wl_qtn_adv_wmm_counters_info_table");
+            init_wl_adv_two_cols_common_info_table(table_obj, wl_qtn_adv_wmm_title_array);
+            break;
+        case "version_info":
+            document.getElementById("wl_wireless_other_info_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_version_other_info_table");
+            init_wl_adv_two_cols_common_info_table(table_obj, wl_qtn_adv_version_title_array);
+            break;
+        default:
+            document.getElementById("wl_bssid_snr_rssi_noise_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_bssid_snr_rssi_noise_info_table");
+            init_wl_adv_two_cols_common_info_table(table_obj, wl_qtn_adv_bssid_noise_title_array);
+    }
+}
+
+function init_items_2G()
+{
+    var table_obj;
+    hidden_all_content_tr();
+
+    document.getElementById("item_select").disabled = false;
+    switch(raw_array[0])
+    {
+        case "bssid":
+            document.getElementById("wl_bssid_snr_rssi_noise_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_bssid_snr_rssi_noise_info_table");
+            init_wl_adv_common_info_table(table_obj, 4);
+            break;
+        case "rssi_antenna":
+            document.getElementById("wl_rssi_per_antenna_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_rssi_antenna_info_table");
+            init_wl_adv_common_info_table(table_obj, 3);
+            break;
+        case "rssi_client":
+            document.getElementById("wl_rssi_per_client_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_rssi_per_client_info_table");
+            init_wl_adv_common_info_table(table_obj, 2);
+            break;
+        case "clients_uptimes":
+            document.getElementById("wl_associated_clients_uptimes_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_client_cnct_info_table");
+            init_wl_adv_common_info_table(table_obj, 2);
+            break;
+        case "client_detail":
+            document.getElementById("wl_detailed_statistics_client_tr").style.display = "block";
+            init_wl_adv_detail_per_client_info_table();
+            break;
+        case "counters":
+            document.getElementById("wl_counters_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_counters_info_table");
+            init_wl_adv_massive_values_info_table(table_obj);
+            break;
+        case "packet_counter":
+            document.getElementById("wl_packet_counters_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_packet_counters_info_table");
+            init_wl_adv_two_cols_common_info_table(table_obj, wl_adv_packet_counters_title_array);
+            break;
+        case "current_power":
+            document.getElementById("wl_current_power_values_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_current_power_info_table");
+            init_wl_adv_two_cols_common_info_table(table_obj, wl_adv_current_power_title_array);
+            break;
+        case "rate":
+            document.getElementById("wl_connection_phy_rates_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_rate_standard_info_table");
+            init_wl_adv_common_info_table(table_obj, 3);
+            break;
+        case "mcs":
+            document.getElementById("wl_current_mcs_index_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_current_mcs_index_info_table");
+            raw_array[1] = "_(Current MCS Index)_/"+raw_array[1];
+            init_wl_adv_common_info_table(table_obj, 2);
+            break;
+        case "neighbour":
+            document.getElementById("wl_neighbour_diagnostics_table").style.display = "block";
+            document.getElementById("wl_neighbour_diagnostics_graph").style.display = "block";
+            document.getElementById("wl_neighbor_rescan").style.display = "block";
+            table_obj = document.getElementById("wl_adv_neighbour_ap_rssi_channel_info_table");
+            //Draw table for Neighbour
+            drawNeighbourTable(table_obj, 7);
+            //Draw graph for Neighbour
+            drawNeighbourGraph();
+            break;
+        case "power":
+            document.getElementById("wl_power_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_power_info_table");
+            init_wl_adv_info_table_special_for_power(table_obj);
+            break;
+        case "wmm":
+            document.getElementById("wl_wmm_statistics_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_wmm_counters_info_table");
+            init_wl_adv_massive_values_info_table(table_obj);
+            break;
+        case "frame_count":
+            document.getElementById("wl_frame_count_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_ignored_auth_frame_count_info_table");
+            init_wl_adv_massive_values_info_table(table_obj);
+            break;
+        case "version_info":
+            document.getElementById("wl_wireless_other_info_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_version_other_info_table");
+            init_wl_adv_two_cols_common_info_table(table_obj, wl_adv_version_other_title_array);
+            break;
+        default:
+            document.getElementById("wl_bssid_snr_rssi_noise_tr").style.display = "block";
+            table_obj = document.getElementById("wl_adv_bssid_snr_rssi_noise_info_table");
+            init_wl_adv_common_info_table(table_obj, 4);
+    }
+}
+
+function onSelectWlIndex()
+{
+    if (document.getElementById("id_wl_5").checked == true)
+        gv_band = 1;
+    else
+        gv_band = 0;
+
+    do_apply();
+}
+
+function init_selection()
+{
+    var selection = document.getElementById("item_select");
+    var i = 0;
+
+    selection.length = 0;
+    if (gv_band == 1) // 5G
+    {
+        selection[i++] = new Option("_(BSSID Noise)_", "bssid");
+        selection[i++] = new Option("_(Packet Counters)_", "packet_counter");
+        selection[i++] = new Option("_(Transmit Counters)_", "muc_tx");
+        selection[i++] = new Option("_(Receive Counters)_", "muc_rx");
+        selection[i++] = new Option("_(Current Power Values)_", "current_power");
+        selection[i++] = new Option("_(Available Channel Condition Status (Boot))_", "channel_status_boot");
+        selection[i++] = new Option("_(Available Channel Condition Status (Current))_", "channel_status_current");
+        selection[i++] = new Option("_(Selected Channel Status)_", "channel_status");
+        selection[i++] = new Option("_(WMM Statistics/Counters)_", "wmm");
+        selection[i++] = new Option("_(Wireless Version)_", "version_info");
+        selection[i++] = new Option("_(Neighboring WiFi Diagnostics Results)_", "neighbour");
+    }
+    else
+    {
+        selection[i++] = new Option("_(BSSID SNR RSSI Noise)_", "bssid");
+        selection[i++] = new Option("_(RSSI Per Antenna)_", "rssi_antenna");
+        selection[i++] = new Option("_(Counters)_", "counters");
+        selection[i++] = new Option("_(Packet Counters)_", "packet_counter");
+        selection[i++] = new Option("_(Current Power Values)_", "current_power");
+        selection[i++] = new Option("_(Current MCS Index)_", "mcs");
+        selection[i++] = new Option("_(Neighboring WiFi Diagnostics Results)_", "neighbour");
+        selection[i++] = new Option("_(WMM Statistics/Counters)_", "wmm");
+        selection[i++] = new Option("_(Ignored/Malformed Authentication/Association Frame Count)_", "frame_count");
+        selection[i++] = new Option("_(Wireless Version And Other Information)_", "version_info");
+        /*
+        selection[i++] = new Option("_(RSSI Per Client)_", "rssi_client");
+        selection[i++] = new Option("_(List Of Associated Clients And Uptimes)_", "clients_uptimes");
+        selection[i++] = new Option("_(Detailed Statistics Per Client)_", "client_detail");
+        selection[i++] = new Option("_(Connection Phy Rates And Standard Per Client MAC/Hostname)_", "rate");
+        selection[i++] = new Option("_(Power)_", "power");
+        */
+    }
+}
+
+function init_band()
+{
+    if (gv_radioEnabled_2 == 0 && gv_radioEnabled_5 == 0)
+    {
+        hidden_all_content_tr();
+        document.getElementById("id_wl_2").disabled = true;
+        document.getElementById("id_wl_5").disabled = true;
+        document.getElementById("wl_radio_disabled_tip_tr").style.display = "block";
+        document.getElementById("item_select").disabled = true;
+        return false;
+    }
+    else
+    {
+        if (gv_radioEnabled_2 == 0)
+        {
+            document.getElementById("id_wl_2").disabled = true;
+            document.getElementById("id_wl_5").checked = true;
+            gv_band = 1;
+            return true;
+        }
+        else
+            document.getElementById("id_wl_2").disabled = false;
+
+        if (gv_radioEnabled_5 == 0 || has_QTN == 0)
+        {
+            document.getElementById("id_wl_5").disabled = true;
+            document.getElementById("id_wl_2").checked = true;
+            gv_band = 0;
+            return true;
+        }
+        else
+            document.getElementById("id_wl_5").disabled = false;
+
+        if (gv_band == 0)
+            document.getElementById("id_wl_2").checked = true;
+        else
+            document.getElementById("id_wl_5").checked = true;
+
+        return true;
+    }
+}
+
+function do_load()
+{
+    if (init_band())
+    {
+        init_selection();
+        if (gv_band == 1)
+        {
+            init_items_5G();
+        }
+        else
+        {
+            init_items_2G();
+        }
+    }
+    side_nav("wirelessstatus");
+}
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+        <div id="content_right_header">
+        </div>
+        <div id="content_right_contentarea">
+            <h1>_(Advanced Wireless Statistics)_</h1>
+            </br>
+            <table width="85%" border="0" cellpadding="0" cellspacing="0">
+               <tr>
+                 <td style="text-align:left;" width="35%"><strong>_(Frequency)_:</strong></td>
+                 <td style="text-align:left;" width="12%"><input name="wireless_index" id="id_wl_5" type="radio" onClick="onSelectWlIndex();" />
+                  _(5G)_ </td>
+                 <td style="text-align:left;" width="53%"><input name="wireless_index" id="id_wl_2" type="radio" onClick="onSelectWlIndex();" />
+                  _(2.4G)_ </td>
+               </tr>
+            </table>
+            <table width="85%" border="0" cellpadding="0" cellspacing="0" id="item_select_table">
+                <tr>
+                    <td width="35%" style="text-align:left;"><strong>_(Display)_:</strong> </td>
+                    <td style="text-align:left;">
+                        <select id="item_select" onchange="do_apply();">
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2"></td>
+                </tr>
+            </table>
+            <table width="85%" border="0" cellpadding="0" cellspacing="0" id="content_table">
+                <tr id="wl_radio_disabled_tip_tr" style="display:none;">
+                    <td width="570px" align="center">
+                        <font style="font-size:100%;">_(Both 5G and 2.4G wireless radios are disabled.)_</font>
+                    </td>
+                </tr>
+                <tr id="wl_wait_data_tr" style="display:none;">
+                    <td width="570px" align="center">
+                        <font color="#006600">_(Please wait for result ...)_</font>
+                    </td>
+                </tr>
+                <tr id="wl_bssid_snr_rssi_noise_tr" style="display:block;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(BSSID SNR RSSI Noise)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_bssid_snr_rssi_noise_info_table" style="margin:0px;">
+                            <tr>
+                                <th width="25%" align="left"><strong>_(BSSID)_</strong></th>
+                                <th width="20%" align="left"><strong>_(SNR)_</strong></th>
+                                <th width="" align="left"><strong>_(RSSI)_</strong></th>
+                                <th width="" align="left"><strong>_(Noise)_</strong></th>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_rssi_per_antenna_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(RSSI Per Antenna)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_rssi_antenna_info_table" style="margin:0px;">
+                            <tr>
+                                <th width="33%" align="left"><strong>_(RSSI[0])_</strong></th>
+                                <th width="33%" align="left"><strong>_(RSSI[1])_</strong></th>
+                                <th width="" align="left"><strong>_(RSSI[2])_</strong></th>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_rssi_per_client_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(RSSI Per Client)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_rssi_per_client_info_table" style="margin:0px;">
+                            <tr>
+                                <th width="50%" align="left"><strong>_(Client Mac)_</strong></th>
+                                <th width="" align="left"><strong>_(RSSI)_</strong></th>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_associated_clients_uptimes_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(List Of Associated Clients And Uptimes)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_client_cnct_info_table" style="margin:0px;">
+                            <tr>
+                                <!--<th width="20%" align="left" style="font-weight:bold;">_(SSID)_</th>-->
+                                <th width="50%" align="left"><strong>_(Mac)_</strong></th>
+                                <th width="" align="left"><strong>_(Uptime)_</strong></th>
+                                <!--<th width="" align="left"><strong>_(Connect Times)_</strong></th>-->
+                                <!--<th width="" align="left"><strong>_(Disconnect Times)_</strong></th>-->
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_detailed_statistics_client_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Detailed Statistics Per Client)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_detail_per_client_info_table" style="margin:0px;">
+                            <tr>
+                                <th width="40%" style="text-align:left" ><strong>_(Items)_</strong></th>
+                                <th width="" style="text-align:left" ><strong>_(Values)_</strong></th>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_counters_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Counters)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_counters_info_table" style="margin:0px;">
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_packet_counters_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Packet Counters)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_packet_counters_info_table" style="margin:0px;">
+                            <tr>
+                                <th width="60%" style="text-align:left" ><strong>_(Items)_</strong></th>
+                                <th width="" style="text-align:left" ><strong>_(Values)_</strong></th>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_muc_tx_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Transmit Counters)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_muc_tx_info_table" style="margin:0px;">
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_muc_rx_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Receive Counters)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_muc_rx_info_table" style="margin:0px;">
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_current_power_values_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Current Power Values)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_current_power_info_table" style="margin:0px;">
+                            <tr>
+                                <th width="40%" style="text-align:left" ><strong>_(Items)_</strong></th>
+                                <th width="" style="text-align:left" ><strong>_(Values)_</strong></th>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_connection_phy_rates_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Connection Phy Rates And Standard Per Client MAC/Hostname)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_rate_standard_info_table" style="margin:0px;">
+                            <tr>
+                                <th width="40%" style="text-align:left" ><strong>_(Mac)_</strong></th>
+                                <th width="" style="text-align:left" ><strong>_(Phy Rates)_</strong></th>
+                                <th width="" style="text-align:left" ><strong>_(Standard)_</strong></th>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_current_mcs_index_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Current MCS Index)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_current_mcs_index_info_table" style="margin:0px;">
+                            <tr>
+                                <th width="40%" style="text-align:left" ><strong>_(Items)_</strong></th>
+                                <th width="" style="text-align:left" ><strong>_(Values)_</strong></th>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_neighbour_diagnostics_table" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Neighboring WiFi Diagnostics Results)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_neighbour_ap_rssi_channel_info_table" style="margin:0px;">
+                            <tr>
+                                <th align="left"><strong>_(SSID)_</strong></th>
+                                <th align="left"><strong>_(CHANNEL)_</strong></th>
+                                <th align="left"><strong>_(SIGNAL)_<br>(_(dBm)_)</strong></th>
+                                <th align="left"><strong>_(PHY TYPE)_</strong></th>
+                                <th align="left"><strong>_(SEC TYPE)_</strong></th>
+                                <th align="left"><strong>_(MIN DATA RATE)_</strong></th>
+                                <th align="left"><strong>_(MAX DATA RATE)_</strong></th>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_power_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Power)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_power_info_table" style="margin:0px;">
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_wmm_statistics_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(WMM Statistics/Counters)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_wmm_counters_info_table" style="margin:0px;">
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_frame_count_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Ignored/Malformed Authentication/Association Frame Count)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_ignored_auth_frame_count_info_table" style="margin:0px;">
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_wireless_other_info_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Wireless Version And Other Information)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_adv_version_other_info_table" style="margin:0px;">
+                            <tr>
+                                <th width="50%" style="text-align:left" ><strong>_(Items)_</strong></th>
+                                <th width="" style="text-align:left" ><strong>_(Values)_</strong></th>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_qtn_bssid_noise_tr" style="display:block;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(BSSID Noise)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_qtn_adv_bssid_noise_info_table" style="margin:0px;">
+                            <tr>
+                                <th width="40%" style="text-align:left" ><strong>_(Items)_</strong></th>
+                                <th width="" style="text-align:left" ><strong>_(Values)_</strong></th>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_qtn_wmm_statistics_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(WMM Statistics/Counters)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_qtn_adv_wmm_counters_info_table" style="margin:0px;">
+                            <tr>
+                                <th width="40%" style="text-align:left" ><strong>_(Items)_</strong></th>
+                                <th width="" style="text-align:left" ><strong>_(Values)_</strong></th>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_qtn_channel_status_boot_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Available Channel Condition Status (Boot))_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_qtn_adv_channel_status_boot_info_table" style="margin:0px;">
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_qtn_channel_status_current_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Available Channel Condition Status (Current))_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_qtn_adv_channel_status_current_info_table" style="margin:0px;">
+                        </table>
+                    </td>
+                </tr>
+                <tr id="wl_qtn_channel_status_tr" style="display:none;">
+                    <td>
+                        <h2 align="center" style="margin:0 0 0 0px;">_(Selected Channel Status)_</h2>
+                        <table width="570px" border="0" cellpadding="0" cellspacing="0" class="status_style" id="wl_qtn_adv_channel_status_info_table" style="margin:0px;">
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-left:0px;" id="wl_neighbour_diagnostics_graph">
+                <tr style="padding-top:20px;">
+                    <td>
+                        <div style="width:650px; overflow-x:auto;">
+                            <div id="placeholder" style="width:650px;height:480px; padding:0px; position:relative;"></div>
+                        </div>
+                    </td>
+                </tr>
+                    </td>
+                </tr>
+            </table>
+            <table width="85%" id="wl_neighbor_rescan">
+               <tr>
+                 <td style="text-align:right;" width="100%"><a class="button1" onclick="do_apply();" id="btn_rescan"><span>_(Scan)_</span></a></td>
+               </tr>
+            </table>
+        </div>
+    <div id="content_right_footer">
+    </div>
+</div>
+<div class="clear_left">
+</div>
+<div id="footer">&nbsp;</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(IP Address)_ - _(DNS Host Mapping)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="js/util.js"></script>
+<script type="text/javascript" src="js/functions.js"></script>
+<script type="text/javascript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script type="text/javascript">
+
+var item = <%ejGetOther(dnshostmapping)%>;
+var items = item.dnshostmapping;
+var icon = ["icon_computer.png","icon_gameconsole.png","icon_printer.png","icon_satellite.png","icon_settop.png","icon_camera.png","icon_camera.png","icon_telephone.png","icon_videocamera.png","icon_server.png","icon_router.png"];
+var ethSubnetMask = htmlDecodeStr('<%ejGet(ethSubnetMask)%>');
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function getIcon(index)
+{
+   if (index < 0 || index >= icon.length)
+      index = 0;
+
+   return "images/" + icon[index]
+}
+
+function do_load()
+{
+   side_nav("advancedsetup_dnshostmapping");
+}
+
+function IPAddressToNumber(IPAddress)
+{
+   var v = IPAddress.split(".");
+   var Number = 0;
+
+   for (var i = 0; i < v.length; i++)
+   {
+      Number <<= 8;
+      Number += parseInt(v[i]);
+   }
+
+   return Number;
+}
+
+/*
+ * Addresses and port designations will be accepted in the following format:
+ * 206.123.123.123
+ * 206.123.123.123:443
+ * https://206.123.123.123
+ * 192.168.0.123 (Set LAN DHCP range)
+ */
+function getIpAddress(str)
+{
+   var ip = str;
+   var idx;
+
+   if ((idx = ip.indexOf("://")) != -1)
+   {
+      ip = ip.substring(idx + 3);
+   }
+
+   if ((idx = ip.indexOf(":")) != -1)
+   {
+      ip = ip.substring(0, idx);
+   }
+
+   return ip;
+}
+
+function add_item()
+{
+   var lochead = 'advancedsetup_dnshostmapping.cgi?';
+   var loc = '';
+
+   with (document.forms[0])
+   {
+      if (Hostname.value == "")
+      {
+         tips = "_(The DNS host name cannot be left blank. You must enter a DNS host name.)_";
+         alert(tips);
+         return;
+      }
+      if(Hostname.value.indexOf(".") != -1)
+      {
+        if (Hostname.value.length > 64)
+        {
+          tips = "_(The DNS domain name entered in step 1 cannot be longer than 64 characters.)_";
+          alert(tips);
+          return;
+        }
+      }
+      else if(Hostname.value.length > 20)
+      {
+         tips = "_(The DNS host name entered in step 1 cannot be longer than 20 characters.)_";
+         alert(tips);
+         return;
+      }
+
+      if (Hostname.value.charAt(0) == "." || Hostname.value.charAt(Hostname.value.length-1) == ".")
+      {
+         tips = "_(The DNS host name' first or last character is '.'. You must enter a DNS host name.)_";
+         alert(tips);
+         return;
+      }
+      /* if (Hostname.value.search("[^A-Za-z0-9\-]") != -1)
+      {
+         tips = "The hostname is invalid. You must enter a valid hostname.";
+         alert(tips);
+         return;
+      } */
+
+      if (hasHTMLTags(Hostname.value) || (Hostname.value.indexOf("\"") != -1))
+      {
+         tips = "_(The DNS host name entered in step 1 is not valid. You must enter a valid DNS host name.)_";
+         alert(tips);
+         return ;
+      }
+
+      for (var i = 0; i < items.length; i++)
+      {
+         if (htmlDecodeStr(items[i].Hostname) == Hostname.value)
+         {
+            tips = "_(The DNS host name entered in step 1 conflicts with an item in the DNS host mapping list.)_";
+            alert(tips);
+            return;
+         }
+      }
+
+      if (IPAddress.value == "")
+      {
+         tips = "_(The IP address cannot be left blank.)_";
+         alert(tips);
+         return;
+      }
+
+      var ipAddress = getIpAddress(IPAddress.value);
+
+      if (!isValidIpAddress(ipAddress))
+      {
+         tips = "_(The IP address entered in step 2 is invalid. You must enter a valid IP address.)_";
+         alert(tips);
+         return;
+      }
+
+      var nIPInterfaceIPAddress = IPAddressToNumber(ipAddress);
+      var nSubnetMask = IPAddressToNumber(ethSubnetMask);
+      var nNetworkAddress = nSubnetMask & nIPInterfaceIPAddress;
+      var nBroadcastAddress = nNetworkAddress | ~nSubnetMask;
+
+      if (nIPInterfaceIPAddress <= nNetworkAddress || nIPInterfaceIPAddress >= nBroadcastAddress)
+      {
+         tips = "_(The IP address entered in step 2 cannot be the same as the network address or broadcast address.)_";
+         alert(tips);
+         return;
+      }
+
+      loc = "action=add&hostname=" + newEncodeUrl(Hostname.value) + "&ip=" + ipAddress;
+	  loc += '&sessionKey=' + sessionKey;
+      loc = encrypt_query(loc,key);
+      lochead += loc;
+
+      //var code = 'location="' + lochead + '"';
+      //eval(code);
+      postSubmit(lochead);
+   }
+}
+
+function del_item(hostname)
+{
+    var lochead = 'advancedsetup_dnshostmapping.cgi?';
+    var loc = '';
+	hostname = decodeUrl(htmlDecodeStr(hostname));
+    loc = 'action=del&hostname=' +newEncodeUrl(hostname);
+	loc += '&sessionKey=' + sessionKey;
+    loc = encrypt_query(loc,key);
+    lochead += loc;
+
+    //var code = 'location="' + lochead + '"';
+    //eval(code);
+	postSubmit(lochead);
+}
+
+</script>
+</head>
+<body>
+<div id="wrapper">
+<!-- TOP NAV -->
+<%ejInclude(top_btn_nav5.html)%>
+<!-- END TOP NAV -->
+<!-- SIDE NAV -->
+<%ejInclude(adv_left.html)%>
+<!-- END SIDE NAV -->
+
+<!-- MAIN CONTENT AREA -->
+<div id="content_right">
+<div id="content_right_header"></div>
+<div id="content_right_contentarea">
+<h1 class="advancedsetup_dnshostmapping">_(DNS Host Mapping)_</h1>
+<p><span>_(DNS host mapping creates a static host name for the specified IP address. WAN and LAN IP addresses are supported.)_</span></p>
+<form>
+
+	<p><strong>1. _(Enter the DNS host name.)_</strong></p>
+	<table border="0" cellpadding="0" cellspacing="0">
+	<tr>
+	<td width="110"><label for="Hostname">_(DNS Host Name)_:</label></td>
+	<td><input type="text" maxlength="64" name="Hostname" id="Hostname"/></td>
+	</tr>
+	</table>
+	<p>&nbsp;</p>
+	<p><strong>2. _(Enter the IP address.)_</strong></p>
+	<table border="0" cellpadding="0" cellspacing="0">
+	<tr>
+	<td width="110"><label for="IPAddress">_(IP Address)_:</label></td>
+	<td><input type="text" name="IPAddress" id="IPAddress"/></td>
+	</tr>
+	</table>
+	<p>&nbsp;</p>
+	<p><strong>3. _(Click Apply to save changes.)_ </strong></p>
+	<p><a class="button1" onclick="add_item();" id="btn_apply"><span>_(Apply)_</span></a></p>
+	<p>&nbsp;</p>
+	<p align="center"><strong>_(DNS Host Mapping List)_</strong></p>
+	<table id="tbList" width="85%" border="0" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin-top:10px;">
+	<tr>
+	<th>&nbsp;</th>
+	<th>_(DEVICE NAME)_</th>
+	<th>_(IP ADDRESS)_</th>
+	<th>_(DNS NAME)_</th>
+	<th width="80">_(EDIT)_</th>
+	</tr>
+	<script type="text/javascript">
+	for (var i = 0; i < items.length; i++)
+	{
+		document.write("<tr>");
+		document.write("<td><img src='" + getIcon(items[i].Icon) + "' alt='' width='39' height='39'/></td>");
+		if(items[i].DeviceName == "")
+			document.write("<td>" + items[i].IPAddress + "</td>");
+		else
+			document.write("<td>" + items[i].DeviceName + "</td>");
+		document.write("<td>" + items[i].IPAddress + "</td>");
+		var hostName = decodeUrl(items[i].Hostname);
+		document.write("<td>" + hostName + "</td>");
+    var btn_remove = "btn_remove_"+i;
+		document.write("<td><a href=\"javascript:del_item('" + htmlEncodeStr(items[i].Hostname) + "')\" class=\"button1\"  type=\"button\"  style='text-decoration:none;' id='"+btn_remove+"'><span>_(Remove)_</span></a></a></td>");
+		document.write("</tr>");
+	}
+	if (items.length == 0)
+	{
+		document.write("<tr><td colspan='5' align='center'>_(No Entries Defined)_</td></tr>");
+	}
+	</script>
+	</table>
+</form>
+</div>
+<div id="content_right_footer"></div>
+</div>
+<div class="clear_left"></div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(do_load);
+</SCRIPT>
+</body>
+</html>

@@ -1,0 +1,322 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<style type="text/css">
+.xAxis >.tickLabel{
+  -o-transform:rotate(-90deg);
+
+  -moz-transform:rotate(-90deg);
+
+ -webkit-transform:rotate(-90deg);
+
+  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+
+  transform: rotate(-90deg);
+  
+  margin-bottom: 50px;
+}
+</style>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Status)_ - _(Wireless Monitor)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/nav.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+
+<script language="javascript" type="text/javascript" src="js/jquery.js"></script>
+<script language="javascript" type="text/javascript" src="js/jquery.flot.js"></script>
+<script language="javascript" type="text/javascript" src="js/jquery.flot.axislabels.js"></script>
+<script language="javascript" type="text/javascript" src="js/jquery.flot.categories.min.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script type="text/javascript">
+var wirelessclientlistsinfo = "<%ejGetOther(wirelessclientlistsinfo)%>";
+var hostinfo = '<%ejGetOther(hostinfo)%>';
+var clientsInfoList = [];
+var totalBar=0;
+function getCurrentDate() {
+    var date = new Date();
+    var seperator1 = "/";
+    var seperator2 = ":";
+    var month = date.getMonth() + 1;
+    var strDate = date.getDate();
+    var hour = date.getHours();
+    var min = date.getMinutes();
+    var sec = date.getSeconds();
+
+    if (month >= 1 && month <= 9) {
+        month = "0" + month;
+    }
+    if (strDate >= 0 && strDate <= 9) {
+        strDate = "0" + strDate;
+    }
+    if (hour >= 0 && hour <= 9) {
+        hour = "0" + hour;
+    }
+    if (min >= 0 && min <= 9) {
+        min = "0" + min;
+    }
+    if (sec >= 0 && sec <= 9) {
+        sec = "0" + sec;
+    }
+
+    var currentdate = month + seperator1 + strDate + seperator1 + date.getFullYear()
+            + " " + hour + seperator2 + min
+            + seperator2 + sec;
+
+    document.getElementById("currentTime").innerHTML = currentdate;
+} 
+
+function getHostNameByMAC(mac)
+{
+    var hostName = mac;
+    if(hostinfo == "")
+      return hostName;
+    var hosts_array = hostinfo.split("|");
+    for(var i=0; i<hosts_array.length; i++)
+    {
+        var hostInfo_array = hosts_array[i].split("/");
+        var dev_name = htmlDecodeStr(hostInfo_array[0]);
+        var dev_mac = htmlDecodeStr(hostInfo_array[2]).toUpperCase();
+        if(mac.toUpperCase() == dev_mac && dev_name != "")
+        {
+            hostName = dev_name+"<br>("+dev_mac+")";
+            break;
+        }
+    }
+    return hostName;
+}
+
+function sortRssi(graph_data_ssid)
+{
+    var temp = 0;
+    for (var i = 0; i < graph_data_ssid.length; i++)
+    {
+        for (var j = 0; j < graph_data_ssid.length - i-1; j++)
+        {
+            if (graph_data_ssid[j][1] < graph_data_ssid[j+1][1])
+            {
+              temp = graph_data_ssid[j + 1];
+              graph_data_ssid[j + 1] = graph_data_ssid[j];
+              graph_data_ssid[j] = temp;
+            }
+        }
+    }
+    return graph_data_ssid;
+}
+
+function do_load()
+{
+    side_nav("wirelessstatus");
+    var graph_lable = [];
+    var graph_data = [];
+    if(wirelessclientlistsinfo == "")
+        return;
+    document.getElementById("signalDiv").style.display = "";
+    var wifiClientsList = wirelessclientlistsinfo.split("|");
+    var conSSID;
+    //var clientsInfoList = [];
+    //Get Connected ssid for clients for graph lable.
+    totalBar = wifiClientsList.length-1;
+    for(var i=0;i<wifiClientsList.length-1;i++)
+    {
+        var clientInfo = wifiClientsList[i];
+        if(clientInfo == "")
+            continue;
+        var clientInfoArray = clientInfo.split("/");
+        var ssid= htmlDecodeStr(clientInfoArray[0]);
+        var mac = htmlDecodeStr(clientInfoArray[1]);
+        var signalStrength = clientInfoArray[2];
+        var retransmissions = clientInfoArray[3];
+        var client = new Object();
+        if(conSSID != ssid)
+        {
+            conSSID = ssid;
+            graph_lable.push(ssid);
+        }
+        client.ssid = ssid;
+        var hostName = getHostNameByMAC(mac);
+        client.mac = hostName;
+        client.signalStrength = parseInt(signalStrength)+100;
+        client.retransmissions = retransmissions;
+        clientsInfoList.push(client);
+    }
+
+    for(var j=0;j<graph_lable.length;j++)
+    {
+        var conSSID = graph_lable[j];
+        var graph_data_ssid = [];
+        for(var n=0; n<clientsInfoList.length; n++)
+        {
+            if(conSSID == clientsInfoList[n].ssid)
+            {
+                graph_data_ssid.push([clientsInfoList[n].mac,clientsInfoList[n].signalStrength]);
+            }
+        }
+        graph_data_ssid = sortRssi(graph_data_ssid);
+        graph_data.push(graph_data_ssid);
+    }
+
+    drawRssiGraph(graph_lable,graph_data);
+    getCurrentDate();
+}
+
+function drawRssiGraph(graph_lable,graph_data)
+{
+    if(totalBar <10 )
+        totalBar = 10;
+    if(totalBar > 10)
+    {
+        var width_g = ((totalBar-10)*65+650)+"px";
+        $("#placeholder").width(width_g);
+    }
+    var options = {
+
+        grid:{
+            hoverable: true,
+            clickable: true,
+            backgroundColor: { colors: ["#D8D7D8", "#D8D7D8"] },
+            markings: function (axes) {
+            var markings = [];
+            for (var x = Math.floor(axes.yaxis.min); x < axes.yaxis.max; x += 20)
+            markings.push({ yaxis: { from: x, to: x+.25 }, color: "white" });
+            return markings;
+            },
+            labelMargin: 45,
+            borderWidth: {
+                top: 0,
+                right: 0,
+                bottom: 1,
+                left: 0
+            },
+        },
+        series: {
+            bars: {
+                show: true,
+                barWidth: 0.5,
+                align: "center",
+            },
+        },
+
+        xaxis: {
+            show: true,
+            position: "bottom",
+            mode: "categories",
+            axisLabel:'_(CONNECTED DEVICES MAC ADDRESS)_',
+            tickLength: 0,
+            //autoscaleMargin:0.02,
+            min: -0.5,
+            max: totalBar,
+        },
+
+        yaxis: {
+            axisLabel:'_(SIGNAL STRENGTH (DB))_',
+            min:0,
+            max:100,
+            tickLength: 0,
+            tickFormatter: function (v, axis) {
+                return v-100;
+            },
+        },
+        colors: ["#DC5625", "#007ACC","#006600"]
+    };
+
+    var dataSet = [];
+    for(var i=0; i<graph_data.length;i++)
+    {
+        dataSet.push({
+            label:graph_lable[i],
+            data:graph_data[i],
+        });
+    }
+
+    $.plot("#placeholder", dataSet, options);
+
+    var previousPoint = null;
+    $("#placeholder").bind("plothover", function (event, pos, item)
+    {
+        if (item)
+        {
+            if (previousPoint != item.dataIndex)
+            {
+                previousPoint = item.dataIndex;
+                $("#tooltip").remove();
+                var y = item.datapoint[1].toFixed(0)-100;
+                var tip = clientsInfoList[item.datapoint[0]].mac+": "+y;
+                showTooltip(item.pageX, item.pageY,tip);
+            }
+        }
+        else
+        {
+            $("#tooltip").remove();
+            previousPoint = null;
+        }
+    });
+}
+
+function showTooltip(x, y, contents)
+{
+    $('<div id="tooltip">' + contents + '</div>').css( {
+        position: 'absolute',
+        display: 'none',
+        top: y + 10,
+        left: x + 10,
+        border: '1px solid #fdd',
+        padding: '2px',
+        'background-color': '#dfeffc',
+        opacity: 0.80
+    }).appendTo("body").fadeIn(200);
+}
+
+function doReload()
+{
+    window.location.href="modemstatus_wirelessmonitor_graph.html";
+}
+function dom_load(){ do_load(); }
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+        <div id="content_right_header"></div>
+        <div id="content_right_contentarea">
+            <p></p>
+            <table width="60%" border="0" align="center" cellpadding="0" cellspacing="0" style="margin:10px auto 0 auto;padding:0 0 5px 0;">
+                <tr>
+                    <td align="right">
+                        <strong>_(Please click Refresh to reload the new data)_:</strong>
+                    </td>
+                    <td style="width:10%">
+                        <a class="button1" onclick="doReload();" id="btn_refresh"><span>_(Refresh)_</span></a>
+                    </td>
+                </tr>
+            </table>
+            <div id="signalDiv" style="display:none">
+                <h1 class="modemstatus_wirelessstatus">_(Connected Devices Signal Strength)_</h1>
+                <h2 id="currentTime" style="margin:0 auto;text-align:center;"></h2>
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-left:0px;">
+                    <tr style="padding-top:20px;">
+                        <td>
+                            <div style="width:700px; overflow-x:auto;">
+                                <div id="placeholder" style="width:700px;height:480px; padding:0px; position:relative;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div id="content_right_footer"></div>
+    </div>
+    <div class="clear_left"></div>
+    <div id="footer">&nbsp;</div>
+</div>
+<script language="JavaScript">var foobar = new domFunction(dom_load);</script></body>
+</html>

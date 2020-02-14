@@ -1,0 +1,236 @@
+Save AEI changed code here. Apply it when upgrade.
+
+For example,
+cd ~/QSR1000-CDK-36.4.0.4-2013-12-10/Source/quantenna-sdk-v36.4.0.4/drivers/pcie2
+cp -r * ~/ATTBGW/qsdk/qca/src/linux/drivers/net/wireless/quantenna/
+cd ~/ATTBGW
+patch -p1 < ~/ATTBGW/qsdk/qca/src/linux/drivers/net/wireless/quantenna/patches/aei.patch
+
+---
+ .../net/wireless/quantenna/host/common/qdpc_init.c |   17 ++++++++
+ .../net/wireless/quantenna/host/common/qdpc_init.h |    5 +++
+ .../net/wireless/quantenna/host/common/qdpc_pcie.c |   21 +++++++++
+ .../wireless/quantenna/host/common/topaz_vnet.c    |   45 +++++++++++++++++++-
+ .../wireless/quantenna/host/common/topaz_vnet.h    |   10 +++++
+ 5 files changed, 97 insertions(+), 1 deletion(-)
+
+diff --git a/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/qdpc_init.c b/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/qdpc_init.c
+index 8070fcd..402b865 100644
+--- a/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/qdpc_init.c
++++ b/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/qdpc_init.c
+@@ -286,7 +286,11 @@ static void qdpc_tune_pcie_mps(struct pci_dev *pdev, int pos)
+ {
+ 	struct pci_dev *parent = NULL;
+ 	int ppos;
++#if defined(AEI_OPENWRT)
++	uint16_t dev_cap;
++#else
+ 	uint32_t dev_cap;
++#endif
+ 	uint16_t pctl, dev_ctl;
+ 	unsigned int mps = tlp_mps;
+ 	unsigned int dev_mpss;
+@@ -429,6 +433,10 @@ static void qdpc_pcie_remove(struct pci_dev *pdev)
+ 
+ 	priv = netdev_priv(ndev);
+ 
++#if defined(AEI_OPENWRT)
++	aei_delete_nssctx(priv);
++#endif
++
+ 	if (priv->init_thread)
+ 		kthread_stop(priv->init_thread);
+ 	if (priv->nl_socket)
+@@ -662,6 +670,15 @@ static int qdpc_boot_done(struct vmac_priv *priv)
+ 	macaddr[5] = (tmp >> 8) & 0xFF;
+ 	memcpy(ndev->dev_addr, macaddr, ETH_ALEN);
+ 
++#if defined(AEI_OPENWRT)
++	/*
++	 * Create NSS virtual interface after host0 get its MAC address.
++	 * So NSS can set source MAC address when redirect packets from
++	 * WAN eth to wifi.
++	 */
++	aei_create_nssctx(priv);
++#endif
++
+ 	PRINT_INFO("Connection established with Target BBIC4 board\n");
+ 
+ 	/* Save target-side MSI address for later enable/disable irq*/
+diff --git a/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/qdpc_init.h b/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/qdpc_init.h
+index 0ef6777..fd7f9a3 100644
+--- a/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/qdpc_init.h
++++ b/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/qdpc_init.h
+@@ -32,7 +32,12 @@
+ /*
+  * Netlink Message types.
+  */
++#if defined(AEI_OPENWRT)
++/* 31 is aleady used in drivers/char/nl_kernel/nl_kernel.h */
++#define QDPC_NETLINK_RPC_PCI              20
++#else
+ #define QDPC_NETLINK_RPC_PCI              31
++#endif
+ #define QDPC_NETLINK_TYPE_CLNT_REGISTER   10
+ #define QDPC_NETLINK_TYPE_CLNT_REQUEST    11
+ 
+diff --git a/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/qdpc_pcie.c b/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/qdpc_pcie.c
+index 56a1211..4bff18d 100644
+--- a/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/qdpc_pcie.c
++++ b/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/qdpc_pcie.c
+@@ -158,6 +158,7 @@ static bool qdpc_bar_check(struct vmac_priv *priv, qdpc_bar_t *bar)
+ 	return 1;
+ }
+ 
++#if !defined(AEI_OPENWRT)
+ static void qdpc_update_hw_bar(struct pci_dev *pdev, uint8_t index)
+ {
+ 	uint32_t addr, start;
+@@ -170,6 +171,7 @@ static void qdpc_update_hw_bar(struct pci_dev *pdev, uint8_t index)
+ 		printk("BAR %d: reset to PCI address %x\n", index, start);
+ 	}
+ }
++#endif
+ 
+ static qdpc_bar_t *qdpc_map_bar(struct vmac_priv *priv, qdpc_bar_t *bar,
+ 						uint8_t index, size_t len, uint32_t offset)
+@@ -197,7 +199,13 @@ static qdpc_bar_t *qdpc_map_bar(struct vmac_priv *priv, qdpc_bar_t *bar,
+ 		return NULL;
+ 	}
+ 
++#if !defined(AEI_OPENWRT)
++	/*
++	 * Update BAR address causes L2 cache bug as in http://192.168.20.105/issues/168473.
++	 * Don't do it.
++	 */
+ 	qdpc_update_hw_bar(priv->pdev, index);
++#endif
+ 
+ 	vaddr = ioremap_nocache(busaddr, len);
+ 	if (!vaddr) {
+@@ -283,6 +291,14 @@ int32_t qdpc_set_dma_mask(struct vmac_priv *priv) {
+ 
+ 	printk("Requested DMA mask:0x%llx\n", dma_mask);
+ 
++#if defined(AEI_OPENWRT)
++	/*
++	 * QCA does not define ISA_DMA_THRESHOLD
++	 * Hack it by setting dma_mask directly
++	 */
++	*priv->pdev->dev.dma_mask = dma_mask;
++	priv->pdev->dev.coherent_dma_mask = dma_mask;
++#else
+ 	result = pci_set_dma_mask(priv->pdev, dma_mask);
+ 	if (!result) {
+ 			result = pci_set_consistent_dma_mask(priv->pdev, dma_mask);
+@@ -294,8 +310,13 @@ int32_t qdpc_set_dma_mask(struct vmac_priv *priv) {
+ 		printk(" pci_set_dma_mask() error %d. Mask:0x%llx\n", result, dma_mask);
+ 		return 1;
+ 	}
++#endif
+ 
++#if defined(AEI_OPENWRT)
++	return result;
++#else
+ 	return 0;
++#endif
+ }
+ static int32_t qdpc_pcie_init_mem(struct vmac_priv *priv)
+ {
+diff --git a/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/topaz_vnet.c b/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/topaz_vnet.c
+index 55fd27b..5f7601c 100644
+--- a/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/topaz_vnet.c
++++ b/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/topaz_vnet.c
+@@ -506,11 +506,34 @@ static int __sram_text vmac_rx_poll(struct napi_struct *napi, int budget)
+ 
+ 				dump_rx_pkt(vmp, skb->data, skb->len);
+ 
++				#if defined(AEI_OPENWRT)
++				/*
++				 * workaround 4n+2 issue on host driver side.
++				 * we use this hack until QTN provide a solution on its wifi driver.
++				 */
++				if (likely((unsigned int)skb->data % 4 != 2)) {
++					struct sk_buff *new_skb;
++
++					new_skb = dev_alloc_skb(SKB_BUF_SIZE);
++					if (likely(new_skb)) {
++						skb_reserve(new_skb, align_buf_dma_offset(new_skb->data)+2);
++						memcpy(new_skb->data, skb->data, VMAC_GET_LEN(descw1));
++						new_skb->dev = ndev;
++						skb_put(new_skb, VMAC_GET_LEN(descw1));
++						dev_kfree_skb(skb);
++						skb = new_skb;
++					}
++				}
++				#endif
++
+ 				skb->protocol = eth_type_trans(skb, ndev);
+ 				processed++;
+ 
+-
++				#if defined(AEI_OPENWRT)
++				aei_send_to_nss(vmp, skb);
++				#else
+ 				netif_receive_skb(skb);
++				#endif
+ 
+ 				ndev->stats.rx_packets++;
+ 				ndev->stats.rx_bytes += VMAC_GET_LEN(descw1);
+@@ -637,13 +660,33 @@ int vmac_tx(void *pkt_handle, struct net_device *ndev, enum pkt_type pkt_type)
+ 	tbdp = &vmp->tx_bd_base[i];
+ 
+ 	skb = (struct sk_buff *)pkt_handle;
++#if defined(AEI_OPENWRT)
++	/*
++	 * Hack TCP ACK:
++	 * TCP ACK(without TCP option) is 54 bytes:
++	 * 	Eth header(14 bytes) + IP header(20 bytes) + TCP header(20 bytes)
++	 * Ethernet frame minimum length is 60 bytes.
++	 * Linux network statck will add trailing bytes if length is less than 60.
++	 *
++	 * But if packet came from NSS fast path, then it doesn't add trailing bytes.
++	 * It seems Quantenna wifi driver will drop packets less than 60 bytes.
++	 * We hack the length to 60, don't worry about it because skb data buffer is
++	 * always far more large than 60.
++	 */
++	if (unlikely(skb->len < 60))
++		skb->len = 60;
++	vmp->tx_skb[i] = skb;
++#else
+ 	vmp->tx_skb[i] = (uint32_t)pkt_handle;
++#endif
+ 	baddr = (uint32_t)pci_map_single(vmp->pdev, skb->data, skb->len, (int)DMA_TO_DEVICE);
+ 	len = skb->len;
+ 	wmb();
+ 	tbdp->buff_addr = cpu_to_le32(baddr);
+ 
++#if !defined(AEI_OPENWRT)
+ 	dump_tx_pkt(vmp, bus_to_virt(baddr), len);
++#endif
+ 
+ 	descw1 = VMAC_SET_LEN(len);
+ 	if (++i >= vmp->tx_bd_num)
+diff --git a/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/topaz_vnet.h b/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/topaz_vnet.h
+index 7f184d9..83c8de2 100644
+--- a/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/topaz_vnet.h
++++ b/qsdk/qca/src/linux/drivers/net/wireless/quantenna/host/common/topaz_vnet.h
+@@ -118,8 +118,18 @@ struct vmac_priv {
+ 
+ 	/* io memory pointers */
+ 	__iomem qdpc_pcie_bda_t *bda;
++
++#if defined(AEI_OPENWRT)
++	void *nssctx;	/* QCA NSS platform specific handler*/
++#endif
+ };
+ 
++#if defined(AEI_OPENWRT)
++extern void aei_create_nssctx(struct vmac_priv *vmp);
++extern void aei_delete_nssctx(struct vmac_priv *vmp);
++extern void aei_send_to_nss(struct vmac_priv *vmp, struct sk_buff *skb);
++#endif
++
+ extern struct net_device *vmac_alloc_ndev(void);
+ extern int vmac_net_init(struct pci_dev *pdev);
+ extern void vmac_clean(struct net_device *ndev);

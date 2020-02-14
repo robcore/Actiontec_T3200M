@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Config Download/Upload)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/nav.js" TYPE="text/javascript"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript">
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function do_load()
+{
+	//highlight the button after user click on it
+	side_nav("Config DownUpload");
+}
+
+function downloadConf() {
+   var loc = 'backupsettings.conf';
+   loc += '?sessionKey=' + sessionKey;
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+var progress = 0;
+
+function isInProgress() {
+   form = document.myform;
+   if (progress == 0 && form.filename.value == "" )
+   {
+       alert("_(Select a configuration file.)_");
+       return false;
+   }
+
+   if ( progress == 0 )  {
+      progress = 1;
+      return true;
+   }
+   alert("_(Configuration upload is in progress. You must wait for the upload to complete and the modem to reboot.)_");
+   return false;
+}
+
+function uploadConf()
+{
+	if(isInProgress())
+	{
+		//document.getElementById("fileshow").disabled = true;
+		document.myform.submit();
+	}
+}
+
+function getuploadfile(filename)
+{
+    document.getElementById("fileshow").value = filename;
+}
+
+function chooseFile()
+{
+    document.getElementById("filename").click();
+}
+function dom_load(){ do_load(); }
+
+</SCRIPT>
+</head>
+
+<body>
+	<div id="wrapper">
+		<!-- TOP NAV -->
+		<%ejInclude(top_btn_nav5.html)%>
+		<!-- END TOP NAV -->
+		<!-- SIDE NAV -->
+		<%ejInclude(adv_left.html)%>
+		<!-- END SIDE NAV -->
+
+		<!-- MAIN CONTENT AREA -->
+		<div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="utilities_configdownupload">_(Configuration Download and Upload)_</h1>
+				<form name="myform" method='post' ENCTYPE='multipart/form-data' action='uploadsettings.cgi'>
+					<p>_(To download and save the modem's current configuration, click Download.)_</p>
+					<table border="0" cellspacing="0" cellpadding="0">
+						<tr>
+							<td>
+								<a class="button1" onclick="downloadConf()" id="btn_download"><span>_(Download)_</span></a>
+							</td>
+						</tr>
+					</table>
+					<p>&nbsp;</p>
+					<p>_(To upload a previously saved configuration to the modem, click Browse.)_<br>
+					_(Select the configuration file, then click Upload to start the upload.)_</p>
+					<!--QA-Bug #127607: Add a style for type=file-->
+					<table border="0" cellspacing="0" cellpadding="0" style="padding-bottom:0px;">
+						<tr>
+							<td >
+								<div class="fileinputs">
+									<input name='filename' id="filename" type="file" class="filehidden" onchange="getuploadfile(this.value)" size="1"/>
+									<table border="0" cellspacing="0" cellpadding="0" class="fileinputs_tab">
+										<tr>
+											<td>
+												<input id="fileshow" name="fileshow" style="width:260px; height:16px;" type="text" onclick="chooseFile()" readonly/>
+											</td>
+											<td>
+												<a class="button1" onclick="chooseFile()" id="btn_browse"><span>_(Browse)_</span></a>
+											</td>
+										</tr>
+									</table>
+								</div>
+							</td>
+							<td>
+								<a class="button1" onclick="uploadConf()" id="btn_upload"><span>_(Upload)_</span></a>
+							</td>
+						</tr>
+					</table>
+				</form>
+				<p>&nbsp;</p>
+				<div class="clear_left"></div>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+	</div>
+	<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT>
+</body>
+</html>

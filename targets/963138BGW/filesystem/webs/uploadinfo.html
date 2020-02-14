@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(DSL Router Update!)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript">
+
+var msg = new Array();
+msg[0] = "_(Uploading is in progress. The modem will reboot upon completion. This process will take about 2 minutes.)_";
+msg[1] = "_(Image uploading failed. The system is out of memory. The modem is rebooting.)_";
+msg[2] = "_(Image uploading failed. No image file was selected.)_";
+msg[3] = "_(Image uploading failed. The selected file contains an illegal image.)_";
+msg[4] = "_(Fatal error during image uploading.)_";
+msg[5] = "_(Image uploading failed. The selected file contains an older firmware version.)_";
+msg[6] = "_(The selected firmware version is currently running on the modem. An upgrade is not required. Click OK to exit or Cancel to run the upgrade.)_";
+
+var idxStr = '<%ejGetOther(sysInfo, upldSts)%>';
+function getMsgIndex() {
+   var idxNum = parseInt(idxStr);
+   if ( isNaN(idxNum) || idxNum < 0 || idxNum > 6 )
+      idxNum = 4;
+
+   return idxNum;
+}
+function do_replace()
+{
+   location.href="index.html";
+   setTimeout("do_retry()", 5000);
+}
+
+function do_retry()
+{
+    do_replace();
+}
+function frmLoad() {
+    if ( getMsgIndex() == 0 )
+        setTimeout("do_retry()", 80000);
+ /*   if (window.top.location.pathname.indexOf("utilities_upgradefirmware") != -1)
+    {
+        var code = 'window.top.location="uploadinfo.html"';
+        eval(code);
+    }
+   */
+}
+</script>
+</head>
+
+<body onload="frmLoad();">
+<div id="wrapper">
+	<!-- END SIDE NAV -->
+
+	<div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="thankyou">_(DSL Router Update!)_ </h1>
+			<form>
+            <table width="85%" border="0" cellpadding="0" cellspacing="0" style="border-bottom:0px">
+               <tr>
+                 <td>
+                 <script language="javascript">
+                      document.write(msg[getMsgIndex()]);
+                 </script>
+                </td>
+             </tr>
+               <tr>
+                 <td>
+                    <p><a class="button1" onclick="javascript:history.back()" ><span>_(Back)_</span></a></p>
+                </td>
+             </tr>
+             <br>
+			</table>
+            </form>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+</body>
+</html>

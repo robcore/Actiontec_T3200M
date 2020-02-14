@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Reboot)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/nav.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<SCRIPT LANGUAGE="JavaScript">
+
+function do_load()
+{
+   var sysReboot = htmlDecodeStr('<%ejGet(sysReboot)%>');
+   if ( sysReboot == '1' )
+        doReboot();
+
+	//highlight the button after user click on it
+	side_nav("reboot");
+}
+
+function doReboot()
+{
+  if(confirm("_(To reboot the modem, click OK.)_") )
+  {
+      location.href= "rebootinfo.html";
+  }
+}
+
+function dom_load(){ do_load(); }
+
+</SCRIPT>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="utilities_reboot">_(Reboot Modem)_</h1>
+					<p>_(To reboot the modem, click Reboot..)_</p>
+					<table border="0" align="center" cellpadding="5" cellspacing="0" class="status_style"  style="margin:10px auto 0 auto;">
+                      <!--<tr>
+                        <th width="47">&nbsp;</th>
+                        <th width="197">REBOOT MODEM</th>
+                        <th width="192">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;REBOOT</th>
+                      </tr>-->
+                      <tr align="center">
+                        <td width="47">&nbsp;</td>
+                        <td width="197"><div align="center">_(Reboot Modem)_:</div>
+                        </td>
+                        <td width="192"><p align="center"><a class="button1" onclick="javascript:doReboot()" style="text-decoration:none;" id="btn_reboot"><span>_(Reboot)_</span></a></p></td>
+                      </tr>
+                    </table>
+				    <p>&nbsp;</p>
+				    <div class="clear_left"></div>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

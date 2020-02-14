@@ -1,0 +1,735 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Iperf Test)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/functions.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var no_response = 0;
+var seg = 0;
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+var iperfHost = htmlDecodeStr("<%ejGet(iperfHost)%>");
+
+function refresh_result(values)
+
+{
+
+    //alert(values);
+
+    var form = document.forms[0];
+
+    var res = "";
+
+    var table = document.getElementById("result_tbl");
+
+
+    var mode = document.getElementById("mode").value;
+    var prot = document.getElementById("protocol").value;
+
+    var table_2;
+
+    if(mode == 0)
+    {
+    table_2 = document.getElementById("statistics_tbl_client");
+    }
+    else
+    {
+    table_2 = document.getElementById("statistics_tbl_server");
+    }
+
+    var i=0 , j=0;
+
+    var show_line = new Array() ;
+    var show_line_sta = new Array() ;
+
+
+
+	var tmp = "";
+
+
+    var lastRow=1;
+
+    var tbody1 = table.getElementsByTagName("TBODY")[0];
+
+
+if(mode == 0)
+{
+	document.getElementById("test_off").style.display = "block";
+
+    document.getElementById("test_on").style.display = "none";
+}
+
+
+
+   if(values!="")
+
+    {
+
+	    values = values.split('+');
+
+	    seg = htmlDecodeStr(values[0]);
+
+	    tmp = htmlDecodeStr(values[1]);
+
+
+    }
+
+
+	if(tmp != "" && tmp != "0")
+        res = tmp.split('|');
+
+    var dataBegin = 0;
+
+
+    if(res != "" && res.length  > 1)
+
+    {
+	lastRow = tbody1.rows.length;
+
+	for ( i = lastRow; i > 0 ; i-- ) {
+
+		tbody1.removeChild(tbody1.rows[i - 1]);
+
+	}
+
+
+    tbody1 = table_2.getElementsByTagName("TBODY")[0];
+
+	lastRow = tbody1.rows.length;
+
+	for ( i = lastRow; i > 1 ; i-- ) {
+
+		tbody1.removeChild(tbody1.rows[i - 1]);
+
+	}
+
+
+        for(i=0;i<res.length;i++)
+	{
+		if(res[i].indexOf("------------------------") >= 0)
+		{
+			continue;
+		}
+
+                
+		if(dataBegin == 0)
+		{
+			if(res[i].indexOf("Interval") >= 0 && res[i].indexOf("Transfer") >= 0 && res[i].indexOf("Bandwidth") >= 0)
+			{
+				dataBegin = 1;
+				continue;
+			}
+			
+
+			show_line[0] = res[i];
+			appendTableRow(table, "center", show_line);
+		}
+		else
+		{
+			if(prot == 1 && mode == 0)//udp
+			{
+				if(dataBegin == 1)
+				{
+					if(res[i].indexOf("Sent") >= 0 && res[i].indexOf("datagrams") >= 0)
+					{
+						dataBegin = 2;
+						show_line[0] = res[i];
+						appendTableRow(table, "center", show_line);
+						continue;
+					}
+				}
+				else
+				{
+
+					show_line[0] = res[i];
+					appendTableRow(table, "center", show_line);
+					continue;
+				}
+			}
+			if(mode == 0)
+			{
+				var resnew = res[i].replace(" sec","+sec");
+				resnew = resnew.replace(new RegExp(" MBytes","gm"),"+MBytes");
+				resnew = resnew.replace(new RegExp(" Mbits","gm"),"+Mbits");
+				resnew = resnew.replace(new RegExp("   ","gm"),"  ");
+				resnew = resnew.replace(new RegExp("  ","gm")," ");
+				var details = resnew.split(" ");
+				show_line_sta[0] = details[0] + " " + details[1];
+				show_line_sta[1] = details[2].replace("+"," ");
+				show_line_sta[2] = details[3].replace("+"," ");
+				show_line_sta[3] = details[4].replace("+"," ");
+				appendTableRow(table_2, "center", show_line_sta);
+			}
+			else
+			{
+				show_line_sta[0] = res[i];
+				appendTableRow(table_2, "center", show_line_sta);
+			}
+		}
+	}
+
+
+
+    if(seg == 1) 
+    {
+	var intvl = parseInt(document.getElementById("interval").value);
+        setTimeout("http_refresh()", intvl * 1000);
+    }
+    else
+	{
+		document.getElementById("simple_result").innerHTML = "_(No Test in Progress)_";
+		document.getElementById("test_off").style.display = "none";
+		document.getElementById("test_on").style.display = "block";
+	}
+
+    }
+
+	else
+	{
+
+		if(seg == 1)
+		{
+			if(mode == 0)
+			{
+				document.getElementById("test_off").style.display = "block";
+				document.getElementById("test_on").style.display = "none";
+			}
+			setTimeout("http_refresh()", 3000);
+		}
+		else
+		{
+			document.getElementById("simple_result").innerHTML = "_(No Test in Progress)_";
+			document.getElementById("test_off").style.display = "none";
+			document.getElementById("test_on").style.display = "block";
+		}
+
+
+	}
+
+
+
+}
+
+function configModestate()
+{
+	if(document.getElementById("mode").value == 0)
+	{
+		document.getElementById("content_client_info").style.display = "block";
+		document.getElementById("statistics_tbl_client").style.display = "block";
+		document.getElementById("tbl_client_label").style.display = "block";
+		document.getElementById("statistics_tbl_server").style.display = "none";
+		document.getElementById("content_server_info").style.display = "none";
+		document.getElementById("tbl_server_label").style.display = "none";
+	    document.getElementById("item0").innerHTML = "<strong>5</strong>";
+        document.getElementById("item1").innerHTML = "<strong>6</strong>";
+        document.getElementById("item3").innerHTML = "<strong>7</strong>";
+    }
+	else
+	{
+		document.getElementById("content_client_info").style.display = "none";
+		document.getElementById("statistics_tbl_client").style.display = "none";
+		document.getElementById("tbl_client_label").style.display = "none";
+		//document.getElementById("content_server_info").style.display = "block";
+		document.getElementById("statistics_tbl_server").style.display = "block";
+		document.getElementById("tbl_server_label").style.display = "block";
+        document.getElementById("item3").innerHTML = "<strong>5</strong>";
+	}
+
+	configProtstate();
+
+}
+function configProtstate()
+{
+      if(document.getElementById("protocol").value == 0)
+      {
+	      document.getElementById("content_tcp_info").style.display = "block";
+	      document.getElementById("content_udp_info").style.display = "none";
+          if(document.getElementById("mode").value == 0)
+            document.getElementById("item3").innerHTML = "<strong>7</strong>";
+      }
+      else
+      {
+	      if(document.getElementById("mode").value == 0)
+	      {
+		      document.getElementById("content_udp_info").style.display = "block";
+              document.getElementById("item2").innerHTML = "<strong>7</strong>";
+              if(document.getElementById("mode").value == 0)
+                document.getElementById("item3").innerHTML = "<strong>8</strong>";
+	      }
+	      document.getElementById("content_tcp_info").style.display = "none";
+      }
+
+}
+function do_load()
+{
+
+	htmlDecode();
+	document.getElementById("test_off").style.display = "none";
+	document.getElementById("test_on").style.display = "block";
+
+	document.getElementById("bytes").value = "800M";
+	document.getElementById("times").value = 10;
+	document.getElementById("interval").value = 10;
+	document.getElementById("window").value = "16K";
+	document.getElementById("bandwidth").value = "1M";
+
+	document.getElementById("url").value = iperfHost;
+
+	configModestate();
+
+        //refresh_result("------------------------------------------------------------|Client connecting to 192.168.1.64, TCP port 5001|TCP window size: 16.0 KByte (default)|------------------------------------------------------------|[ 5] local 192.168.1.254 port 34889 connected with 192.168.1.64 port 5001|[ ID] Interval Transfer Bandwidth|[ 5] 0.0- 5.0 sec 98.6 MBytes 165 Mbits/sec|[ 5] 5.0-10.0 sec 78.8 MBytes 132 Mbits/sec|[ 5] 0.0-10.0 sec 178 MBytes 149 Mbits/sec");
+
+	//refresh_result("------------------------------------------------------------|Client connecting to 192.168.1.64, TCP port 5001|TCP window size: 16.0 KByte (default)|------------------------------------------------------------|[ 5] local 192.168.1.254 port 41532 connected with 192.168.1.64 port 5001|[ ID] Interval Transfer Bandwidth|[ 5] 0.0- 3.0 sec 54.3 MBytes 152 Mbits/sec|[ 5] 3.0- 6.0 sec 38.9 MBytes 109 Mbits/sec|[ 5] 6.0- 9.0 sec 35.4 MBytes 98.9 Mbits/sec|[ 5] 0.0-10.0 sec 140 MBytes 118 Mbits/sec");
+
+	//refresh_result("------------------------------------------------------------|Client connecting to 192.168.1.64, TCP port 5001|TCP window size: 16.0 KByte (default)|------------------------------------------------------------|[  5] local 192.168.1.254 port 56047 connected with 192.168.1.64 port 5001|[ ID] Interval       Transfer     Bandwidth|[  5] 20.0-10.0 sec   176 MBytes   148 Mbits/sec|[  5]  0.0-10.0 sec   176 MBytes   148 Mbits/sec");
+	side_nav("advancedutilities_iperf");
+}
+
+function isIpAddress(address) {
+
+   var addrParts = address.split('.');
+
+   for (i = 0; i < addrParts.length; i++) {
+      if (isNaN(addrParts[i]))
+          return false;
+   }
+   return true;
+}
+
+
+function checkInvalidchar(Address)
+{
+    var s = Address;
+    var num = /^\d+/;
+    var web_rule = /[\w-]+(\.[\w-]+)+(\/\w+)*\/?/;
+    var isIp = false;
+    var isUrl = false;
+
+    if(s=="" || s==null)
+    {
+        alert("_(You must enter a valid address.)_");
+        return false;
+    }
+
+    if (isIpAddress(s)) {
+	isIp = true;
+    }
+    else {
+	isUrl = true;
+    }
+
+    if (isIp)
+    {
+	if (!isValidIpAddress(s))
+	{
+	    alert("_(The IP Address is invalid. You must enter a valid IP Address.)_");
+	    return false;
+	}
+    }
+
+    if (isUrl)
+    {
+	if (!web_rule.test(s) || s.indexOf('(')!=-1 || s.indexOf(')')!=-1)
+	{
+	    alert("_(The URL is invalid. You must enter a valid URL.)_");
+	    return false;
+	}
+    }
+
+        return true;
+}
+
+function IperfTest()
+{
+	var form = document.forms[0];
+	var i = 0;
+
+	var mode =document.getElementById("mode").value;
+	var lochead='advancedutilities_iperf.cgi?';
+
+	var loc="";
+	var key = '<%ejGetOther(encrypt_key, 0)%>';
+
+	loc+="iperfMode=";
+	loc+=mode;
+
+
+	if(seg == 1 && mode == 1)
+	{
+		loc +="&iperfServerEnable=0";
+		lochead+=loc;
+		//alert(lochead);
+		if(xmlhttp != null)
+		{
+			xmlhttp.open("POST",lochead,true);
+			xmlhttp.onreadystatechange =function()
+			{
+				if(xmlhttp.readyState==4)
+					statusval = xmlhttp.responseText;
+			}
+			xmlhttp.send(null);
+		}
+		document.getElementById("my_button").innerHTML = "_(Test)_";
+		document.getElementById("simple_result").innerHTML = "_(No Test in Progress)_";
+		return;
+	}
+
+	var pPort = document.getElementById("port").value;
+	if(isNaN(pPort)) {
+		alert("_(Port Number is invalid.)_ ");
+		return false;
+	}
+
+	loc += "&iperfPort=";
+	loc += pPort;
+
+	var pInterval = document.getElementById("interval").value;
+	if(isNaN(pInterval)) {
+		alert("_(Interval is invalid.)_ ");
+		return false;
+	}
+
+	loc += "&iperfIntv=";
+	loc += pInterval;
+
+	loc += "&iperfProt=";
+	var protcl = document.getElementById("protocol").value;
+	loc += protcl;
+	if(protcl == 0) //tcp
+	{
+		loc += "&iperfWin=";
+		loc += document.getElementById("window").value;
+	}
+	if(mode == 0) //client
+	{
+		if(document.getElementById("transByTimes").checked)
+		{
+			loc +="&iperfTimes=";
+			loc += document.getElementById("times").value;
+		}
+		else
+		{
+			loc +="&iperfBytes=";
+			loc += document.getElementById("bytes").value;
+		}
+		var pUrl = document.getElementById("url").value;
+		if(!checkInvalidchar(pUrl))
+		{
+			return false;
+		}
+		loc += "&iperfHost=";
+		loc += pUrl;
+		if(protcl == 1) //udp
+		{
+			loc += "&iperfBand=";
+			loc += document.getElementById("bandwidth").value;
+		}
+		document.getElementById("test_off").style.display = "block";
+		document.getElementById("test_on").style.display = "none";
+	}
+	else
+	{
+
+		loc +="&iperfServerEnable=1";
+		document.getElementById("my_button").innerHTML = "_(stop Test)_";
+	}
+
+
+    loc += '&sessionKey=' + sessionKey;
+	loc=encrypt_query(loc,key);
+	lochead+=loc;
+
+	document.getElementById("simple_result").innerHTML = '<font color="#006600">_(Test is in progress)_ ...</font>';
+
+	//var code = 'location="' + lochead + '"';
+
+	//eval(code);
+	//postSubmit(lochead);
+
+	//alert(lochead);
+	if(xmlhttp != null)
+	{
+		xmlhttp.open("POST",lochead,true);
+		xmlhttp.onreadystatechange =function()
+		{
+			if(xmlhttp.readyState==4)
+				statusval = xmlhttp.responseText;
+		}
+		xmlhttp.send(null);
+		setTimeout("http_refresh()", 2000);
+	}
+
+	//form.submit();
+
+}
+function dom_load(){ do_load(); }
+function Watch_Dog () {
+
+	if ( no_response ) {
+
+		http_refresh();
+
+	}
+
+}
+function http_refresh()
+
+{
+
+	var statusval = "";
+
+
+
+	if(xmlhttp != null)
+
+	{
+		//SW-Bug #127719
+		var curTime = new Date();
+		curTime = curTime.getTime();
+		xmlhttp.open("GET","./advancedutilities_iperf_refresh.html?time="+curTime,true);
+
+		xmlhttp.onreadystatechange =function()
+
+		{
+
+		if(xmlhttp.readyState==4)
+
+            {
+
+                no_response = 0;
+
+	var mode =document.getElementById("mode").value;
+	if(mode == 0)
+	{
+		document.getElementById("test_off").style.display = "block";
+		document.getElementById("test_on").style.display = "none";
+	}
+
+                statusval = xmlhttp.responseText;
+
+                if(statusval == "")
+
+                {
+
+                    setTimeout("http_refresh();", 5000);
+
+                }
+
+                else
+
+                {
+
+                    refresh_result(statusval);
+
+                }
+
+			}
+
+        }
+
+        xmlhttp.send(null);
+
+        no_response = 1;
+
+		setTimeout("Watch_Dog();", 5000);
+
+
+
+	}
+
+	return statusval;
+
+}
+</script>
+</head>
+<body>
+<form name="myform" action="advancedutilities_iperf.cgi" method="POST">
+</form>
+
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+    <div id="content_right_header"></div>
+    <div id="content_right_contentarea">
+	<h1 class="utilities_webactivitylog">&nbsp;_(Iperf Test)_ </h1>
+        <p>_(Test your network situation for interface, below.)_</p>
+	<form>
+	    <p><strong> 1. _(Select iperf Mode.)_ </strong></p>
+	    <table>
+	    <tr>
+		<td>
+		    <select name="mode" id="mode" onchange="configModestate();">
+		    <option value="0">_(Client)_</option>
+		    <option value="1">_(Server)_</option>
+		    </select>
+		</td>
+	      </tr>
+	    </table>
+	    <p><strong> 2. _(Select port to listen or connect to.)_ </strong></p>
+	    <table>
+	      <tr>
+		<td width="121">_(port)_:</td>
+		</td>
+		<td>
+		    <input name="port" type="text" id="port" value="5001" style="height:18px;"/>
+		</td>
+	      </tr>
+	    </table>
+	    <p><strong>  3. _(Select Report interval.)_ </strong></p>
+	    <table>
+	      <tr>
+		<td width="121">_(report interval)_:</td>
+		<td>
+		    <input name="interval" type="text" id="interval" style="height:18px;"/>_(Seconds)_
+		</td>
+	      </tr>
+	    </table>
+	    <p><strong> 4. _(Select protocol.)_ </strong></p>
+	    <table>
+	      <tr>
+		    <td width="121">_(Protocol)_:</td>
+		    <td>
+		    <select name="protocol" id="protocol" onchange="configProtstate();" width="99" style="height:18px;">
+			    <option value="0">_(TCP)_</option>
+			    <option value="1">_(UDP)_</option>
+		    </select>
+		</td>
+		</tr>
+	</table>
+        <div id="content_tcp_info" style="display:none">
+	    <table>
+		<tr>
+		<td width="121">_(window size)_:</td>
+		<td>
+		    <input name="window" type="text" id="window" style="height:18px;"/>_(Bytes)_
+		    </td>
+	      </tr>
+	      </table>
+      </div>
+        <div id="content_client_info" style="display:none">
+	    <p><strong> <span id="item0"></span>. _(Select transmit options.)_ </strong></p>
+	    <table>
+	      <tr>
+		<td width="121">
+		    <input name="transopt" id="transByBytes" type="radio"  align="center" />_(Transmit Bytes)_
+		</td>
+		<td>
+		    <input name="bytes" type="text" id="bytes" style="height:18px;"/>   _(Bytes)_
+		</td>
+	      </tr>
+	      <tr>
+		<td width="121">
+		    <input name="transopt" id="transByTimes" type="radio" align="center" checked="checked"/>_(Transmit Time)_
+		</td>
+		<td>
+		    <input name="times" type="text" id="times" style="height:18px;"/>_(Seconds)_
+		</td>
+	      </tr>
+	    </table>
+	    <p><strong> <span id="item1"></span>. _(Host)_. </strong></p>
+	    <table>
+	      <tr>
+		<td width="121">_(URL or IP)_:</td>
+		<td>
+		    <input name="url" type="text" id="url" size="25"  style="height:18px;"/>
+		</td>
+	      </tr>
+	    </table>
+	    <p>&nbsp;</p>
+        <div id="content_udp_info" style="display:none">
+	    <p><strong> <span id="item2"></span>. _(Select udp bandwidth.)_ </strong></p>
+		<table>
+		  <tr>
+		    <td width="121">_(Bandwidth)_:
+		    </td>
+		    <td>
+			<input type="text" name="bandwidth" id="bandwidth"  size="10" style="height:18px;"/>_(bits/sec)_</td>
+		    </td>
+		  </tr>
+	        </table>
+	    <p>&nbsp;</p>
+	    </div>
+	    </div>
+        <div id="content_server_info" style="display:none">
+	    <table width="440" border="0" align="center" cellpadding="5" cellspacing="0"  style="margin:10px auto 0 auto;">
+	      <tr align="center">
+		    <td width="121"><div align="left">_(enable iperf server mode)_:</div>
+		    </td>
+		    <td width="299"><div align="left">
+	    <input name="iperf_enabled" id="iperf_enabled" type="radio" value="iperf_enabled" align="left"/>
+			_(Enable)_
+	    <input name="iperf_enabled" type="radio" id="iperf_disabled" value="iperf_disabled"  checked="checked" />
+_(Disable)_
+		</td>
+	    </div>
+	      </tr>
+	    </table>
+	</div>
+	    <p><strong> <span id="item3"></span>. _(Select test.)_</strong></p>
+<div id="test_off" style="display:block">
+				<p><a class="button2" id="btn_test_disable"><span>_(Test)_</span></a></p>
+</div>
+<div id="test_on" style="display:none">
+		<p><a class="button1" onclick="IperfTest()" id="btn_test"><span id="my_button">_(Test)_</span></a></p>
+</div>
+	    <table width="48%" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;">
+	      <tr align="center">
+		<th>_(Test Status)_</th>
+	      </tr>
+	      <tr align="center">
+            <td id="simple_result" text-align="center">_(No Test in Progress)_</td>
+	      </tr>
+	    </table>
+	    <p>&nbsp;</p>
+	    <p align="center"><strong>_(Iperf Test Result)_: </strong>
+	    </p>
+	    <table width="85%" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;" id="result_tbl">
+        <tbody>
+	      <tr align="center">
+	      </tr>
+</tbody>
+	    </table>
+	    <p>&nbsp;</p>
+	    <p align="center" style="display:none" id="tbl_client_label"><strong>_(Iperf Statistics as Client)_:</strong>
+	    <table width="85%" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;" id="statistics_tbl_client" style="display:none">
+        <tbody>
+	      <tr align="center">
+		<th width="60">_(ID)_</th>
+		<th width="160">_(Interval)_</th>
+		<th width="160">_(Transfer)_</th>
+		<th width="160">_(Bandwidth)_</th>
+          </tr>
+</tbody>
+	    </table>
+	    <p align="center" style="display:none" id="tbl_server_label"><strong>_(Iperf Statistics as Server)_:</strong>
+	    <table width="85%" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;" id="statistics_tbl_client" style="display:none">
+	    <table width="85%" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;" id="statistics_tbl_server" style="display:none">
+        <tbody>
+	      <tr align="center">
+          </tr>
+</tbody>
+	    </table>
+	    <p></p>
+	</form>
+    </div>
+    <div id="content_right_footer"></div>
+  </div>
+  <div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

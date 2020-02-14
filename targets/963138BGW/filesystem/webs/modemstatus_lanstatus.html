@@ -1,0 +1,516 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Status)_ - _(LAN  Services)_ - _(LAN Status)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script type="text/javascript" src="js/util.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+//LAN
+var brinfo = '<%ejGetOther(brinfo)%>';
+
+var etherinfo=get_net_info(brinfo).split('|');
+   var ethWanVlanInfo = '<%ejGetOther(ethwanvlan, ewan0)%>'; //ifname:connectionMode:VlanMux8021p:VlanMuxID
+ var ethWanInfo = ethWanVlanInfo.split(':');
+var ipv6hostinfo = '<%ejGetOther(ipv6info)%>';
+
+var redirect="modemstatus_lanstatus.html";
+var ifname;
+var sessionKey='<%ejGetOther(sessionKey)%>';
+function showRule(port, param_list, table , image )
+{
+    var serviceName;
+    var serviceCode;
+
+    /* append in serv_list_table */
+    var newTR = table.insertRow(-1);
+    var newTDa = newTR.insertCell(-1);
+    var newTDb = newTR.insertCell(-1);
+    var newTDc = newTR.insertCell(-1);
+    var newTDd = newTR.insertCell(-1);
+    var newTDe = newTR.insertCell(-1);
+
+    newTDa.align = "center";
+    newTDb.align = "center";
+    newTDc.align = "center";
+    newTDd.align = "center";
+    newTDe.align = "center";
+
+    newTDa.width = "20%" ;
+
+    if(image == "ethernet" )
+        newTDa.innerHTML = '_(Ethernet)_';
+    if(image == "usb" )
+        newTDa.innerHTML = '_(USB)_';
+    if(image == "moca")
+         newTDa.innerHTML = '_(MOCA)_';
+
+    newTDb.innerHTML = port;
+    if(param_list[0] == "Disabled"||param_list[0] == "NoLink")
+    {
+        newTDc.innerHTML = "<span class='status_text_r'>_(DISCONNECTED)_ </span>";
+        newTDd.innerHTML = "_(N/A)_";
+        newTDe.innerHTML = "_(N/A)_";
+    }
+    else
+    {
+
+    if(param_list[2] == "100M" ||param_list[2] == "1000M" )
+        newTDc.innerHTML = "<span class='status_text'>"+ param_list[2] + "</span>";
+    else
+        newTDc.innerHTML = "<span class='status_text_y'>"+ param_list[2] + "</span>";
+
+        newTDd.innerHTML = param_list[3];
+        newTDe.innerHTML = param_list[4];
+    }
+}
+
+
+function get_table_string(in_str,len)
+{
+	var out=in_str;
+	if (out.length>len)
+		out=out.substring(0,len)+"...";
+	return out;
+
+}
+
+function appendDevTableRow(table,content){
+    var tr = table.insertRow(-1);
+    var td;
+    td = tr.insertCell(-1);
+	td.innerHTML =content[0];
+
+    td = tr.insertCell(-1);
+	td.innerHTML =content[1];
+
+
+    td = tr.insertCell(-1);
+	td.innerHTML =content[2];
+
+    td = tr.insertCell(-1);
+	td.innerHTML =content[3];
+
+    td = tr.insertCell(-1);
+	td.innerHTML =content[4];
+
+    td = tr.insertCell(-1);
+	td.innerHTML =content[5];
+
+    td = tr.insertCell(-1);
+	td.innerHTML =content[6];
+}
+
+
+function drawDevTable()
+{
+	var dev_table_id = document.getElementById("dev_list_table");
+     if (brinfo=="" ||etherinfo =="")
+	return;
+    for (i = 0; i <etherinfo.length; i++)
+    {  
+        if(etherinfo[i] == "")
+           continue;
+
+        var client_detail = etherinfo[i].split("/");
+        var row_content=new Array(7);
+        row_content[5]="_(N/A)_";
+        var time_str = "";
+        if (client_detail[8] == "Ethernet")
+        {
+		row_content[0]="_(Ethernet)_";
+		switch (client_detail[6]-0)
+            {
+            case 1:
+		row_content[5]="_(100Mbps)_";
+		break;
+            case 2:
+		row_content[5]="_(10Mbps)_";
+		break;
+            case 3:
+		row_content[5]="_(1000Mbps)_";
+		break;
+
+            }
+
+        }
+		else if (client_detail[8] == "Moca")
+        {
+                row_content[0]="_(Moca)_";
+                row_content[5]= client_detail[6] + "_(Mbps)_";
+        }
+        else if (client_detail[6] == "802.11")
+        {
+            row_content[0]="_(Wireless)_";
+            if (client_detail[8] == "is5G")
+            {
+                client_detail[3]="_(5G)_";
+            }
+            else
+            {
+                client_detail[3]="_(2.4G)_";
+            }
+            row_content[5]=client_detail[5];
+
+            if (client_detail[0] == "")
+                client_detail[0] = "_(N/A)_";
+            if (client_detail[1] == "")
+                client_detail[1] = "_(N/A)_";
+        }
+        row_content[1]=get_table_string(htmlDecodeStr(client_detail[0]),15);
+        row_content[2]=client_detail[2];
+        row_content[3]=client_detail[1];
+        row_content[4]=client_detail[3];
+        //row_content[6]=client_detail[7];
+        var time_num = parseInt(client_detail[7]);
+        if(parseInt(time_num/86400))//days
+           time_str = time_str + parseInt(time_num/86400) + "D ";
+        time_num = parseInt(time_num%86400);
+        if(parseInt(time_num/3600))//hours
+           time_str = time_str + parseInt(time_num/3600) + "H ";
+        time_num = parseInt(time_num%3600);
+        if(parseInt(time_num/60))//mins
+           time_str = time_str + parseInt(time_num/60) + "M ";
+        time_num = parseInt(time_num%60);//secs
+           time_str = time_str + time_num + "S";
+        row_content[6]=time_str;
+        appendDevTableRow(dev_table_id,row_content);
+    }
+}
+
+function appendIPv6DevTableRow(table,content){
+    var tr = table.insertRow(-1);
+    var td;
+    td = tr.insertCell(-1);
+	td.innerHTML =content[0];
+
+    td = tr.insertCell(-1);
+	td.innerHTML =content[1];
+
+
+    td = tr.insertCell(-1);
+	td.innerHTML =content[2];
+
+    td = tr.insertCell(-1);
+	td.innerHTML =content[3];
+}
+
+function drawIPv6DevTable()
+{
+    var dev_table_id = document.getElementById("ipv6_dev_list_table");
+    if (ipv6hostinfo =="")
+	    return;
+    var hostinfo = ipv6hostinfo.split("|");
+    for (i = 0; i <hostinfo.length; i++)
+    {
+        var client_detail = hostinfo[i].split("/");
+        var row_content=new Array(4);
+        for(var j=0; j<4; j++)
+        {
+            client_detail[j] = htmlDecodeStr(client_detail[j]);
+        }
+        if (client_detail[0] == "802.11")
+            row_content[0] = "_(Wireless)_";
+        else
+            row_content[0] = "_(Ethernet)_";
+        row_content[1]=client_detail[1];
+        row_content[2]=client_detail[2];
+        row_content[3]=client_detail[3];
+        appendIPv6DevTableRow(dev_table_id,row_content);
+    }
+}
+
+function usb_remove()
+{
+
+    return true ;
+    /*var loc = 'modemstatus_lanstatus.cmd' ;
+    var code;
+     loc += '?ifname=' + ifname;
+     loc += '&redirect=' + redirect;
+	 loc += '&sessionKey=' + sessionKey;
+     code = 'location="' + loc + '"';
+     eval(code);
+     */
+}
+
+function do_load()
+{
+    var eth0_status = '<%ejGetOther(lanStatus, eth0)%>';
+    var eth1_status = '<%ejGetOther(lanStatus, eth1)%>';
+    var eth2_status = '<%ejGetOther(lanStatus, eth2)%>';
+    var eth3_status = '<%ejGetOther(lanStatus, eth3)%>';
+    var moca_status = '<%ejGetOther(lanStatus, lanMoca)%>';
+	var ewan0_status='';
+    if(ethWanInfo[6] =='0')
+    {
+	var ewan0_status = '<%ejGetOther(lanStatus, ewan0)%>';
+    }
+    var table_id_1 = document.getElementById("ethernet_list_table");
+    var table_id_2 = document.getElementById("usb_list_table");
+
+    var image = "ethernet" ;
+    var lan_status = eth0_status.split('/');
+     showRule(1, lan_status, table_id_1, image);
+     lan_status = eth1_status.split('/');
+     showRule(2, lan_status, table_id_1, image);
+     lan_status = eth2_status.split('/');
+     showRule(3, lan_status, table_id_1, image);
+     lan_status = eth3_status.split('/');
+     showRule(4, lan_status, table_id_1, image);
+    if(ethWanInfo[6] =='0')
+    {
+	lan_status = ewan0_status.split('/');
+	showRule(5, lan_status, table_id_1, image);
+    }
+    //var eth0_status = 'Disabled/00:0f:b3:31:32:33/10/2279/0';
+    //var eth1_status = 'Up/00:0f:b3:31:32:34/10/13770/11497';
+
+   // var usb_status = '<%ejGetOther(lanStatus, usb)%>';
+
+   // lan_status = usb_status.split('/');
+    if( board_id.indexOf("M") != -1)
+    {
+    image = "moca" ;
+    lan_status = moca_status.split('/');
+    showRule(1, lan_status, table_id_1 , image);
+    }
+
+   /*  have no lan usb device
+    var cols = new Array();
+    lan_status = usb_status.split('/');
+    ifname=lan_status[6];
+    if(lan_status[0] == "Disabled")
+    {
+        cols[1] = '<span class="status_text_r">_(DISCONNECTED)_ </span>';
+        cols[3] = '_(N/A)_';
+        cols[4] = '_(N/A)_';
+    }
+    else
+    {
+
+        if(lan_status[2] == "100M" ||lan_status[2] == "1000M" ) //   100M / 1000M
+            cols[1] = "<span class='status_text'>"+ lan_status[2] + "</span>";
+        else                                                    //10M
+            cols[1] = "<span class='status_text_y'>"+ lan_status[2] + "</span>";
+
+        cols[3] = lan_status[3];
+        cols[4] = lan_status[4];
+    }
+
+    cols[0] = '<img src = "images/icon' + '_usb.png" width = "39" height = "39" />';
+    cols[2] = "_(N/A)_";
+    cols[5] = '<a href="#" class="remove_btn" onclick="usb_remove();"></a>';
+    appendTableRow(table_id_2, "center", cols);
+    */
+    //show lan hpna_status
+    //paint_lanhpna_sysinfo();
+
+    drawDevTable();
+    drawIPv6DevTable();
+
+	//highlight the button after user click on it
+	side_nav("lanstatus");
+}
+
+function paint_lanhpna_sysinfo()
+{
+    var hpna_sysinfo = '<%ejGetOther(hpna_laninfo)%>';
+    //hpna_sysinfo = 'Error|eth4,50,200';
+    var sys_detail= hpna_sysinfo.split('|');
+    var hpna_statis= '';
+    var lanhpna_ifName = '';
+    var lanhpna_rx = 0;
+    var lanhpna_tx = 0;
+    var link_up=true;
+
+    sys_detail[0] = htmlDecodeStr(sys_detail[0]);
+    sys_detail[1] = htmlDecodeStr(sys_detail[1]);
+    //set the conn status
+    if (sys_detail[0] == "Up")
+    {
+        document.getElementById("hpna_status").value = "_(CONNECTED)_";
+        document.getElementById("hpna_status").className ="status_text";
+    }
+    else if(sys_detail[0] == "Initializing")
+    {
+        document.getElementById("hpna_status").innerHTML = "_(CONNECTING)_";
+        document.getElementById("hpna_status").className ="status_text_y";
+    }
+    else if(sys_detail[0] == "Error")
+    {
+        document.getElementById("hpna_status").innerHTML = "_(ERROR)_";
+        document.getElementById("hpna_status").className ="status_text_r";
+    }
+    else if(sys_detail[0] == "Disabled")
+    {
+        document.getElementById("hpna_status").innerHTML = "_(Disabled)_";
+        document.getElementById("hpna_status").className="status_text_r";
+    }
+    else if(sys_detail[0] == "NoSignal"  ||sys_detail[0] ==  "NoLink")
+    {
+        document.getElementById("hpna_status").innerHTML = "_(NO SIGNAL)_";
+        document.getElementById("hpna_status").className ="status_text_r";
+        link_up=false;
+    }
+
+    // set the statistia value
+    if (sys_detail.length > 1)
+    {
+        hpna_statis = sys_detail[2].split(',');
+        lanhpna_ifName = hpna_statis[0];
+    }
+
+    if (lanhpna_ifName == "eth4" && link_up)
+    {
+        lanhpna_rx = hpna_statis[1];
+        lanhpna_tx = hpna_statis[2];
+    }
+    document.getElementById("hpna_rx").innerHTML = lanhpna_rx;
+    document.getElementById("hpna_tx").innerHTML = lanhpna_tx;
+
+}
+
+
+
+function get_net_info(in_str)
+{
+	if (in_str=="")
+	return in_str;
+	var e_list=in_str.split('|');
+
+	var out_list=e_list[0];
+	var ip_array=new Array();
+
+	var first_ip=htmlDecodeStr((e_list[0].split('/'))[1]);
+
+	if (isValidIpAddress(first_ip))
+		ip_array[0]=first_ip;
+	else
+		return out_list;
+
+	var i,j;
+
+	for (i=1;i<e_list.length;i++)
+	{
+		var details=e_list[i].split('/');
+		var dup=false;
+		for (j=0;j<i;j++)
+		{
+			if (htmlDecodeStr(details[1])==ip_array[j])
+			{
+				dup=true;
+				break;
+			}
+		}
+
+		if (!dup)
+			out_list+="|"+e_list[i];
+
+	}
+
+	return out_list;
+
+}
+
+
+</script>
+</head>
+
+<body onload="do_load()">
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+
+				<h1 class="modemstatus_lanstatus">_(LAN Status)_ </h1>
+					<table class="status_style" style="margin: 10px auto 0pt;" id="ethernet_list_table" align="center" border="0" cellpadding="5" cellspacing="0" width="85%">
+                        <tbody>
+                          <tr align="left">
+                            <th width="113" style="text-transform:none;" align="left">_(Interface)_</th>
+                            <th width="113" style="text-transform:none;" align="left">_(Port)_</th>
+                            <th width="111" style="text-transform:none;" align="left">_(Connection Speed)_</th>
+                            <th width="115" style="text-transform:none;" align="left">_(Packets Sent)_</th>
+                            <th width="98" style="text-transform:none;" align="left">_(Packets Received)_</th>
+                          </tr>
+                        </tbody>
+                    </table>
+					<!-- <table class="status_style" style="margin: 10px auto 0pt;" id="lanhpna_table" align="center" border="0" cellpadding="5" cellspacing="0" width="85%">
+                         <tr align="center">
+                             <th align="left" width="226">_(HPNA Parameter)_:</th>
+                             <th align="left" width="324">_(Status)_</th>
+                         </tr>
+                        <tr align="center">
+                            <td style="text-align:left">_(HPNA Link Status)_:</td>
+                            <td style="text-align:left"><span class="status_text" id='hpna_status' align='left'>_(CONNECTED)_</span></td>
+                        </tr>
+                        <tr align="center">
+                            <td style="text-align:left">_(Packets Sent)_:</td>
+                            <td style="text-align:left"><span id='hpna_tx' align='left'>0</span></td>
+                        </tr>
+                        <tr align="center">
+                            <td style="text-align:left">_(Packets Received)_:</td>
+                            <td style="text-align:left"><span id='hpna_rx' align='left'>0</span></td>
+                        </tr>
+                    </table> -->
+					<table class="status_style" style="margin: 10px auto 0pt;" id="dev_list_table" width="85%" align="center" border="0" cellpadding="5" cellspacing="0">
+                        <tbody>
+                          <tr align="left">
+                            <th width="80" style="text-transform:none;" align="left">_(Interface)_</th>
+							<th width="100" style="text-transform:none;" align="left">_(Hostname)_</th>
+							<th width="120" style="text-transform:none;" align="left">_(MAC Address)_</th>
+							<th width="120" style="text-transform:none;" align="left">_(IP Address)_</th>
+							<th width="30" style="text-transform:none;" align="left">_(Port)_</th>
+                            <th width="100" style="text-transform:none;" align="left">_(Connection Speed)_</th>
+                            <th width="120" style="text-transform:none;" align="left">_(Lease Time Remaining)_</th>
+                          </tr>
+                        </tbody>
+                    </table>
+                    <table class="status_style" style="margin: 10px auto 0pt;" id="ipv6_dev_list_table" width="85%" align="center" border="0" cellpadding="5" cellspacing="0">
+                        <tbody>
+                          <tr align="left">
+                            <th width="80" style="text-transform:none;" align="left">_(Interface)_</th>
+							<th width="120" style="text-transform:none;" align="left">_(MAC Address)_</th>
+							<th width="200" style="text-transform:none;" align="left">_(IPv6 GUAddress)_</th>
+							<th width="200" style="text-transform:none;" align="left">_(IPv6 LLAddress)_</th>
+                          </tr>
+                        </tbody>
+                    </table>
+                    <div id="usb_sev" style="display:none">
+                    <p>&nbsp;</p>
+					<h2 class="inlineheader">USB Host</h2>
+					<p>USB host port allows for certain devices to be connected directly to
+					  your modem.</p>
+					<table width="%88" border="0" align="center" cellpadding="5" id="usb_list_table" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                      <tr align="left">
+                        <th width="50" style="text-transform:none;" align="left">_(USB Host)_</th>
+                        <th width="78" style="text-transform:none;" align="left">_(Connection Speed)_</th>
+                        <th width="73" style="text-transform:none;" align="left">_(Device Connected)_</th>
+                        <th width="68" style="text-transform:none;" align="left">_(Packets Sent)_</th>
+                        <th width="73" style="text-transform:none;" align="left">_(Packets Received)_</th>
+                        <th width="62" style="text-transform:none;" align="left">_(EDIT)_</th>
+                      </tr>
+                    </table>
+                    </div>
+					<p>&nbsp;</p>
+
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+</body>
+</html>

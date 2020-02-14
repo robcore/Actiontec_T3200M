@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Wireless Setup)_ - _(OptikTV Service)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="Javascript">
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var videoSsidState;
+var videoSsidStateOrg;
+
+function do_load()
+{
+    videoSsidState = document.getElementById("uiPostAPEnabled").value;
+    videoSsidStateOrg = document.getElementById("uiPostAPEnabled").value;
+    if(videoSsidState == "1")
+    {
+        document.getElementById("on").checked = true;
+        document.getElementById("off").checked = false;
+    }
+    else
+    {
+        document.getElementById("on").checked = false;
+        document.getElementById("off").checked = true;
+    }
+    side_nav("optiktv_service");
+}
+
+function changeState()
+{
+    if(document.getElementById("on").checked)
+    {
+        videoSsidState = "1";
+    }
+    else if(document.getElementById("off").checked)
+    {
+        videoSsidState = "0";
+    }
+}
+
+function do_apply()
+{
+    var lochead='wirelesssetup_optiktv.wl?';
+    var loc="";
+    var i;
+    var key = '<%ejGetOther(encrypt_key, 0)%>';
+    var form = document.forms[0];
+    var commit = 1;
+
+    if(videoSsidState == videoSsidStateOrg)
+        return;
+
+    if(videoSsidStateOrg == 1 && videoSsidState == 0)
+    {
+        if(!confirm("_(Wireless Set-Top Boxes will not work if you disable the OptikTV Service.)_"))
+            commit = 0;
+    }
+
+    if(commit == 1)
+    {
+        document.getElementById("on").disabled = true;
+        document.getElementById("off").disabled = true;
+        document.getElementById("uiPostAPEnabled").disabled = false;
+        document.getElementById("uiPostAPEnabled").value = videoSsidState;
+
+        loc += 'wlSetBandMode=1';
+
+        for(i=0;i<form.elements.length;i++)
+        {
+            if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+            {
+                loc+="&";
+                loc+=form.elements[i].name;
+                loc+="=";
+                loc+=form.elements[i].value;
+            }
+        }
+        loc += '&wlquantenna_basic_setup_wl1v0=1';
+        loc += '&wlquantenna_security_setup_wl1v0=1';
+        loc += '&sessionKey=' + sessionKey;
+        loc=encrypt_query(loc,key);
+        lochead+=loc;
+        postSubmit(lochead);
+    }
+}
+
+</script>
+</head>
+
+<body onload="do_load()">
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav3.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(wireless_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+         <h1 class="wirelesssetup_basic">_(OptikTV Service Configuration)_</h1>
+           <form name="mainform" action="wirelesssetup_optiktv.wl" method="POST" onSubmit="return do_apply();">
+             <input type="hidden" name="wlEnbl_wl1v3" value="<%ejGetWl(wlEnbl_wl1v3)%>" id="uiPostAPEnabled">
+             <input type="hidden" name="needthankyou" value="1" >
+            <p>_(You may disable wireless IPTV if you are not an OptikTV customer.)_ </p>
+				<p><strong>1. _(Set the OptikTV Service state.)_</strong></p>
+				<table width="45%" border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td width="35%">&nbsp;&nbsp;&nbsp;_(OptikTV Service)_: </td>
+                    <td width="65%">
+                          <input name="videoState" id="on" type="radio" value="Enable" checked="checked" onchange="changeState();"/> _(Enable)_&nbsp;&nbsp;
+                          <input name="videoState" id="off" type="radio" value="Disable" onchange="changeState();"/> _(Disable)_
+                    </td>
+                  </tr>
+            </table>
+				<p><strong>2. _(Click Apply to save changes.)_</strong></p>
+				<p><a class="button1" onclick="do_apply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+			</form>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">//var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

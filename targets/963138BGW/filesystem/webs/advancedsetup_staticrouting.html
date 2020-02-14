@@ -1,0 +1,270 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Routing)_ - _(Static Routing)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/functions.js"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var table_length;
+var RT_MAX_STATIC_ENTRY = 32;
+var staticrouting = '<%ejGetOther(staticrouting)%>'; //format: addr|mask|gw,addr|mask|gw,...
+var info = staticrouting.split(',');
+table_length = info.length -1;
+var availInfNames = '<%ejGetOther(infNames)%>';
+var infNames = availInfNames.split('|');
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function showStaticRouting(){
+    var i = 0;
+    /* debug only
+       staticrouting += "192.168.1.0|255.255.255.0|192.168.10.11,";
+     */
+    var rttable = document.getElementById("static_routing_table");
+
+    if (table_length == 0)
+    {
+        var blank = "_(No Entries Defined)_";
+        appendTableEmptyRow(rttable, "center", "5", blank);
+    }
+
+    for (i = 0; i < table_length; i++) {
+        var records = info[i].split('|');
+        var col = new Array();
+        for(var ii=0; ii<3; ii++)
+        {
+            records[ii] = htmlDecodeStr(records[ii]);
+        }
+
+        col[0] = records[0];
+        col[1] = records[1];
+        if (records[2].length>0)
+            col[2] = records[2];
+        else
+            col[2] = '&nbsp';
+        col[3] = records[3];
+        var btn_remove = "btn_remove_"+i;
+        col[4] = '<a href="#" class="button1" type="button" onClick=doRemove("' + records[0] + '",' + '"' + records[1] + '") style="text-decoration:none;"/ id="'+btn_remove+'"><span>_(Remove)_</span></a>';
+        appendTableRow(rttable, "center", col);
+    }
+}
+
+function do_load()
+{
+    showStaticRouting();
+
+	//highlight the button after user click on it
+	side_nav("advancedsetup_staticrouting");
+}
+
+function doAdd(){
+    var lochead = 'rtroutecfg.cmd?';
+    var loc = 'action=add';
+    var singleRule;
+
+    with ( document.forms[0] ) {
+        if ( isValidIpAddress(dstAddr.value) == false ) {
+            //alert('Destination "' + dstAddr.value + '" has invalid IP address.');
+            alert("_(The Subnet IP Address is invalid.)_");
+            return;
+        }
+        if ( isValidIpAddress(dstMask.value) == false &&  dstMask.value != '255.255.255.255') {
+            //alert('Subnet mask "' + dstMask.value + '" has invalid IP address.');
+            alert("_(The Subnet Mask is invalid.)_");
+            return;
+        }
+        loc += '&dstAddr=' + dstAddr.value;
+        loc += '&dstMask=' + dstMask.value;
+        if(dstGtwy.value == ""){
+          if (dstWanIf.value == "")
+            dstGtwy.value= htmlDecodeStr('<%ejGet(ethIpAddress)%>');
+        }
+        else if ( isValidIpAddress(dstGtwy.value) == false ) {
+            //alert('Default gateway "' + dstGtwy.value + '" has invalid IP address.');
+            alert("_(The Gateway IP Address is invalid.)_");
+            return;
+        }
+        loc += '&dstGtwy=' + dstGtwy.value;
+        loc += '&dstWanIf=' + dstWanIf.value;
+
+        singleRule = dstAddr.value;
+        singleRule += '|'+dstMask.value;
+        singleRule += '|'+dstGtwy.value;
+        singleRule += '|'+dstWanIf.value;
+        for (var i = 0; i < table_length; i++) {
+            if (info[i].indexOf(singleRule)!=-1)
+            {
+                alert("_(Rule already existed.)_");
+                return;
+            }
+        }
+    }
+//Add for SDK6
+        loc +='&ipver=4';
+        loc +='&metric=0';
+//End
+    //loc +='&needthankyou=advancedsetup_staticrouting.html';
+    loc +='&needthankyou=1';
+	loc += '&sessionKey=' + sessionKey;
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+    //var code = 'location="' + loc + '"';
+    //eval(code);
+    postSubmit(lochead);
+}
+
+function doApply(){
+    if (table_length >= RT_MAX_STATIC_ENTRY) {
+        alert("_(Only " + RT_MAX_STATIC_ENTRY + " entries allowed.)_");
+        return;
+    }
+    else
+        doAdd();
+}
+
+function doRemove(addr, mask){
+   /* rmLst format: ip|mask,ip|mask,... */
+   var lochead = 'rtroutecfg.cmd?';
+   var loc = 'action=remove&rmLst=' + addr + '|' + mask + ',';
+   loc += '&sessionKey=' + sessionKey;
+   loc +='&needthankyou=advancedsetup_staticrouting.html';
+   loc=encrypt_query(loc,key);
+   lochead+=loc;
+   //var code = 'location="' + lochead + '"';
+  //eval(code);
+   postSubmit(lochead);
+}
+
+/*
+function dom_load(){ do_load(); }
+
+*/
+function dom_load()
+{
+        do_load();
+}
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="advancedsetup_routing">_(Static Routing)_</h1>
+			<form>
+				<p>_(Enter the Static Routes in the fields below.)_ </p>
+				<p><strong>1. _(Set the destination address of the route.)_</strong></p>
+				<table width="55%" border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td width="43%">&nbsp;&nbsp;&nbsp;_(Destination IP)_: </td>
+                    <td width="57%"><input  name="dstAddr" id="dstAddr" type="text" size="16" style="height:18px;"/>
+                    </td>
+                  </tr>
+                </table>
+				<p>&nbsp;</p>
+				<p><strong>2. _(Set the subnetmask.)_</strong></p>
+				<table width="55%" border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td width="43%">&nbsp;&nbsp;&nbsp;_(Subnetmask)_: </td>
+                    <td width="57%"><input t name="dstMask"  id="dstMask" type="text" size="16" style="height:18px;"/>
+                    </td>
+                  </tr>
+                </table>
+				<p>&nbsp;</p>
+				<p><strong>3. _(Enter the gateway address. If the gateway address is local with respect to the modem, this field can remain blank.)_</strong></p>
+				<table width="55%" border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td width="43%">&nbsp;&nbsp;&nbsp;_(Gateway IP)_: </td>
+                    <td width="57%"><input  name="dstGtwy" id="dstGtwy" type="text" size="16" style="height:18px;"/>
+                    </td>
+                  </tr>
+                </table>
+		<p>&nbsp;</p>
+		<p><strong>4. _(Set the Wan Interface.)_</strong></p>
+		<table width="55%" border="0" cellpadding="0" cellspacing="0">
+			<tr>
+                        <td width="150"> _(Wan Interface)_: </td>
+                        <td width="57%">
+                          <select name="dstWanIf" id="dstWanIf" size="1">
+                             <option value="" selected>
+<script language="Javascript">
+var count = 0;
+var countMax = infNames.length - 1;
+for (count=0;count<countMax;count++) {
+var entry = infNames[count].split('/');
+entry[0] = htmlDecodeStr(entry[0]);
+entry[1] = htmlDecodeStr(entry[1]);
+var desc_intf=entry[1];
+var pt_index=entry[0].indexOf(".");
+
+if (entry[0].indexOf("ptm")!=-1)
+{
+
+	if (pt_index==-1)
+		desc_intf= entry[0] + " (_(PTM)_)";
+	else
+		desc_intf= entry[0] + " (_(PTM VLAN)_ "+ entry[0].substring(pt_index+1) +" )";
+
+}
+else if (entry[0].indexOf("ewan")!=-1)
+{
+	if (pt_index==-1)
+		desc_intf= entry[0] + " (_(Ethernet)_)";
+	else
+		desc_intf= entry[0] + " (_(Ethernet VLAN)_ "+ entry[0].substring(pt_index+1) +" )";
+
+}
+document.write('<option value="' + entry[0] + '">'+desc_intf);
+
+}
+</script>
+                             </option>
+                          </select>
+                        </td>
+          </tr>
+              </table>
+				<p>&nbsp;</p>
+				<p><strong>5. _(Click Apply to save changes.)_ </strong></p>
+				<p><a class="button1" onclick="doApply()" id="btn_apply"><span>_(Apply)_</span></a></p>
+				<p>&nbsp;</p>
+				<!--<p><strong>4. Confirm the information in the Static Routing Table. To view an item from the Static Routing Table, click on the item, then click &quot;View&quot;. To remove an item, click &quot;Remove&quot;.</strong></p>
+				<p>&nbsp;</p>
+                -->
+				<p align="center"><strong>_(Static Routing Table)_ </strong></p>
+				<table width="85%" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;" id="static_routing_table" name="static_routing_table">
+					<tr>
+                        <th><strong>_(Destination IP)_</strong></th>
+                        <th><strong>_(Subnet Mask)_</strong></th>
+                        <th><strong>_(Gateway IP)_</strong></th>
+                        <th><strong>_(Interface)_</strong></th>
+                        <th width="80"><strong>_(EDIT)_ </strong></th>
+					</tr>
+				</table>
+                <p></p>
+			</form>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+
+</SCRIPT>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

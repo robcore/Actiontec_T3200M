@@ -1,0 +1,29 @@
+<div id="left_column">
+	<div id="left_column_header"></div>
+
+	<div id="left_column_content">
+		<ul id="subnav">
+			<li><a  href="#" class="link" onClick="return goThere('advancedsetup_firewallsettings.html');">_(Firewall)_</a></li>
+			<ul>
+                    <li><a  href="#" onClick="return goThere('advancedsetup_firewallsettings.html');" id="advancedsetup_firewallsettings" class="link">_(Firewall)_</a></li>
+                    <li><a  href="#" onClick="return goThere('ipv6_firewallsettings.html');" id="ipv6_firewallsettings" class="link">_(IPv6 Firewall)_</a></li>
+                    <li><a  href="#" onClick="return goThere('advancedsetup_advancedportforwarding.html');" id="advancedsetup_advancedportforwarding" class="link">_(Port Forwarding)_</a></li>
+                    <li><a  href="#" onClick="return goThere('advancedsetup_applications.html');" id="advancedsetup_applications" class="link">_(Applications)_</a></li>
+                    <li><a  href="#" onClick="return goThere('advancedsetup_dmzhosting.html');" id="advancedsetup_dmzhosting" class="link">_(DMZ Hosting)_</a></li>
+                    <li><a  href="#" onClick="return goThere('ipv6_dmzhosting.html');" id="ipv6_dmzhosting" class="link">_(IPv6 DMZ Hosting)_</a></li>
+                    <script language="javascript">
+                        var user_id='<%ejGet(userID)%>';
+                        if(user_id == 3)
+                        {
+                            document.write('<li><a  href="#" onClick="return goThere(\'advancedsetup_advanceddmz.html\');" id="advancedutilities_advanceddmz" class="link">_(Advanced DMZ)_</a></li>');
+                            document.write('<li><a  href="#" onClick="return goThere(\'advancedsetup_ipv6advanceddmz.html\');" id="advancedutilities_ipv6advanceddmz" class="link">_(Advanced IPv6 DMZ)_</a></li>');
+                        }
+                    </script>
+
+                    <li><a  href="#" onClick="return goThere('advancedsetup_upnp.html');" id="advancedsetup_upnp" class="link">_(UPnP)_</a></li>
+			</ul>
+
+		</ul>
+	</div>
+		<div id="left_column_footer"></div>
+</div>

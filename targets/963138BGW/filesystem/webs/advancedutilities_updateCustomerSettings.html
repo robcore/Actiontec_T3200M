@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Load Customer Default Config)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/nav.js" TYPE="text/javascript"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript">
+
+function do_load()
+{
+	//highlight the button after user click on it
+	side_nav("advancedutilities_updateCustomerSettings"); 
+}
+
+var progress = 0;
+
+function isInProgress() {
+   form = document.myform;
+   if (progress == 0 && form.filename.value == "" )
+   {
+       alert("_(Select a configuration file.)_");
+       return false;
+   }
+
+   if ( progress == 0 )  {
+      progress = 1;
+      return true;
+   }
+   alert("_(Configuration upload is in progress. You must wait for the upload to complete and the modem to reboot.)_");
+   return false;
+}
+
+function uploadConf()
+{
+	if(isInProgress())
+		document.myform.submit();
+}
+
+function dom_load(){ do_load(); }
+ 
+</SCRIPT>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+	<%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="utilities_configdownupload">_(Load Customer Default Config)_</h1>
+			<form name="myform" method='post' ENCTYPE='multipart/form-data' action='uploadcustomersettings.cgi'>
+				<p>_(To upload the customer configuration to the modem as default configuration, click Browse.)_<br>
+				   _(Select the configuration file, then click Upload to start the upload.)_</p>
+				<table border="0" cellspacing="0" cellpadding="0">
+				<tr><td><input type='file' name='filename' id='filename' size='30'></td><td><a class="button1" onclick="uploadConf()" id="btn_upload"><span>_(Upload)_</span></a></td></tr>
+				</table>
+			</form>
+				    <p>&nbsp;</p>
+				    <div class="clear_left"></div>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+
+</SCRIPT>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

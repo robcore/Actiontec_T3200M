@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>_(Warning.)_</title>
+    <link href="css/basic.css" rel="stylesheet" type="text/css" />
+    <script language="JavaScript" src="js/nav.js"></script>
+    <script language="JavaScript" src="js/util.js"></script>
+    <script language="JavaScript" src="js/htmldecode.js"></script>
+    <script language="JavaScript" src="js/functions.js"></script>
+    <script language="JavaScript">
+        function do_load()
+        {
+            if(xmlhttp != null)
+            {
+                xmlhttp.open("GET","./wirelesssetup_initializing_refresh.html");
+                xmlhttp.onreadystatechange =function()
+                {
+                    if(xmlhttp.readyState==4)
+                    {
+                        var statusval = xmlhttp.responseText;
+                        if(parseInt(statusval) != 1)
+                        {
+                            setTimeout("do_load();", 3000);
+                            document.getElementById("wireless_tips").innerHTML = "_(Wireless 5GHz or 2.4GHz is initializing, please wait...)_";
+                        }
+                        else
+                        {
+                            document.getElementById("wireless_tips").innerHTML = "_(Wireless initialization has done, do you want to)_ <a href='#' style='color:#0000FF' onClick=goThere('wirelesssetup_basic.html');>_(change wireless settings)_</a> _(or)_ <a href='#' style='color:#0000FF' onClick=goThere('modemstatus_wirelessstatus.html');>_(view wireless status)_</a> ?";
+                        }
+                    }
+                }
+                xmlhttp.send(null);
+            }
+        }
+
+        function dom_load(){ do_load(); }
+
+    </script>
+</head>
+<body>
+<div id="wrapper">
+  <!-- TOP NAV -->
+  <%ejInclude(top_btn_nav3.html)%>
+  <!-- END TOP NAV -->
+  <!-- SIDE NAV -->
+   <div id="left_column">
+	<div id="left_column_header"></div>
+	<div id="left_column_content">
+      <ul id="subnav">
+      <li><a href="#" class="link">_(Wireless)_</a></li>
+      </ul>
+	</div>
+	<div id="left_column_footer"></div>
+   </div>
+  <!-- END SIDE NAV -->
+  <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+        <div id="content_right_header"></div>
+            <div id="content_right_contentarea">
+                <h1 class="thankyou">_(Warning.)_ </h1>
+                <p id="wireless_tips">
+                    _(Wireless 5GHz or 2.4GHz is initializing, please wait...)_
+                </p>
+            </div>
+        <div id="content_right_footer"></div>
+    </div>
+    <div class="clear_left"></div>
+</div>
+<script language="JavaScript">var foobar = new domFunction(dom_load);</script>
+</body>
+</html>

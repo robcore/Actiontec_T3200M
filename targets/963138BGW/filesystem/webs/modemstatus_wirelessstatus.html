@@ -1,0 +1,753 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>_(Status)_ - _(LAN  Services)_ - _(Wireless Status)_</title>
+  <link href="css/basic.css" rel="stylesheet" type="text/css" />
+  <SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+  <script language="JavaScript" src="js/nav.js"></script>
+  <script language="JavaScript" src="js/htmldecode.js"></script>
+  <script language="Javascript">
+
+  var ssid_num = 8;
+  var gv_cssid;
+  var gv_apEnabled = new Array(ssid_num);
+  var gv_ssid = new Array(ssid_num);
+  var gv_bssid = new Array(ssid_num);
+  var gv_wlAuthMode = new Array(ssid_num);
+  var gv_wlWep = new Array(ssid_num);
+  var gv_hide = new Array(ssid_num);
+  var gv_FltMacMode = new Array(ssid_num);
+  var gv_channel = new Array(ssid_num);
+  var gv_realchannel = new Array(ssid_num);
+  var gv_wps_state = new Array(ssid_num);
+  var gv_wps_type = new Array(ssid_num);
+  var gv_wme = new Array(ssid_num);
+  var gv_wme_power_save = new Array(ssid_num);
+  var gv_gmode = new Array(ssid_num);
+  var gv_nmode = new Array(ssid_num);
+  var gv_nreqd = new Array(ssid_num);
+  var gv_radioEnabled = new Array(ssid_num);
+  var gv_pack_recv = new Array(ssid_num);
+  var gv_pack_send = new Array(ssid_num);
+  var gv_keybit = new Array(ssid_num);
+  var gv_vMode = new Array(ssid_num);
+
+/************************ global vars ****************************/
+var has_QTN = htmlDecodeStr("<%ejGet(qtnExist)%>");
+var radioEnabled_wl0 = htmlDecodeStr("<%ejGetWl(wlRadio_wl0)%>");
+var channel_wl0 = htmlDecodeStr("<%ejGetWl(wlChannel_wl0)%>");
+var realChannel_wl0 = htmlDecodeStr("<%ejGetWl(wlCurrentChannel_wl0)%>");
+var gmode_wl0 = htmlDecodeStr("<%ejGetWl(wlgMode_wl0)%>");
+var nmode_wl0 = htmlDecodeStr("<%ejGetWl(wlNmode_wl0)%>");
+var nreqd_wl0 = htmlDecodeStr("<%ejGetWl(wlNReqd_wl0)%>");
+var wmeEnabled_wl0 = htmlDecodeStr("<%ejGetWl(wlWme_wl0)%>");
+var wmePowerSave_wl0 = htmlDecodeStr("<%ejGetWl(wlWmeApsd_wl0)%>");
+
+var radioEnabled_wl1 = htmlDecodeStr("<%ejGetWl(wlRadio_wl1)%>");
+var channel_wl1 = htmlDecodeStr("<%ejGetWl(wlChannel_wl1)%>");
+var realChannel_wl1 = htmlDecodeStr("<%ejGetWl(wlCurrentChannel_wl1)%>");
+var wmeEnabled_wl1 = htmlDecodeStr("<%ejGetWl(wlWme_wl1)%>");
+var wmePowerSave_wl1 = htmlDecodeStr("<%ejGetWl(wlWmeApsd_wl1)%>");
+var vMode_wl1 = htmlDecodeStr("<%ejGetWl(wlVmode_wl1)%>");
+
+/************************ wl1 vars ****************************/
+var apEnabled_wl1v0 = htmlDecodeStr("<%ejGetWl(wlEnbl_wl1v0)%>");
+var ssid_wl1v0 = htmlDecodeStr("<%ejGetWl(wlSsid_wl1v0)%>");
+var bssid_wl1v0 = htmlDecodeStr("<%ejGetWl(wlBssid_wl1v0)%>");
+var authMode_wl1v0 = htmlDecodeStr("<%ejGetWl(wlAuthMode_wl1v0)%>");
+var wep_wl1v0 = htmlDecodeStr("<%ejGetWl(wlWep_wl1v0)%>");
+var keyBit_wl1v0 = htmlDecodeStr("<%ejGetWl(wlKeyBit_wl1v0)%>");
+var hide_wl1v0 = htmlDecodeStr("<%ejGetWl(wlHide_wl1v0)%>");
+var filterMacMode_wl1v0 = htmlDecodeStr("<%ejGetWl(wlFltMacMode_wl1v0)%>");
+var wpsState_wl1v0 = htmlDecodeStr("<%ejGetWl(wlquantenna_wps_enable_wl1)%>");
+var wpsType_wl1v0 = htmlDecodeStr("<%ejGetWl(wlappin_wl1v0)%>");
+var packRecv_wl1v0 = htmlDecodeStr("<%ejGetOther(stsifcget_item_qtn, 0, rx)%>");
+var packSend_wl1v0 = htmlDecodeStr("<%ejGetOther(stsifcget_item_qtn, 0, tx)%>");
+
+var apEnabled_wl1v1 = htmlDecodeStr("<%ejGetWl(wlEnbl_wl1v1)%>");
+var ssid_wl1v1 = htmlDecodeStr("<%ejGetWl(wlSsid_wl1v1)%>");
+var bssid_wl1v1 = htmlDecodeStr("<%ejGetWl(wlBssid_wl1v1)%>");
+var authMode_wl1v1 = htmlDecodeStr("<%ejGetWl(wlAuthMode_wl1v1)%>");
+var wep_wl1v1 = htmlDecodeStr("<%ejGetWl(wlWep_wl1v1)%>");
+var keyBit_wl1v1 = htmlDecodeStr("<%ejGetWl(wlKeyBit_wl1v1)%>");
+var hide_wl1v1 = htmlDecodeStr("<%ejGetWl(wlHide_wl1v1)%>");
+var filterMacMode_wl1v1 = htmlDecodeStr("<%ejGetWl(wlFltMacMode_wl1v1)%>");
+var wpsState_wl1v1 = htmlDecodeStr("<%ejGetWl(wlWscMode_wl1v1)%>");
+var wpsType_wl1v1 = htmlDecodeStr("<%ejGetWl(wlappin_wl1v1)%>");
+var packRecv_wl1v1 = "<%ejGetOther(stsifcget_item_qtn, 1, rx)%>";
+var packSend_wl1v1 = "<%ejGetOther(stsifcget_item_qtn, 1, tx)%>";
+
+var apEnabled_wl1v2 = htmlDecodeStr("<%ejGetWl(wlEnbl_wl1v2)%>");
+var ssid_wl1v2 = htmlDecodeStr("<%ejGetWl(wlSsid_wl1v2)%>");
+var bssid_wl1v2 = htmlDecodeStr("<%ejGetWl(wlBssid_wl1v2)%>");
+var authMode_wl1v2 = htmlDecodeStr("<%ejGetWl(wlAuthMode_wl1v2)%>");
+var wep_wl1v2 = htmlDecodeStr("<%ejGetWl(wlWep_wl1v2)%>");
+var keyBit_wl1v2 = htmlDecodeStr("<%ejGetWl(wlKeyBit_wl1v2)%>");
+var hide_wl1v2 = htmlDecodeStr("<%ejGetWl(wlHide_wl1v2)%>");
+var filterMacMode_wl1v2 = htmlDecodeStr("<%ejGetWl(wlFltMacMode_wl1v2)%>");
+var wpsState_wl1v2 = htmlDecodeStr("<%ejGetWl(wlWscMode_wl1v2)%>");
+var wpsType_wl1v2 = htmlDecodeStr("<%ejGetWl(wlappin_wl1v2)%>");
+var packRecv_wl1v2 = "<%ejGetOther(stsifcget_item_qtn, 2, rx)%>";
+var packSend_wl1v2 = "<%ejGetOther(stsifcget_item_qtn, 2, tx)%>";
+
+var apEnabled_wl1v3 = htmlDecodeStr("<%ejGetWl(wlEnbl_wl1v3)%>");
+var ssid_wl1v3 = htmlDecodeStr("<%ejGetWl(wlSsid_wl1v3)%>");
+var bssid_wl1v3 = htmlDecodeStr("<%ejGetWl(wlBssid_wl1v3)%>");
+var authMode_wl1v3 = htmlDecodeStr("<%ejGetWl(wlAuthMode_wl1v3)%>");
+var wep_wl1v3 = htmlDecodeStr("<%ejGetWl(wlWep_wl1v3)%>");
+var keyBit_wl1v3 = htmlDecodeStr("<%ejGetWl(wlKeyBit_wl1v3)%>");
+var hide_wl1v3 = htmlDecodeStr("<%ejGetWl(wlHide_wl1v3)%>");
+var filterMacMode_wl1v3 = htmlDecodeStr("<%ejGetWl(wlFltMacMode_wl1v3)%>");
+var wpsState_wl1v3 = htmlDecodeStr("<%ejGetWl(wlWscMode_wl1v3)%>");
+var wpsType_wl1v3 = htmlDecodeStr("<%ejGetWl(wlappin_wl1v3)%>");
+var packRecv_wl1v3 = "<%ejGetOther(stsifcget_item_qtn, 3, rx)%>";
+var packSend_wl1v3 = "<%ejGetOther(stsifcget_item_qtn, 3, tx)%>";
+
+/************************ wl0 vars ****************************/
+var apEnabled_wl0v0 = htmlDecodeStr("<%ejGetWl(wlEnbl_wl0v0)%>");
+var ssid_wl0v0 = htmlDecodeStr("<%ejGetWl(wlSsid_wl0v0)%>");
+var bssid_wl0v0 = htmlDecodeStr("<%ejGetWl(wlBssid_wl0v0)%>");
+var authMode_wl0v0 = htmlDecodeStr("<%ejGetWl(wlAuthMode_wl0v0)%>");
+var wep_wl0v0 = htmlDecodeStr("<%ejGetWl(wlWep_wl0v0)%>");
+var keyBit_wl0v0 = htmlDecodeStr("<%ejGetWl(wlKeyBit_wl0v0)%>");
+var hide_wl0v0 = htmlDecodeStr("<%ejGetWl(wlHide_wl0v0)%>");
+var filterMacMode_wl0v0 = htmlDecodeStr("<%ejGetWl(wlFltMacMode_wl0v0)%>");
+var wpsState_wl0v0 = htmlDecodeStr("<%ejGetWl(wlWscMode_wl0v0)%>");
+var wpsType_wl0v0 = htmlDecodeStr("<%ejGetWl(wlappin_wl0v0)%>");
+var packRecv_wl0v0 = htmlDecodeStr("<%ejGetOther(stsifcget_item, wl0, 2)%>");
+var packSend_wl0v0 = htmlDecodeStr("<%ejGetOther(stsifcget_item, wl0, 6)%>");
+
+var apEnabled_wl0v1 = htmlDecodeStr("<%ejGetWl(wlEnbl_wl0v1)%>");
+var ssid_wl0v1 = htmlDecodeStr("<%ejGetWl(wlSsid_wl0v1)%>");
+var bssid_wl0v1 = htmlDecodeStr("<%ejGetWl(wlBssid_wl0v1)%>");
+var authMode_wl0v1 = htmlDecodeStr("<%ejGetWl(wlAuthMode_wl0v1)%>");
+var wep_wl0v1 = htmlDecodeStr("<%ejGetWl(wlWep_wl0v1)%>");
+var keyBit_wl0v1 = htmlDecodeStr("<%ejGetWl(wlKeyBit_wl0v1)%>");
+var hide_wl0v1 = htmlDecodeStr("<%ejGetWl(wlHide_wl0v1)%>");
+var filterMacMode_wl0v1 = htmlDecodeStr("<%ejGetWl(wlFltMacMode_wl0v1)%>");
+var wpsState_wl0v1 = htmlDecodeStr("<%ejGetWl(wlWscMode_wl0v1)%>");
+var wpsType_wl0v1 = htmlDecodeStr("<%ejGetWl(wlappin_wl0v1)%>");
+var packRecv_wl0v1 = htmlDecodeStr("<%ejGetOther(stsifcget_item, wl0.1, 2)%>");
+var packSend_wl0v1 = htmlDecodeStr("<%ejGetOther(stsifcget_item, wl0.1, 6)%>");
+
+var apEnabled_wl0v2 = htmlDecodeStr("<%ejGetWl(wlEnbl_wl0v2)%>");
+var ssid_wl0v2 = htmlDecodeStr("<%ejGetWl(wlSsid_wl0v2)%>");
+var bssid_wl0v2 = htmlDecodeStr("<%ejGetWl(wlBssid_wl0v2)%>");
+var authMode_wl0v2 = htmlDecodeStr("<%ejGetWl(wlAuthMode_wl0v2)%>");
+var wep_wl0v2 = htmlDecodeStr("<%ejGetWl(wlWep_wl0v2)%>");
+var keyBit_wl0v2 = htmlDecodeStr("<%ejGetWl(wlKeyBit_wl0v2)%>");
+var hide_wl0v2 = htmlDecodeStr("<%ejGetWl(wlHide_wl0v2)%>");
+var filterMacMode_wl0v2 = htmlDecodeStr("<%ejGetWl(wlFltMacMode_wl0v2)%>");
+var wpsState_wl0v2 = htmlDecodeStr("<%ejGetWl(wlWscMode_wl0v2)%>");
+var wpsType_wl0v2 = htmlDecodeStr("<%ejGetWl(wlappin_wl0v2)%>");
+var packRecv_wl0v2 = "<%ejGetOther(stsifcget_item, wl0.2, 2)%>";
+var packSend_wl0v2 = "<%ejGetOther(stsifcget_item, wl0.2, 6)%>";
+
+var apEnabled_wl0v3 = htmlDecodeStr("<%ejGetWl(wlEnbl_wl0v3)%>");
+var ssid_wl0v3 = htmlDecodeStr("<%ejGetWl(wlSsid_wl0v3)%>");
+var bssid_wl0v3 = htmlDecodeStr("<%ejGetWl(wlBssid_wl0v3)%>");
+var authMode_wl0v3 = htmlDecodeStr("<%ejGetWl(wlAuthMode_wl0v3)%>");
+var wep_wl0v3 = htmlDecodeStr("<%ejGetWl(wlWep_wl0v3)%>");
+var keyBit_wl0v3 = htmlDecodeStr("<%ejGetWl(wlKeyBit_wl0v3)%>");
+var hide_wl0v3 = htmlDecodeStr("<%ejGetWl(wlHide_wl0v3)%>");
+var filterMacMode_wl0v3 = htmlDecodeStr("<%ejGetWl(wlFltMacMode_wl0v3)%>");
+var wpsState_wl0v3 = htmlDecodeStr("<%ejGetWl(wlWscMode_wl0v3)%>");
+var wpsType_wl0v3 = htmlDecodeStr("<%ejGetWl(wlappin_wl0v3)%>");
+var packRecv_wl0v3 = "<%ejGetOther(stsifcget_item, wl0.3, 2)%>";
+var packSend_wl0v3 = "<%ejGetOther(stsifcget_item, wl0.3, 6)%>";
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function go_to_adv_wl_statistics()
+{
+    goThere("wireless_advanced_statistics.html");
+    return;
+}
+
+function go_to_wireless_monitor()
+{
+    goThere("modemstatus_wirelessmonitor.html");
+    return;
+}
+
+function go_to_wireless_associatedDevSts()
+{
+    goThere("modemstatus_wirelessmonitor_graph.html");
+    return;
+}
+
+function do_load()
+{
+    gv_apEnabled[0] = apEnabled_wl1v0;
+    gv_ssid[0] = ssid_wl1v0;
+    gv_bssid[0] = bssid_wl1v0;
+    gv_wlAuthMode[0] = authMode_wl1v0;
+    gv_wlWep[0] = wep_wl1v0;
+    gv_keybit[0] = keyBit_wl1v0;
+    gv_hide[0] = hide_wl1v0;
+    gv_FltMacMode[0] = filterMacMode_wl1v0;
+    gv_pack_recv[0] = packRecv_wl1v0;
+    gv_pack_send[0] = packSend_wl1v0;
+    gv_wps_state[0] = wpsState_wl1v0;
+    gv_wps_type[0] = wpsType_wl1v0;
+    gv_wme[0] = wmeEnabled_wl1;
+    gv_wme_power_save[0] = wmePowerSave_wl1;
+    gv_channel[0] = channel_wl1;
+    gv_realchannel[0] = realChannel_wl1;
+    gv_radioEnabled[0] = radioEnabled_wl1;
+    gv_vMode[0] = vMode_wl1;
+
+    gv_apEnabled[1] = apEnabled_wl1v1;
+    gv_ssid[1] = ssid_wl1v1;
+    gv_bssid[1] = bssid_wl1v1;
+    gv_wlAuthMode[1] = authMode_wl1v1;
+    gv_wlWep[1] = wep_wl1v1;
+    gv_keybit[1] = keyBit_wl1v1;
+    gv_hide[1] = hide_wl1v1;
+    gv_FltMacMode[1] = filterMacMode_wl1v1;
+    gv_pack_recv[1] = packRecv_wl1v1;
+    gv_pack_send[1] = packSend_wl1v1;
+    gv_wps_state[1] = wpsState_wl1v1;
+    gv_wps_type[1] = wpsType_wl1v1;
+    gv_wme[1] = wmeEnabled_wl1;
+    gv_wme_power_save[1] = wmePowerSave_wl1;
+    gv_channel[1] = channel_wl1;
+    gv_realchannel[1] = realChannel_wl1;
+    gv_radioEnabled[1] = radioEnabled_wl1;
+    gv_vMode[1] = vMode_wl1;
+
+    gv_apEnabled[2] = apEnabled_wl1v2;
+    gv_ssid[2] = ssid_wl1v2;
+    gv_bssid[2] = bssid_wl1v2;
+    gv_wlAuthMode[2] = authMode_wl1v2;
+    gv_wlWep[2] = wep_wl1v2;
+    gv_keybit[2] = keyBit_wl1v2;
+    gv_hide[2] = hide_wl1v2;
+    gv_FltMacMode[2] = filterMacMode_wl1v2;
+    gv_pack_recv[2] = packRecv_wl1v2;
+    gv_pack_send[2] = packSend_wl1v2;
+    gv_wps_state[2] = wpsState_wl1v2;
+    gv_wps_type[2] = wpsType_wl1v2;
+    gv_wme[2] = wmeEnabled_wl1;
+    gv_wme_power_save[2] = wmePowerSave_wl1;
+    gv_channel[2] = channel_wl1;
+    gv_realchannel[2] = realChannel_wl1;
+    gv_radioEnabled[2] = radioEnabled_wl1;
+    gv_vMode[2] = vMode_wl1;
+
+    gv_apEnabled[3] = apEnabled_wl1v3;
+    gv_ssid[3] = ssid_wl1v3;
+    gv_bssid[3] = bssid_wl1v3;
+    gv_wlAuthMode[3] = authMode_wl1v3;
+    gv_wlWep[3] = wep_wl1v3;
+    gv_keybit[3] = keyBit_wl1v3;
+    gv_hide[3] = hide_wl1v3;
+    gv_FltMacMode[3] = filterMacMode_wl1v3;
+    gv_pack_recv[3] = packRecv_wl1v3;
+    gv_pack_send[3] = packSend_wl1v3;
+    gv_wps_state[3] = wpsState_wl1v3;
+    gv_wps_type[3] = wpsType_wl1v3;
+    gv_wme[3] = wmeEnabled_wl1;
+    gv_wme_power_save[3] = wmePowerSave_wl1;
+    gv_channel[3] = channel_wl1;
+    gv_realchannel[3] = realChannel_wl1;
+    gv_radioEnabled[3] = radioEnabled_wl1;
+    gv_vMode[3] = vMode_wl1;
+
+    gv_apEnabled[4] = apEnabled_wl0v0;
+    gv_ssid[4] = ssid_wl0v0;
+    gv_bssid[4] = bssid_wl0v0;
+    gv_wlAuthMode[4] = authMode_wl0v0;
+    gv_wlWep[4] = wep_wl0v0;
+    gv_keybit[4] = keyBit_wl0v0;
+    gv_hide[4] = hide_wl0v0;
+    gv_FltMacMode[4] = filterMacMode_wl0v0;
+    gv_pack_recv[4] = packRecv_wl0v0;
+    gv_pack_send[4] = packSend_wl0v0;
+    gv_wps_state[4] = wpsState_wl0v0;
+    gv_wps_type[4] = wpsType_wl0v0;
+    gv_wme[4] = wmeEnabled_wl0;
+    gv_wme_power_save[4] = wmePowerSave_wl0;
+    gv_channel[4] = channel_wl0;
+    gv_realchannel[4] = realChannel_wl0;
+    gv_gmode[4] = gmode_wl0;
+    gv_nmode[4] = nmode_wl0;
+    gv_nreqd[4] = nreqd_wl0;
+    gv_radioEnabled[4] = radioEnabled_wl0;
+
+    gv_apEnabled[5] = apEnabled_wl0v1;
+    gv_ssid[5] = ssid_wl0v1;
+    gv_bssid[5] = bssid_wl0v1;
+    gv_wlAuthMode[5] = authMode_wl0v1;
+    gv_wlWep[5] = wep_wl0v1;
+    gv_keybit[5] = keyBit_wl0v1;
+    gv_hide[5] = hide_wl0v1;
+    gv_FltMacMode[5] = filterMacMode_wl0v1;
+    gv_pack_recv[5] = packRecv_wl0v1;
+    gv_pack_send[5] = packSend_wl0v1;
+    gv_wps_state[5] = wpsState_wl0v1;
+    gv_wps_type[5] = wpsType_wl0v1;
+    gv_wme[5] = wmeEnabled_wl0;
+    gv_wme_power_save[5] = wmePowerSave_wl0;
+    gv_channel[5] = channel_wl0;
+    gv_realchannel[5] = realChannel_wl0;
+    gv_gmode[5] = gmode_wl0;
+    gv_nmode[5] = nmode_wl0;
+    gv_nreqd[5] = nreqd_wl0;
+    gv_radioEnabled[5] = radioEnabled_wl0;
+
+    gv_apEnabled[6] = apEnabled_wl0v2;
+    gv_ssid[6] = ssid_wl0v2;
+    gv_bssid[6] = bssid_wl0v2;
+    gv_wlAuthMode[6] = authMode_wl0v2;
+    gv_wlWep[6] = wep_wl0v2;
+    gv_keybit[6] = keyBit_wl0v2;
+    gv_hide[6] = hide_wl0v2;
+    gv_FltMacMode[6] = filterMacMode_wl0v2;
+    gv_pack_recv[6] = packRecv_wl0v2;
+    gv_pack_send[6] = packSend_wl0v2;
+    gv_wps_state[6] = wpsState_wl0v2;
+    gv_wps_type[6] = wpsType_wl0v2;
+    gv_wme[6] = wmeEnabled_wl0;
+    gv_wme_power_save[6] = wmePowerSave_wl0;
+    gv_channel[6] = channel_wl0;
+    gv_realchannel[6] = realChannel_wl0;
+    gv_gmode[6] = gmode_wl0;
+    gv_nmode[6] = nmode_wl0;
+    gv_nreqd[6] = nreqd_wl0;
+    gv_radioEnabled[6] = radioEnabled_wl0;
+
+    gv_apEnabled[7] = apEnabled_wl0v3;
+    gv_ssid[7] = ssid_wl0v3;
+    gv_bssid[7] = bssid_wl0v3;
+    gv_wlAuthMode[7] = authMode_wl0v3;
+    gv_wlWep[7] = wep_wl0v3;
+    gv_keybit[7] = keyBit_wl0v3;
+    gv_hide[7] = hide_wl0v3;
+    gv_FltMacMode[7] = filterMacMode_wl0v3;
+    gv_pack_recv[7] = packRecv_wl0v3;
+    gv_pack_send[7] = packSend_wl0v3;
+    gv_wps_state[7] = wpsState_wl0v3;
+    gv_wps_type[7] = wpsType_wl0v3;
+    gv_wme[7] = wmeEnabled_wl0;
+    gv_wme_power_save[7] = wmePowerSave_wl0;
+    gv_channel[7] = channel_wl0;
+    gv_realchannel[7] = realChannel_wl0;
+    gv_gmode[7] = gmode_wl0;
+    gv_nmode[7] = nmode_wl0;
+    gv_nreqd[7] = nreqd_wl0;
+    gv_radioEnabled[7] = radioEnabled_wl0;
+
+    draw_ssid_select_list();
+    uiset_section_wl_status();
+
+	//highlight the button after user click on it
+	side_nav("wirelessstatus");
+}
+
+function uiset_section_ssid_state()
+{
+    //values checked
+    if (gv_apEnabled[gv_cssid] == "1" && gv_radioEnabled[gv_cssid] == "1") {
+        document.getElementById("id_ssid_enabled").innerHTML = "_(Enabled)_";
+        document.getElementById("id_ssid_enabled").className = "status_text_g";
+    }
+    else {
+        document.getElementById("id_ssid_enabled").innerHTML = "_(Disabled)_";
+        document.getElementById("id_ssid_enabled").className = "status_text_r";
+    }
+}
+
+function draw_ssid_select_list()
+{
+    var ssid_list = document.getElementById("id_ssid");
+    ssid_list.length = 0;
+
+    if (has_QTN == "0")
+    {
+        ssid_list[0] = new Option(gv_ssid[4], "4");
+        ssid_list[1] = new Option(gv_ssid[5], "5");
+/*
+        ssid_list[2] = new Option(gv_ssid[6], "6");
+        ssid_list[3] = new Option(gv_ssid[7], "7");
+*/
+    }
+    else
+    {
+        ssid_list[0] = new Option(gv_ssid[0], "0");
+        ssid_list[1] = new Option(gv_ssid[1], "1");
+        ssid_list[2] = new Option(gv_ssid[4], "4");
+        ssid_list[3] = new Option(gv_ssid[5], "5");
+/*
+        ssid_list[2] = new Option(gv_ssid[2], "2");
+        ssid_list[3] = new Option(gv_ssid[3], "3");
+        ssid_list[4] = new Option(gv_ssid[4], "4");
+        ssid_list[5] = new Option(gv_ssid[5], "5");
+        ssid_list[6] = new Option(gv_ssid[6], "6");
+        ssid_list[7] = new Option(gv_ssid[7], "7");
+*/
+    }
+}
+
+function uiset_section_wl_status()
+{
+    gv_cssid = parseInt(document.getElementById("id_ssid").value);
+
+    //
+    if (gv_radioEnabled[gv_cssid] == "1")  //Enabled
+    {
+    document.getElementById("id_radio_enabled").innerHTML ="_(Enabled)_";
+    document.getElementById("id_radio_enabled").className = "status_text_g";
+    document.getElementById("advanced_wireless_statistics").setAttribute("class", "button1");
+    document.getElementById("advanced_wireless_statistics").setAttribute("onclick", "go_to_adv_wl_statistics()");
+    document.getElementById("modemstatus_wireless_monitor").setAttribute("class", "button1");
+    document.getElementById("modemstatus_wireless_monitor").setAttribute("onclick", "go_to_wireless_monitor()");
+    document.getElementById("associatedDevSts").setAttribute("class", "button1");
+    document.getElementById("associatedDevSts").setAttribute("onclick", "go_to_wireless_associatedDevSts()");
+    }
+    else {
+    document.getElementById("id_radio_enabled").innerHTML ="_(Disabled)_";
+    document.getElementById("id_radio_enabled").className = "status_text_r";
+    document.getElementById("advanced_wireless_statistics").setAttribute("class", "button2");
+    document.getElementById("advanced_wireless_statistics").setAttribute("onclick", "");
+    document.getElementById("modemstatus_wireless_monitor").setAttribute("class", "button2");
+    document.getElementById("modemstatus_wireless_monitor").setAttribute("onclick", "");
+    document.getElementById("associatedDevSts").setAttribute("class", "button2");
+    document.getElementById("associatedDevSts").setAttribute("onclick", "");
+    }
+
+    //
+    if ( (gv_wlAuthMode[gv_cssid] == "open" || gv_wlAuthMode[gv_cssid] == "shared" || gv_wlAuthMode[gv_cssid] == "None")
+	    && (gv_wlWep[gv_cssid] == "disabled") ){   //AuthMode == OFF
+	document.getElementById("id_security_enabled").innerHTML ="_(Disabled)_";
+	document.getElementById("id_security_enabled").className = "status_text_r";
+    }
+    else{
+	document.getElementById("id_security_enabled").innerHTML ="_(Enabled)_";
+	document.getElementById("id_security_enabled").className = "status_text_g";
+    }
+
+    //
+    if ( (gv_wlAuthMode[gv_cssid] == "open" || gv_wlAuthMode[gv_cssid] == "shared" || gv_wlAuthMode[gv_cssid] == "None")
+	    && (gv_wlWep[gv_cssid] == "disabled") )
+   {
+	document.getElementById("id_security_type").innerHTML = "_(Disabled)_";
+	document.getElementById("id_security_type").className  = "status_text_r";
+   }
+    else {
+	switch (gv_wlAuthMode[gv_cssid]) {
+	    case "open":
+		case "shared":
+		if (gv_keybit[gv_cssid] == 1) { //64-BIT
+		    document.getElementById("id_security_type").innerHTML = "_(64-bit WEP)_";
+		} else { //128-BIT
+		    document.getElementById("id_security_type").innerHTML = "_(128-bit WEP)_";
+		}
+	    document.getElementById("id_security_type").className  = "";
+	    break;
+	    case "radius":
+		document.getElementById("id_security_type").innerHTML = "_(WEP + 802.1x)_";
+	    document.getElementById("id_security_type").className  = "";
+	    break;
+	    case "wpa":
+		document.getElementById("id_security_type").innerHTML = "_(WPA Enterprise)_";
+	    document.getElementById("id_security_type").className  = "";
+	    break;
+	    case "psk":
+		document.getElementById("id_security_type").innerHTML = "_(WPA PSK)_";
+	    document.getElementById("id_security_type").className  = "";
+	    break;
+	    case "wpa2":
+		document.getElementById("id_security_type").innerHTML = "_(WPA2 Enterprise)_";
+	    document.getElementById("id_security_type").className  = "";
+	    break;
+	    case "psk2":
+		document.getElementById("id_security_type").innerHTML = "_(WPA2 PSK)_";
+	    document.getElementById("id_security_type").className  = "";
+	    break;
+	    case "wpa wpa2":
+		document.getElementById("id_security_type").innerHTML = "_(WPA/WPA2 Enterprise)_";
+	    document.getElementById("id_security_type").className  = "";
+	    break;
+	    case "psk psk2":
+		document.getElementById("id_security_type").innerHTML = "_(WPA/WPA2 PSK)_";
+	    document.getElementById("id_security_type").className  = "";
+	    break;
+	    default:
+	    document.getElementById("id_security_type").innerHTML = "_(Disabled)_";
+	    document.getElementById("id_security_type").className  = "status_text_r";
+	}
+    }
+    //
+    document.getElementById("id_ssid_text").innerHTML = "<strong>" + gv_ssid[gv_cssid] + "</strong>";
+    document.getElementById("id_ssid_text").className = "status_text_g";
+/*
+    //
+    if (gv_channel == "0")
+	document.getElementById("id_channel_text").innerHTML = "Auto";
+    else
+	document.getElementById("id_channel_text").innerHTML = gv_channel;
+*/
+    if (gv_channel[gv_cssid] == "0") {
+        document.getElementById("select_channel_text").innerHTML = "_(Auto)_";
+        document.getElementById("id_channel_text").innerHTML = gv_realchannel[gv_cssid];
+    }
+    else {
+        document.getElementById("select_channel_text").innerHTML = "_(Manual)_";
+        document.getElementById("id_channel_text").innerHTML = gv_channel[gv_cssid];
+    }
+
+    //
+    if (gv_wme[gv_cssid] == "1")
+	document.getElementById("id_wmm_state").innerHTML = "_(Enabled)_";
+    else
+	document.getElementById("id_wmm_state").innerHTML = "_(Disabled)_";
+
+    if (gv_wme_power_save[gv_cssid] == "1")
+	document.getElementById("id_wmm_power_save").innerHTML = "_(Enabled)_";
+    else
+	document.getElementById("id_wmm_power_save").innerHTML = "_(Disabled)_";
+
+
+    if(gv_cssid == 0 || gv_cssid == 4) // WPS only cover primary SSID now.
+    {
+        if (gv_wps_state[gv_cssid] =="enabled")
+        {
+            document.getElementById("id_wps_state").innerHTML = "_(Enabled)_";
+            if (gv_wps_type[gv_cssid] =="enabled")
+                document.getElementById("id_wps_type").innerHTML = "_(AP PIN, PBC, End Device PIN)_";
+            else
+                document.getElementById("id_wps_type").innerHTML = "_(PBC, End Device PIN)_";
+        }
+        else
+        {
+            document.getElementById("id_wps_state").innerHTML = "_(Disabled)_";
+            document.getElementById("id_wps_type").innerHTML = "_(N/A)_";
+        }
+    }
+    else
+    {
+        document.getElementById("id_wps_state").innerHTML = "_(N/A)_";
+        document.getElementById("id_wps_type").innerHTML = "_(N/A)_";
+    }
+
+    //
+    if (gv_hide[gv_cssid] == "1")
+	document.getElementById("id_ssid_bcast").innerHTML = "_(Disabled)_";
+    else
+	document.getElementById("id_ssid_bcast").innerHTML = "_(Enabled)_";
+
+    //
+    if (gv_FltMacMode[gv_cssid] == "deny" || gv_FltMacMode[gv_cssid] == "allow") {
+	document.getElementById("id_mac_authen").innerHTML = "_(Enabled)_";
+    }
+    else
+    {
+	document.getElementById("id_mac_authen").innerHTML = "_(Disabled)_";
+    }
+//
+    if (gv_cssid > 3) // 2G
+    {
+        if(gv_nmode[gv_cssid] == "off")
+        {
+          if (gv_gmode[gv_cssid] == "0" ) { //802.11b
+              document.getElementById("id_wireless_mode").innerHTML = "_(802.11b only)_";
+          }
+          else if (gv_gmode[gv_cssid] == "2" ) { //802.11g
+              document.getElementById("id_wireless_mode").innerHTML = "_(802.11g only)_";
+          }
+          else if (gv_gmode[gv_cssid] == "1" ) { //802.11b&g
+               document.getElementById("id_wireless_mode").innerHTML ="_(Legacy Mode (802.11b+g only))_";
+          }
+          else{
+               document.getElementById("id_wireless_mode").innerHTML ="_(Legacy Mode (802.11b+g only))_";
+          }
+        }
+        else
+        {
+            if(gv_nreqd[gv_cssid] == "1")
+            { //802.11n
+                document.getElementById("id_wireless_mode").innerHTML ="_(Performance Mode (802.11n only))_";
+            }
+            else
+            {
+                if (gv_gmode[gv_cssid] == "2" ) { //802.11g&n
+                    document.getElementById("id_wireless_mode").innerHTML ="_(Balanced Mode (802.11n+g only))_";
+                }
+                else if (gv_gmode[gv_cssid] == "1" ) { //802.11b&g&n
+                    document.getElementById("id_wireless_mode").innerHTML ="_(Compatible Mode (802.11b+802.11g+802.11n))_";
+                }
+                else
+                    document.getElementById("id_wireless_mode").innerHTML ="_(Compatible Mode (802.11b+802.11g+802.11n))_";
+            }
+        }
+    }
+    else // 5G
+    {
+        if (gv_vMode[gv_cssid] == "1")
+        {
+            document.getElementById("id_wireless_mode").innerHTML ="_(Compatible Mode (802.11a+802.11n+802.11ac))_";
+        }
+        else
+        {
+            document.getElementById("id_wireless_mode").innerHTML ="_(Balanced Mode (802.11a+802.11n))_";
+        }
+    }
+
+    //
+    document.getElementById("id_packet_sent").innerHTML = gv_pack_send[gv_cssid];
+    document.getElementById("id_packet_recv").innerHTML = gv_pack_recv[gv_cssid];
+    uiset_section_ssid_state();
+}
+
+function dom_load(){ do_load(); }
+
+  </script>
+</head>
+
+<body>
+<div id="wrapper">
+  <!-- TOP NAV -->
+  <%ejInclude(top_btn_nav1.html)%>
+  <!-- END TOP NAV -->
+  <!-- SIDE NAV -->
+  <%ejInclude(status_left.html)%>
+  <!-- END SIDE NAV -->
+  <!-- MAIN CONTENT AREA -->
+  <div id="content_right">
+    <div id="content_right_header">
+    </div>
+    <div id="content_right_contentarea">
+      <h1 class="modemstatus_wirelessstatus">&nbsp;&nbsp;_(Wireless Status)_ &nbsp; </h1>
+        <form id="form1" name="form1" method="post" action="">
+        <table width="80%" border="0" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+          <tr align="center">
+              <th width="237"><div align="left"><strong>_(Select SSID)_</strong></div>
+              </th>
+              <th width="183">
+                  <div align="left"></div>
+              </th>
+          </tr>
+          <tr align="center">
+              <td><div align="left">SSID:</div>
+              </td>
+              <td><div align="left">
+              <select name="ssid" id="id_ssid" onchange="uiset_section_wl_status();">
+              </select>
+              </div>
+              </td>
+          </tr>
+        </table>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _(For wireless status, select SSID from drop-down list.)_
+        </p>
+        <table width="80%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style"  style="margin:10px auto 0 auto;">
+        <tr>
+	    <th width="56%" style="text-align:left" ><strong>_(Parameter)_</strong></th>
+	    <th width="44%" style="text-align:left" ><strong>_(Status)_</strong></th>
+	</tr>
+        <tr>
+            <td>_(Radio)_: </td>
+            <td><span id="id_radio_enabled">_(Yes)_</span></td>
+        </tr>
+        <tr>
+            <td>SSID: </td>
+            <td><span id="id_ssid_enabled">_(Yes)_</span></td>
+        </tr>
+        <tr>
+            <td>_(Security)_: </td>
+            <td><span id="id_security_enabled">_(Yes)_</span></td>
+        </tr>
+        <!--tr>
+            <td width="60%">Security Code: </td>
+            <td><span id="id_security_type"></span></td>
+        </tr-->
+        <tr>
+            <td>SSID: </td>
+            <td><span id="id_ssid_text"></span></td>
+        </tr>
+
+
+        <tr>
+            <td>_(Channel Selection)_: </td>
+            <td><span id="select_channel_text">6</span></td>
+        </tr>
+        <tr>
+            <td>_(Channel)_: </td>
+            <td><span id="id_channel_text">6</span></td>
+        </tr>
+
+        <tr>
+            <td>_(Wireless Security Type)_: </td>
+            <td><span id="id_security_type"></span></td>
+        </tr>
+        <tr>
+            <td>_(SSID Broadcast)_: </td>
+            <td><span id="id_ssid_bcast">_(Enabled)_</span></td>
+        </tr>
+        <tr>
+            <td>_(MAC Authentication)_: </td>
+            <td><span id="id_mac_authen">_(Disabled)_</span></td>
+        </tr>
+        <tr>
+            <td >_(Wireless Mode)_: </td>
+            <td><span id="id_wireless_mode">_(Mixed - accepts 802.11 b and 802.11g)_</span></td>
+        </tr>
+        <tr>
+            <td>_(WPS State)_: </td>
+            <td><span id="id_wps_state">_(Off)_</span></td>
+        </tr>
+        <tr>
+            <td>_(WPS Type)_: </td>
+            <td><span id="id_wps_type">_(PBC)_</span></td>
+        </tr>
+        <tr>
+            <td>_(WMM QoS)_: </td>
+            <td><span id="id_wmm_state">_(Off)_</span></td>
+        </tr>
+        <tr>
+            <td>_(WMM Power Save)_: </td>
+            <td><span id="id_wmm_power_save">_(Off)_</span></td>
+        </tr>
+        <tr>
+            <td>_(Wireless Packets Sent)_: </td>
+            <td><span id="id_packet_sent">0</span></td>
+        </tr>
+        <tr>
+            <td>_(Wireless Packets Received)_: </td>
+            <td><span id="id_packet_recv">0</span></td>
+        </tr>
+        </table>
+        <p>
+        </p>
+        <table width="80%" border="0" align="center" cellpadding="5" cellspacing="0" style="margin:10px auto 0 auto;">
+            <tr>
+                <td>
+                    <a id="advanced_wireless_statistics" class="button1" onclick="go_to_adv_wl_statistics();"><span>_(Advanced Wireless Statistics)_</span></a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <a id="modemstatus_wireless_monitor" class="button1" onclick="go_to_wireless_monitor();"><span>_(Modem Status Wireless Monitor)_</span></a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <a id="associatedDevSts" class="button1" onclick="go_to_wireless_associatedDevSts();"><span>_(Wireless Monitor Graph)_</span></a>
+                </td>
+            </tr>
+        </table>
+      </form>
+    </div>
+    <div id="content_right_footer">
+  </div>
+</div>
+<div class="clear_left">
+</div>
+<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

@@ -1,0 +1,13 @@
+#
+# Kconfig for the sckipio gfast driver module - gfast.ko
+#
+
+#add a line in ../Kconfig
+#source "drivers/net/sckipio/Kconfig"
+
+config SCKIPIO_GFAST
+        tristate "sckipio gfast card"
+       ---help---
+          Say Y here if you intend to attach an sckipio gfast to your computer.
+
+          To compile this driver as a module, choose M here, If unsure, say N.

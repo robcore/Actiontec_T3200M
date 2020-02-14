@@ -1,0 +1,289 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Status)_ - _(Wireless Monitor)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="javascript" src="js/functions.js" type="text/javascript"></script>
+<SCRIPT LANGUAGE="JavaScript" SRC="js/nav.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<SCRIPT LANGUAGE="JavaScript">
+
+var wirelessclientlistsinfo = '<%ejGetWirelessMonitorInfo()%>';
+var onewirelessclient = wirelessclientlistsinfo.split('@&');
+var saved_data = '<%ejGetOther(wlSavedClientPacket)%>';
+var tag = 0;
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+
+function drawDropdownlist()
+{
+    var i;
+    var form = document.forms[0];
+    var curSelClient = form.wl_client.value;
+//remove the old drop down list first
+    form.wl_client.options.length = 0;
+
+    if ( wirelessclientlistsinfo == "N/A" || onewirelessclient == "")
+    {
+         form.wl_client[0] = new Option("_(No Wireless client found)_","0");
+         return;
+    }
+    else
+    {
+         for ( i = 0; i < onewirelessclient.length-1; i++)
+        {
+            var details = onewirelessclient[i].split('&@');
+            var strhostName = htmlDecodeStr(details[0]);
+            form.wl_client[i] = new Option(strhostName+"_"+details[1], strhostName);
+        }
+
+        if(("" != curSelClient) && (wirelessclientlistsinfo.indexOf(curSelClient) != -1))
+            form.wl_client.value = curSelClient;
+    }
+}
+
+function uiset_section_wlclient_status(client_idx)
+{
+     if ( wirelessclientlistsinfo == "N/A" )
+     {
+         document.getElementById("id_hostname").innerHTML      = "_(N/A)_";
+         document.getElementById("id_mac").innerHTML           = "_(N/A)_";
+         document.getElementById("id_rssi").innerHTML          = "_(N/A)_";
+         document.getElementById("id_uptime").innerHTML        = "_(N/A)_";
+         document.getElementById("id_pkts_tx").innerHTML       = "_(N/A)_";
+         document.getElementById("id_pkts_rx").innerHTML       = "_(N/A)_";
+         document.getElementById("id_pkts_lost").innerHTML     = "_(N/A)_";
+         document.getElementById("id_phy_rate").innerHTML      = "_(N/A)_";
+         //document.getElementById("id_wmmps").innerHTML         = "N/A";
+         //document.getElementById("id_disconnection").innerHTML = "N/A";
+     }
+     else
+     {
+         var details = onewirelessclient[client_idx].split('&@');
+         if (saved_data != '')
+         {
+             var entries = saved_data.split('|');
+             for (var i=0; i<entries.length-1; i++)
+             {
+                 var ele = entries[i].split('/');
+                 if (ele[0] == details[1]) // mac
+                 {
+                     if (parseInt(details[4]) >= parseInt(ele[1]))
+                         details[4] -= ele[1];
+                     if (parseInt(details[5]) >= parseInt(ele[2]))
+                         details[5] -= ele[2];
+                     if (parseInt(details[6]) >= parseInt(ele[3]))
+                         details[6] -= ele[3];
+                     break;
+                 }
+             }
+         }
+         document.getElementById("id_hostname").innerHTML      = details[0];
+         document.getElementById("id_mac").innerHTML           = details[1];
+         document.getElementById("id_rssi").innerHTML          = details[2];
+         document.getElementById("id_uptime").innerHTML        = details[3];
+         document.getElementById("id_pkts_tx").innerHTML       = details[4];
+         document.getElementById("id_pkts_rx").innerHTML       = details[5];
+         document.getElementById("id_pkts_lost").innerHTML     = details[6];
+         document.getElementById("id_phy_rate").innerHTML      = details[7];
+         //document.getElementById("id_wmmps").innerHTML         = details[8];
+         //document.getElementById("id_disconnection").innerHTML = details[9];
+     }
+}
+
+function onSelectClient()
+{
+    var form = document.forms[0];
+    var client_idx = form.wl_client.selectedIndex;
+    uiset_section_wlclient_status(client_idx);
+}
+
+function http_refresh()
+{
+
+    var xmlhttp;
+    if (window.XMLHttpRequest)
+    {// code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp=new XMLHttpRequest();
+    }
+    else
+    {// code for IE6, IE5
+        xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+    }
+
+    if(xmlhttp != null)
+    {
+        //SW-Bug #127719
+        var curTime = new Date();
+        curTime = curTime.getTime();
+        xmlhttp.open("GET","./modemstatus_wirelessmonitor_refresh.html?time="+curTime,true);
+        xmlhttp.onreadystatechange =function()
+        {
+            if(xmlhttp.readyState == 4)
+            {
+                var statusval = xmlhttp.responseText;
+                // If GUI is locked, return it to avoid parameters undefined error.
+                if(statusval.indexOf("_(Another management entity is currently configuring this unit)_")!=-1)
+                {
+                    http_refresh();
+		}
+                else
+                {
+                    tag = 1;
+                    do_load(statusval);
+                }
+            }
+        }
+        xmlhttp.send(null);
+    }
+}
+
+function do_load(val)
+{
+    if(tag == 1 && val != 0)
+    {
+        wirelessclientlistsinfo = val.replace(/[\r\n]/g,"");
+        onewirelessclient = wirelessclientlistsinfo.split('@&');
+    }
+    drawDropdownlist();
+
+    var form = document.forms[0];
+    var client_idx = form.wl_client.selectedIndex;
+    uiset_section_wlclient_status(client_idx);
+    side_nav("wirelessstatus");
+    setTimeout("http_refresh()", 15000);
+}
+
+function doReload()
+{
+    window.location.href="modemstatus_wirelessmonitor.html";
+}
+
+function doClear()
+{
+    var lochead = 'clearWlClientPacket.cmd?';
+    var loc = '';
+
+    loc += 'mac=' + document.getElementById("id_mac").innerHTML;
+    loc += '&send=' + document.getElementById("id_pkts_tx").innerHTML;
+    loc += '&receive=' + document.getElementById("id_pkts_rx").innerHTML;
+    loc += '&lost=' + document.getElementById("id_pkts_lost").innerHTML;
+    loc += '&sessionKey=' + sessionKey;
+    loc += '&needthankyou=modemstatus_wirelessmonitor.html';
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+    postSubmit(lochead);
+}
+
+function dom_load(){ do_load(0); }
+
+</SCRIPT>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+    <div id="content_right_header"></div>
+        <div id="content_right_contentarea">
+           <h1 class="modemstatus_wirelessstatus">&nbsp;&nbsp;_(Wireless Monitor)_ &nbsp; </h1>
+           <form id="form1" name="form1" method="post" action="">
+         <table width="80%" border="0" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+          <tr align="center">
+              <th width="237"><div align="left"><strong>_(Select Wireless Client)_</strong></div>
+              </th>
+              <th width="183">
+                  <div align="left"></div>
+              </th>
+          </tr>
+          <tr align="center">
+              <td><div align="left">_(Wireless client)_:</div>
+              </td>
+              <td><div align="left">
+              <select name="wl_client" id="wl_client" onchange="onSelectClient();">
+              </select>
+              </div>
+              </td>
+          </tr>
+        </table>
+
+        <table width="80%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style"  style="margin:10px auto 0 auto;">
+        <tr>
+	    <th width="56%" style="text-align:left" ><strong>_(Parameter)_</strong></th>
+	    <th width="44%" style="text-align:left" ><strong>_(Status)_</strong></th>
+	</tr>
+        <tr>
+            <td>_(Hostname)_: </td>
+            <td><span id="id_hostname">_(N/A)_</span></td>
+        </tr>
+        <tr>
+            <td>_(MAC)_: </td>
+            <td><span id="id_mac">_(N/A)_</span></td>
+        </tr>
+        <tr>
+            <td>_(RSSI)_: </td>
+            <td><span id="id_rssi">_(N/A)_</span></td>
+        </tr>
+        <tr>
+            <td>_(Connection duration)_: </td>
+            <td><span id="id_uptime">_(N/A)_</span></td>
+        </tr>
+        <tr>
+            <td>_(Packets sent)_: </td>
+            <td><span id="id_pkts_tx">_(N/A)_</span></td>
+        </tr>
+        <tr>
+            <td>_(Packets Received)_: </td>
+            <td><span id="id_pkts_rx">_(N/A)_</span></td>
+        </tr>
+        <tr>
+            <td>_(Packets lost)_: </td>
+            <td><span id="id_pkts_lost">_(N/A)_</span></td>
+        </tr>
+        <tr>
+            <td>_(PHY rate)_: </td>
+            <td><span id="id_phy_rate">_(N/A)_</span></td>
+        </tr>
+<!--
+        <tr>
+            <td>_(WMM power save)_: </td>
+            <td><span id="id_wmmps">_(N/A)_</span></td>
+        </tr>
+        <tr>
+            <td >_(Disconnection)_: </td>
+            <td><span id="id_disconnection">_(N/A)_</span></td>
+        </tr>
+-->
+        </table>
+        <p>
+        </p>
+        <table width="80%" border="0" align="center" cellpadding="0" cellspacing="0" style="margin:10px auto 0 auto;padding:0 0 5px 0;">
+            <tr>
+                <td style="width:5%">
+                    <a class="button1" onclick="doReload();" id="btn_refresh"><span>_(Refresh)_</span></a>
+                </td>
+                <td style="width:90%">
+                </td>
+                <td style="width:5%">
+                    <a class="button1" onclick="doClear();" id="btn_refresh"><span>_(Clear)_</span></a>
+                </td>
+            </tr>
+        </table>
+      </form>
+         </div>
+    <div id="content_right_footer"></div>
+    </div>
+    <div class="clear_left"></div>
+    <div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

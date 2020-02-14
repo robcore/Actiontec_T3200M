@@ -1,0 +1,155 @@
+<script language="javascript">
+var user_id='<%ejGet(userID)%>';
+var dslstatus = '<%ejGetOther(dslget)%>';
+var dslsts_temp = dslstatus.split("|");
+var board_id='<%ejGet(boardID)%>';
+</script>
+ <div id="left_column">
+	<div id="left_column_header"></div>
+
+	<div id="left_column_content">
+		<ul id="subnav">
+			<script language="javascript">
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_servicesblocking.html');\" id=\"blockilter\" class=\"link\">_(Blocking/Filtering)_</a></li>");
+				document.write("<ul>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_servicesblocking.html');\" id=\"servicesblocking\" class=\"link\">_(Services Blocking)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_websiteblocking.html');\" id=\"advancedsetup_websiteblocking\" class=\"link\">_(Website Blocking)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_schedulingaccess.html');\" id=\"advancedsetup_schedulingaccess\" class=\"link\">_(Scheduling Access)_</a></li>");
+                document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_parentcontrol.html');\" id=\"advancedsetup_parentcontrol\" class=\"link\">_(Parental Controls)_</a></li>");
+                document.write("</ul>");
+				document.write("<hr />");
+				if (user_id==3)
+				{
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_broadbandsettings.html');\"  id=\"broadbandsettings\" class=\"link\">_(Broadband Settings)_ </a></li>");
+					document.write("<hr />");
+				}
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_wanipaddress.html');\" id=\"ipaddresssettings\" class=\"link\">_(IP Address)_</a></li>");
+				document.write("<ul>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_wanipaddress.html');\" id=\"advancedsetup_wanipaddress\" class=\"link\">_(WAN IP Addressing)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('ipv6_wansetting.html');\" id=\"ipv6_wansetting\" class=\"link\">_(IPv6 WAN Settings)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_lanipdhcpsettings.html');\" id=\"advancedsetup_lanipdhcpsettings\" class=\"link\">_(LAN IP Settings)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('ipv6_lansetting.html');\" id=\"ipv6_lansetting\" class=\"link\">_(IPv6 LAN Settings)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_dhcpreservation.html');\" id=\"advancedsetup_dhcpreservation\" class=\"link\">_(DHCP Reservation)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_dynamicdns.html');\" id=\"advancedsetup_dynamicdns\" class=\"link\">_(Dynamic DNS)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_dnshostmapping.html');\" id=\"advancedsetup_dnshostmapping\" class=\"link\">_(DNS Host Mapping)_</a></li>");
+                document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_pb.html');\"                  id=\"advancedsetup_pb\" class=\"link\">_(Port Bridging)_</a></li>");
+                if( board_id.indexOf("M") != -1)
+                {
+                    document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_moca.html');\" id=\"advancedsetup_moca\" class=\"link\">_(MoCA LAN Setup)_</a></li>");
+				}
+				document.write("</ul>");
+				document.write("<hr />");
+
+				if (user_id==3)
+				{
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_upstream.html');\" id=\"upstream\" class=\"link\">_(QoS Settings)_</a></li>");
+					document.write("<ul>");
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_upstream.html');\" id=\"advancedsetup_upstream\" class=\"link\">_(QoS Upstream)_</a></li>");
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_downstream.html');\" id=\"advancedsetup_downstream\" class=\"link\">_(QoS Downstream)_</a></li>");
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('ipv6_qossettings.html');\" id=\"ipv6_qossettings\" class=\"link\">_(IPv6 QoS)_</a></li>");
+					document.write("</ul>");
+					document.write("<hr />");
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_remotegui.html');\" id=\"remotegui\" class=\"link\">_(Remote)_</a></li>");
+					document.write("<ul>");
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_remotegui.html');\" id=\"advancedsetup_remotegui\" class=\"link\">_(Remote GUI)_</a></li>");
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_remotetelnet.html');\" id=\"advancedsetup_remotetelnet\" class=\"link\">_(Remote Telnet)_</a></li>");
+					document.write("</ul>");
+					document.write("<hr />");
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_dynamicrouting.html');\" id=\"dynamicrouting\" class=\"link\">_(Routing)_</a></li>");
+					document.write("<ul>");
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_dynamicrouting.html');\" id=\"advancedsetup_dynamicrouting\" class=\"link\">_(Dynamic Routing)_</a></li>");
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_staticrouting.html');\" id=\"advancedsetup_staticrouting\" class=\"link\">_(Static Routing)_</a></li>");
+					document.write("</ul>");
+					document.write("<hr/>");
+				}
+
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_admin.html');\" id=\"admin\" class=\"link\">_(Security)_</a></li>");
+				document.write("<ul>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_admin.html');\" id=\"advancedsetup_admin\" class=\"link\">_(Admin Password)_</a></li>");
+				if (user_id==3)
+				{
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_nat.html');\" id=\"advancedsetup_nat\" class=\"link\">_(NAT)_</a></li>");
+				}
+				document.write("</ul>");
+				document.write("<hr/>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_storagedeviceinfo.html');\" id=\"storageservice\" class=\"link\">_(Storage Service)_</a></li>");
+				document.write("<ul>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_storagedeviceinfo.html');\" id=\"advancedsetup_storagedeviceinfo\" class=\"link\">_(Storage Device Info)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_storageuseraccountcfg.html');\" id=\"advancedsetup_storageuseraccountcfg\" class=\"link\">_(Samba Configuration)_</a></li>");
+				document.write("</ul>");
+				document.write("<hr/>");
+				if(board_id != "T3200BM" && board_id != "T3200B" && board_id != "T3200M")
+				{
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_voicesip_advanced.html');\" id=\"voicesettings\" class=\"link\">_(Voice Settings)_</a></li>");
+					document.write("<ul>");
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_voicesip_advanced.html');\" id=\"advancedsetup_voicesip_advanced\" class=\"link\">_(Voice Advanced Setting)_</a></li>");
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_voicesip_basic.html');\" id=\"advancedsetup_voicesip_basic\" class=\"link\">_(Voice Basic Setting)_</a></li>");
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_voicesip_debug.html');\" id=\"advancedsetup_voicesip_debug\" class=\"link\">_(Voice Debug Setting)_</a></li>");
+					document.write("</ul>");
+					document.write("<hr/>");
+				}
+				document.write("<li><a href=\"#\" class=\"link\" onClick=\"return goThere('utilities_reboot.html');\">_(Modem Utilities)_</a></li>");
+				document.write("<ul>");
+				document.write("<li><a  href=\"#\" id=\"reboot\" class=\"link\" onClick=\"return goThere('utilities_reboot.html');\">_(Reboot)_</a></li>");
+				document.write("<li><a  href=\"#\" id=\"restoredefaultsettings\" class=\"link\" onClick=\"return goThere('utilities_restoredefaultsettings.html');\">_(Restore Defaults)_</a></li>");
+				if (user_id==3)
+				{
+					var isie = navigator.appName.indexOf("Internet Explorer") == -1 ? "0" : "1";
+					document.write("<li><a ");
+					document.write("href=\"#\" id=\"upgradefirmware\" class=\"link\" onClick=\"return goThere('utilities_upgradefirmware.html?isie="+isie+"');\"");
+					document.write(">_(Upgrade Firmware)_</a></li>");
+
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('utilities_remoteupgrade.html');\" id=\"utilities_remoteupgrade\" class=\"link\">_(Check for new firmware link)_</a></li>");
+                }
+				document.write("<li><a  href=\"#\" id=\"advancedutilities_speedtest\" class=\"link\" onClick=\"return goThere('advancedutilities_speedtest_ookla.html');\">_(Speed Test)_ </a></li>");
+				document.write("<li><a  href=\"#\" id=\"advancedutilities_ipping\" class=\"link\" onClick=\"return goThere('advancedutilities_ipping.html');\">_(Ping Test)_ </a></li>");
+                if(user_id==3)
+                {
+				document.write("<li><a  href=\"#\" id=\"advancedutilities_tcpdump\" class=\"link\" onClick=\"return goThere('advancedutilities_tcpdump.html');\">_(Tcpdump Debug)_ </a></li>");
+                }
+				document.write("<li><a  href=\"#\" id=\"advancedutilities_iperf\" class=\"link\" onClick=\"return goThere('advancedutilities_iperf.html');\">_(Iperf Test)_ </a></li>");
+				document.write("<li><a  href=\"#\" id=\"ipv6_ping\" class=\"link\" onClick=\"return goThere('ipv6_ping.html');\">_(IPv6 Ping Test)_ </a></li>");
+				document.write("<li><a  href=\"#\" id=\"advancedutilities_traceroute\" class=\"link\" onClick=\"return goThere('advancedutilities_traceroute.html');\">_(Traceroute)_</a></li>");
+				document.write("<li><a  href=\"#\" id=\"ipv6_traceroute\" class=\"link\" onClick=\"return goThere('ipv6_traceroute.html');\">_(IPv6 Traceroute)_</a></li>");
+				document.write("<li><a  href=\"#\" id=\"timezone\" class=\"link\" onClick=\"return goThere('utilities_timezone.html');\">_(Time Zone)_ </a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedsetup_language.html');\" id=\"advancedsetup_language\" class=\"link\">_(Language Settings)_</a></li>");
+				if (user_id==3)
+				{
+					 document.write(" <li><a  href=\"#\" id=\"Config DownUpload\" class=\"link\" onClick=\"return goThere('utilities_updatesettings.html');\">_(Config Download/Upload)_ </a></li>");
+				}
+
+				if((user_id==3)&&(dslsts_temp[1] != undefined) && (dslsts_temp[1] == "ATM") && (dslsts_temp[18] != undefined) && (dslsts_temp[18] == "ADSL_2plus"))
+						document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedutilities_oamping.html');\" id=\"advancedutilities_oamping\" class=\"link\">_(OAM Ping Test)_</a></li>");
+
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedutilities_dnscache.html');\" id=\"advancedutilities_dnscache\" class=\"link\">_(DNS Cache)_</a></li>");
+				if (user_id==3)
+				{
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedutilities_tr069.html');\" id=\"advancedutilities_tr069\" class=\"link\">_(TR-069)_</a></li>");
+				}
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedutilities_igmp.html');\" id=\"advancedutilities_igmp\" class=\"link\">_(IGMP Setting)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedutilities_upgradehistory.html');\" id=\"advancedutilities_upgradehistory\" class=\"link\">_(Upgrade History)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedutilities_alg.html');\" id=\"advancedutilities_alg\" class=\"link\">_(ALG)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedutilities_toolbox.html');\" id=\"advancedutilities_toolbox\" class=\"link\">_(Tool Box)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedutilities_dlna.html');\" id=\"advancedutilities_dlna\" class=\"link\">_(DLNA)_</a></li>");
+
+				if (user_id==3)
+				{
+                document.write("<div style=\"display:<%ejGetOther(Sckipio_Gfast_Stats,gfast_display)%>\"><li><a  href=\"#\" id=\"gfastconfig\" class=\"link\" onClick=\"return goThere('advancedsetup_gfastconfig.html');\">_(G.fast Configure)_</a></li></div>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedutilities_updateCustomerSettings.html');\" id=\"advancedutilities_updateCustomerSettings\" class=\"link\">_(Load Customer Default Config)_</a></li>");
+				}
+                if (user_id==3)
+                {
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedutilities_ippcfg.html');\" id=\"advancedutilities_ippcfg\" class=\"link\">_(Print Server)_</a></li>");
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('tech.html');\" id=\"tech\" class=\"link\">_(Tech Statistics)_</a></li>");
+				}
+                                
+                document.write("<li><a  href=\"#\" onClick=\"return goThere('advancedutilities_xDSL_diagnostics.html');\" id=\"advancedutilities_xDSL_diagnostics\" class=\"link\">_(xDSL Diagnostics)_</a></li>");
+                
+				document.write("<li><a  href=\"#\" onClick=\"return goThere('http://www.actiontec.com/products/manuals/T3200M_UserManual.pdf');\" id=\"advancedutilities_ippcfg\" class=\"link\">_(User's Manual)_</a></li>");
+				document.write("</ul>");
+			</script>
+		</ul>
+
+	</div>
+		<div id="left_column_footer"></div>
+</div>

@@ -1,0 +1,604 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(xDSL Diagnostics)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="Javascript">
+  
+var tab_height = 200; //the height of the histogram table.
+var tab_width = 512;  //the width of the histogram table.
+var y_count= 4; //the axis y will draw 4 grids to show the max data of the statistics data.
+var x_count = 8; //the axis x will draw 8 grids to show statistical total quantity.
+var tr_num_line1 = 0; //the tr of the table, in here, it is the max data of the statistics data.
+var tr_num_line2 = 0; //the tr of the table, in here, it is the max data of the statistics data.
+var td_num_line1 = 0; //the td of the table, in here, it is statistical total quantity.
+var td_num_line2 = 0; //the td of the table, in here, it is statistical total quantity.
+
+//SNR, QLN, HLOG and Bits
+var statist_info_line1 ='<%ejGetLogFile(adslinfosqhb, 0)%>';//line1
+var statist_info_line2 ='<%ejGetLogFile(adslinfosqhb, 1)%>';//line2
+var line1Info = '<%ejGetOther(dslLinkBondRate, 0)%>';//The iformation of line2
+var line2Info = '<%ejGetOther(dslLinkBondRate, 1)%>';//The iformation of line1
+var line1_up = line1Info.split("|")[0];
+var line2_up = line2Info.split("|")[0];
+var traffictype = '<%ejGetOther(trafficType, 0)%>';// PTM/ATM
+
+//bert
+var adslbert2 = '<%ejGetOther(xdslbert,1)%>';
+var adslbert1 = '<%ejGetOther(xdslbert,0)%>';
+var adslbert1_temp;
+var adslbert2_temp;
+var xdsldiagmode = htmlDecodeStr('<%ejGet(xdsldiagmode)%>');//0：SNR; 1:QLN; 2:HLOG; 3:Bits ; 4:Bert
+var sessionkey = '<%ejGetOther(sessionKey)%>';
+
+/*Auto refresh: The auto time of bert is 10s, and the others are 60s(because the data is too large).*/
+function http_refresh(){
+    if(xmlhttp != null)
+    {
+        //SW-Bug #127719
+        var curTime = new Date();
+        curTime = curTime.getTime();
+        xmlhttp.open("GET","advancedutilities_xDSL_diagnostics_refresh.html?time="+curTime,true);
+        xmlhttp.onreadystatechange =function()
+        {
+            if(xmlhttp.readyState == 4)
+            {
+                var statusval = xmlhttp.responseText;
+                // If GUI is locked, return it to avoid parameters undefined error.
+                if(statusval.indexOf("_(Another management entity is currently configuring this unit.)_")!=-1)
+                {
+                    http_refresh();
+                    return;
+                }else{
+                    statusval = statusval.replace('\n',"");
+                    var refresh_info = statusval.split('+');
+                    adslbert1 = refresh_info[0];
+                    adslbert2 = refresh_info[1];
+                    statist_info_line1 = refresh_info[2];
+                    statist_info_line2 = refresh_info[3];
+                    traffictype = refresh_info[4];
+                    line1Info = refresh_info[5];
+                    line2Info = refresh_info[6];
+                    xdsldiagmode = htmlDecodeStr(refresh_info[7]);
+                    if(adslbert1==undefined||adslbert2==undefined||statist_info_line1==undefined||statist_info_line2==undefined||traffictype==undefined||line1Info==undefined||line2Info==undefined||xdsldiagmode==undefined)
+                    {
+                        http_refresh();
+                        return;
+                    }
+                    line1_up = line1Info.split("|")[0];
+                    line2_up = line2Info.split("|")[0];
+                    do_load();
+                }
+            }
+        }
+        xmlhttp.send(null);
+    }
+}
+
+//Draw the histogram of SNR, QLN, HLOG and Bits
+function drawHistogram(statist_datas, type)
+{
+
+    var statist_array=eval(statist_datas);
+    //get statistical total quantity.
+    td_num = statist_array.length;
+
+    //get the max value
+    
+    if(xdsldiagmode==1||xdsldiagmode==2)
+        tr_num = Math.ceil(Math.abs(Math.min.apply(null,statist_array)));
+    else
+        tr_num = Math.ceil(Math.max.apply(null,statist_array));
+    //if the max value is 0, don't show the histogram.
+    if(tr_num==0){
+        if(type == 1)
+            document.getElementById("adslinfosqhb_line1").style.display = 'none';
+        if(type == 2)
+            document.getElementById("adslinfosqhb_line2").style.display = 'none';
+        return;
+    }
+    
+    //draw the table
+    drawTable(statist_datas,tab_height, tab_width, tr_num, type);
+
+    //show the left mark number
+    drawSign_Y(tab_height, tr_num, y_count, type);
+
+    //show the buttom mark number
+    drawSign_X(tab_width, x_count, type);
+
+    //set the header information
+    var header_id = "information_header_"+type
+    switch (xdsldiagmode)
+    {
+        case "0":
+            if(type == 1)
+                document.getElementById("information_header_1").innerHTML= "_(DSL 1 SNR/bin loading)_";
+            else
+                document.getElementById("information_header_2").innerHTML= "_(DSL 2 SNR/bin loading)_";
+            break;
+        case "1":
+            if(type == 1)
+                document.getElementById("information_header_1").innerHTML= "_(DSL 1 QLN loading)_";
+            else
+                document.getElementById("information_header_2").innerHTML= "_(DSL 2 QLN loading)_";
+            break;
+        case "2":
+            if(type == 1)
+                document.getElementById("information_header_1").innerHTML= "_(DSL 1 Hlog loading)_";
+            else
+                document.getElementById("information_header_2").innerHTML= "_(DSL 2 Hlog loading)_";
+            break;
+        case "3":
+            if(type == 1)
+                document.getElementById("information_header_1").innerHTML= "_(DSL 1 Bits/bin loading)_";
+            else
+                document.getElementById("information_header_2").innerHTML= "_(DSL 2 Bits/bin loading)_";
+            break;
+        default:
+            if(type == 1)
+                document.getElementById("information_header_1").innerHTML= "_(DSL 1 SNR/bin loading)_";
+            else            
+                document.getElementById("information_header_2").innerHTML= "_(DSL 2 SNR/bin loading)_";
+            break;
+    } 
+}
+
+/*
+draw the table
+div_height: the height of the parent div('showInformation_1' and 'showInformation_2').
+div_width: the width of parent div.
+max_value: the max value of the statistical data.
+line: line1 or line2
+*/
+function drawTable(statist_datas, div_height, div_width, max_value, line)
+{
+    var statist_array;
+    statist_array=eval(statist_datas);
+    var div_container;
+    if(line==1)
+        div_container = document.getElementById("showInformation_1");
+    else
+        div_container = document.getElementById("showInformation_2");
+
+    if (statist_array != null) {
+        var topOffsetPercent = div_height / max_value;
+        var sub_div_width = div_width/(statist_array.length);
+        for (var i = 0; i < statist_array.length; i++) {
+            var sub_div = document.createElement("div"); //Create a sub div
+            //sub_div.id = "sub_div_" + i + "_" + statist_array[i];
+            //set the title
+            var title_value = statist_array[i];
+            //The data of QLN and Hlog should be negative number.
+            if(title_value>0 && (xdsldiagmode ==1 || xdsldiagmode==2))
+                title_value = title_value*-1;
+            sub_div.title = title_value;
+            //set the height of sub div.
+            var max_height = Math.abs(statist_array[i]);
+            sub_div.style.height = Math.round(topOffsetPercent * max_height) + "px";
+            //set the width of sub div
+            sub_div.style.width = sub_div_width+"px"; 
+            //set the left padding. 
+            sub_div.style.left = i*sub_div_width+ "px";
+            //set the top padding of sub div to the parent div.
+            sub_div.style.top = div_height - Math.round(topOffsetPercent * max_height) + "px";
+            //set the position 
+            sub_div.style.position = "absolute"; 
+            //hidden the scroll
+            sub_div.style.overflow = "hidden";
+            //set the bgcolor of sub div.
+            sub_div.style.background = "none repeat scroll 0 0 green"; 
+            sub_div.style.display = "block"; 
+            //add sub div to the parent div.
+            div_container.appendChild(sub_div); 
+        }
+    }else{
+        div_container.innerHTML='';    
+    }   
+}
+
+/*
+draw the axis y
+tab_height: the height of the table.
+tr_num: the tr of the table, in here, it is the max data of the statistics data.
+y_count: the max count of the axis y, it is not same as the tr_num.
+*/
+function drawSign_Y(tab_height, tr_num, y_count, line)
+{
+    var sign_y_content='';
+    var y_height = Math.floor(tab_height/y_count)+"px";
+    var y_mark = 1;
+    if(tr_num%y_count)
+    {
+         y_mark = Math.floor(tr_num/y_count)+1;
+    }else{
+         y_mark = Math.floor(tr_num/y_count) 
+    }
+    y_count = tr_num / y_mark;
+    sign_y_content= '<table style="height:'+tab_height+'px; width:30px; margin:0px; padding:0px;" border="0" cellspacing="0" cellpadding="0">';
+    for(var y=0;y<y_count;y++)
+    {
+        if(y == 0 && tr_num>60)
+        {
+            if(xdsldiagmode==1||xdsldiagmode==2)
+                sign_y_content+= '<tr><td align="right" height="'+y_height+'" valign="top" style="padding:0px;">'+'-'+tr_num+'</td></tr>';
+            else        
+                sign_y_content+= '<tr><td align="right" height="'+y_height+'" valign="top" style="padding:0px;">'+tr_num+'</td></tr>';
+            continue;   
+        }
+        
+        if(xdsldiagmode==1||xdsldiagmode==2)
+            sign_y_content+= '<tr><td align="right" height="'+y_height+'" valign="top" style="padding:0px;">'+'-'+((y_mark*y_count)-(y_mark*y))+'</td></tr>';
+        else        
+            sign_y_content+= '<tr><td align="right" height="'+y_height+'" valign="top" style="padding:0px;">'+((y_mark*y_count)-(y_mark*y))+'</td></tr>'; 
+    }
+    sign_y_content+= '</table>';
+    if(line==1)
+        document.getElementById("left_mark_1").innerHTML= sign_y_content;
+    if(line==2)
+        document.getElementById("left_mark_2").innerHTML= sign_y_content;
+}
+
+/*
+draw the bottom sign axis
+tab_width: the width of the table.
+x_count: the max count of the axis x.
+*/
+function drawSign_X(tab_width, x_count, line)
+{
+    var x_width = Math.ceil(tab_width/x_count)+"px";
+    var sign_x_content='<table style="width:'+tab_width+'px; height:5px; margin:0px; padding:0px;" border="0" cellspacing="0" cellpadding="0">';
+    sign_x_content +='<tr>';
+    for(var j=1;j<=x_count;j++)
+    {
+        if(traffictype == 'PTM')
+            sign_x_content +='<td width="'+x_width+'" align="right" style="padding:0px;">'+512*j+'</td>';
+        else
+            sign_x_content +='<td width="'+x_width+'" align="right" style="padding:0px;">'+64*j+'</td>';
+    }
+    sign_x_content +='</tr>';
+    sign_x_content+= '</table>';
+    if(line==1)
+        document.getElementById("btm_mark_1").innerHTML= sign_x_content;
+    if(line==2)
+        document.getElementById("btm_mark_2").innerHTML= sign_x_content;
+}
+
+function start()
+{
+    var rege=/[^0-9]/;
+    var mat ;
+    var temp=document.getElementsByName("dslline");
+    var loc = "xdsl_bert.cmd?";
+    loc += 'bertactive=start';
+    var berttime;
+    var tips = "_(The Bert Time is invalid. Please enter a valid number.)_";;
+    if(temp[0].checked)
+    {  
+        berttime = document.getElementById("berttime1").value;
+        if(berttime == '')
+        {
+            alert(tips);
+            return;
+        }
+        mat = berttime.match(rege);
+        if (mat)
+        {
+            if (mat.length > 0)
+            {
+                alert(tips);
+                return;
+            }
+        }
+        loc += '&bertindex=0';
+        loc += '&berttime='+berttime;
+    }  
+    else if(temp[1].checked)
+    {
+        berttime = document.getElementById("berttime2").value;
+        if(berttime == '')
+        {
+            alert(tips);
+            return;
+        }
+        mat = berttime.match(rege);
+        if (mat)
+        {
+            if (mat.length > 0)
+            {
+                alert(tips);
+                return;
+            }
+        }
+        loc += '&bertindex=1';
+        loc += '&berttime='+berttime;
+    }
+    else
+    {
+        return;
+    }
+    loc += '&needthankyou=advancedutilities_xDSL_diagnostics.html';
+    loc += '&sessionKey='+sessionkey;
+    postSubmit(loc);
+
+}
+
+function stop()
+{
+    var temp=document.getElementsByName("dslline");
+    var loc = "xdsl_bert.cmd?";
+    loc += 'bertactive=stop';
+    if(temp[0].checked)
+        loc += '&bertindex=0';
+    else if(temp[1].checked)
+        loc += '&bertindex=1';
+    else
+        return;
+    loc += '&needthankyou=advancedutilities_xDSL_diagnostics.html';
+    loc += '&sessionKey='+sessionkey;
+    postSubmit(loc);
+}
+
+/*load bert information*/
+function load_bert()
+{
+    if(adslbert1 != "")
+    {
+        adslbert1_temp = adslbert1.split("|");
+        document.getElementById("bert1_status").innerHTML = adslbert1_temp[0];
+        document.getElementById("bert1_totaltime").innerHTML = adslbert1_temp[1]+" sec";
+        document.getElementById("bert1_elapsedtime").innerHTML = adslbert1_temp[2]+" sec";
+        document.getElementById("bert1_bitstest").innerHTML = adslbert1_temp[3];
+        document.getElementById("bert1_bitserr").innerHTML = adslbert1_temp[4];
+    }
+    if(adslbert2 != "")
+    {
+        adslbert2_temp = adslbert2.split("|");
+        document.getElementById("bert2_status").innerHTML = adslbert2_temp[0];
+        document.getElementById("bert2_totaltime").innerHTML = adslbert2_temp[1]+" sec";
+        document.getElementById("bert2_elapsedtime").innerHTML = adslbert2_temp[2]+" sec";
+        document.getElementById("bert2_bitstest").innerHTML = adslbert2_temp[3];
+        document.getElementById("bert2_bitserr").innerHTML = adslbert2_temp[4];
+    }
+    if(adslbert1_temp[0] == "RUNNING" || adslbert2_temp[0] == "RUNNING")
+    {
+        setTimeout("http_refresh()",10000);
+    }
+}
+
+/*load histogram of SNR, QLN, HLOG and Bits*/
+function load_graph()
+{
+    document.getElementById("showInformation_1").innerHTML='';
+    document.getElementById("showInformation_2").innerHTML='';
+    if((statist_info_line1!='')&&(traffictype!='Inactive')&&(line1_up == "Up"))
+    { 
+        document.getElementById("adslinfosqhb_line1").style.display = '';
+        drawHistogram(statist_info_line1, 1);
+    }else{
+        document.getElementById("adslinfosqhb_line1").style.display = 'none';
+    }
+
+    if((statist_info_line2!='')&&(traffictype!='Inactive')&&(line2_up == "Up"))
+    {
+        document.getElementById("adslinfosqhb_line2").style.display = '';
+        drawHistogram(statist_info_line2, 2);
+    }else{
+        document.getElementById("adslinfosqhb_line2").style.display = 'none';
+    }
+    setTimeout("http_refresh()",60000);
+
+}
+
+function displayConfTab(flag)
+{
+    document.getElementById("bert").style.display="none";
+    document.getElementById("adslinfosqhb_line1").style.display="none";
+    document.getElementById("adslinfosqhb_line2").style.display="none";
+    switch(flag)
+    {
+        case 0:
+            load_graph();
+            break;
+        case 1:
+            load_graph();
+            break;
+        case 2:
+            load_graph();
+            break;
+        case 3:
+            load_graph();
+            break;
+        case 4:
+            document.getElementById("bert").style.display="";
+            load_bert(); 
+            break;
+        default:
+            break;
+    }
+}
+
+function doApply()
+{
+    var diag_type_temp = document.getElementById("diag_type");
+    var loc = "advancedutilities_xDSL_diagnostics.cgi?";
+    loc += 'xdsldiagmode='+diag_type_temp.selectedIndex;
+    loc += '&sessionKey='+sessionkey;
+    postSubmit(loc);
+}
+
+function do_load()
+{
+    var type=parseInt(xdsldiagmode);
+    document.getElementById("diag_type").value = type;
+    displayConfTab(type);
+    side_nav("advancedutilities_xDSL_diagnostics");
+}
+
+function dom_load(){ do_load(); }
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- END SIDE NAV -->
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+        <div id="content_right_header"></div>
+        <div id="content_right_contentarea">
+            <h1 class="modemstatus_routingtable">_(xDSL Diagnostics)_</h1>
+            <table>
+                <tr>
+                    <td width="120px"><strong>_(Diagnostics Type:)_</strong></td>
+                    <td>
+                    <select id="diag_type" name="diag_type" style="width:100px;">
+                    <option value="0">_(SNR/bin)_</option>
+                    <option value="1">_(QLN)_</option>
+                    <option value="2">_(Hlog)_</option>
+                    <option value="3">_(Bits/Bitsbin)_</option>
+                    <option value="4">_(Bert)_</option>
+                    </select>
+                    </td>
+                    <td><a class="button1" onclick="doApply()" id="btn_apply"><span>_(Apply)_</span></a></td>
+                </tr>
+            </table>
+            <div id="bert" name="bert" style="display:none">
+                <table  width="80%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                    <tr align="left">
+                        <th align="left" width="40%">_(DSL 1)_</th>
+                        <th align="left"></th>
+                    </tr>
+                    <tr align="left">
+                        <td>_(BERT Status)_</td>
+                        <td span id='bert1_status'>_(N/A)_</td>
+                    </tr>
+                    <tr align="left">
+                        <td>_(BERT Total Time)_</td>
+                        <td span id='bert1_totaltime'>_(N/A)_</td>
+                    </tr>
+                    <tr align="left">
+                        <td>_(BERT Elapsed Time)_</td>
+                        <td span id='bert1_elapsedtime'>_(N/A)_</td>
+                    </tr>
+                    <tr align="left">
+                        <td>_(BERT Bits Tested)_</td>
+                        <td span id='bert1_bitstest'>_(N/A)_</td>
+                    </tr>
+                    <tr align="left">
+                        <td>_(BERT Bits Err)_</td>
+                        <td span id='bert1_bitserr'>_(N/A)_</td>
+                    </tr>
+                </table>
+
+                <table  width="80%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                    <tr align="left">
+                        <th align="left" width="40%">_(DSL 2)_</th>
+                        <th align="left"></th>
+                    </tr>
+                    <tr align="left">
+                        <td>_(BERT Status)_</td>
+                        <td span id='bert2_status'>_(N/A)_</td>
+                    </tr>
+                    <tr align="left">
+                        <td>_(BERT Total Time)_</td>
+                        <td span id='bert2_totaltime'>_(N/A)_</td>
+                    </tr>
+                    <tr align="left">
+                        <td>_(BERT Elapsed Time)_</td>
+                        <td span id='bert2_elapsedtime'>_(N/A)_</td>
+                    </tr>
+                    <tr align="left">
+                        <td>_(BERT Bits Tested)_</td>
+                        <td span id='bert2_bitstest'>_(N/A)_</td>
+                    </tr>
+                    <tr align="left">
+                        <td>_(BERT Err Bits)_</td>
+                        <td span id='bert2_bitserr'>_(N/A)_</td>
+                    </tr>
+                </table>
+                <table  width="80%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                    <tr align="left">
+                        <th align="left" width="40%">_(Set Bert)_</th>
+                        <th align="left"></th>
+                    </tr>
+                    <tr align="center">
+                        <td>
+                            <input type='text' name='berttime1' id='berttime1' value='' size='10' >_(sec)_
+                        </td>
+                        <td> <input type='radio' name='dslline' value='0'>_(DSL 1)_</td>
+                    </tr>
+                    <tr align="center">
+                        <td>
+                            <input type='text' name='berttime2' id='berttime2' value='' size='10' >_(sec)_
+                        </td>
+                        <td> <input type='radio' name='dslline' value='1'>_(DSL 2)_</td>
+                    </tr>
+                </table>
+
+                <table  width="20%" align="center" cellspacing="0" style="margin:10px auto 0 auto;" >
+                    <tr align="center">
+                        <td >
+                            <a class="button1" onclick="start()" ><span>_(Start)_</span></a>
+                        </td>
+                        <td>
+                            <a class="button1" onclick="stop()" ><span>_(Stop)_</span></a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div id="adslinfosqhb_line1">
+                <h1 style="margin:10px auto 0 65px !important; font:font:11px/11px; color:#000; font-weight:bold; text-align:left"><span id="information_header_1" style="font-weight:bold"></span></h1>
+                <table width="80%" border="0" cellpadding="5" cellspacing="0"   style="margin:10px auto 0 auto;" >        
+                    <tr>
+                        <td id="left_mark_1" style="padding:0px; width:30px;"></td>
+                        <td style="border-left:1px solid #000000;border-bottom:1px solid #000000;padding:0px; width:512px;">
+                            <div id="showInformation_1" style="width:512px; height:200px; position:relative;"></div>             
+                        </td>     
+                    </tr>     
+                        <tr>
+                            <td width="30px" align="right" valign="top"></td>
+                            <td id="btm_mark_1" width="512px"></td>      
+                        </tr>
+                </table>
+                <br></br>
+            </div>
+
+            <div id="adslinfosqhb_line2">
+                <h1 style="margin:10px auto 0 65px !important; font:font:11px/11px; color:#000; font-weight:bold; text-align:left"><span id="information_header_2" style="font-weight:bold"></span></h1>
+                <table width="80%" border="0" cellpadding="5" cellspacing="0"  style="margin:10px auto 0 auto;">
+                    <tr>
+                        <td id="left_mark_2" style="padding:0px; width:30px;"></td>
+                        <td style="border-left:1px solid #000000;border-bottom:1px solid #000000;padding:0px;width:512px;">            
+                            <div id="showInformation_2" style="width:512px; height:200px; position:relative;"></div>      
+                        </td>
+                    </tr>     
+                    <tr>
+                        <td width="30px" align="right" valign="top"></td>
+                        <td id="btm_mark_2" width="512px"></td>
+                    </tr>     
+                </table>
+            </div>
+        </div>
+        <div id="content_right_footer"></div>
+    </div>
+    <div class="clear_left"></div>
+    <div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

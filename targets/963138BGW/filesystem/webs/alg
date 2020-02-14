@@ -1,0 +1,223 @@
+var categorylist = new Array(7);
+var c;
+categorylist[0]=new category("_(Games)_", 29);
+    categorylist[0].app[0]=new cV("Alien vs Predator", 3);
+        categorylist[0].app[0].rule[0]=new iVe("80","80","80","UDP");
+        categorylist[0].app[0].rule[1]=new iVe("2300","2400","2300","UDP");
+        categorylist[0].app[0].rule[2]=new iVe("8000","8900","8000","UDP");
+    categorylist[0].app[1]=new cV("Asheron's Call", 3);
+        categorylist[0].app[1].rule[0]=new iVe("9000","9001","9000","UDP");
+        categorylist[0].app[1].rule[1]=new iVe("9004","9005","9004","UDP");
+        categorylist[0].app[1].rule[2]=new iVe("9012","9013","9012","UDP");
+    categorylist[0].app[2]=new cV("Dark Rein 2", 1);
+        categorylist[0].app[2].rule[0]=new iVe("26214","26214","26214","TCP or UDP");
+    categorylist[0].app[3]=new cV("Delta Force", 1);
+        categorylist[0].app[3].rule[0]=new iVe("3999","3999","3999","TCP or UDP");
+    categorylist[0].app[4]=new cV("Doom", 1);
+        categorylist[0].app[4].rule[0]=new iVe("666","666","666","TCP or UDP");
+    categorylist[0].app[5]=new cV("Dune 2000", 2);
+        categorylist[0].app[5].rule[0]=new iVe("4000","4000","4000","TCP");
+        categorylist[0].app[5].rule[1]=new iVe("1140","1234","1140","TCP or UDP");
+    categorylist[0].app[6]=new cV("DirectX 7~8 Games", 3);
+        categorylist[0].app[6].rule[0]=new iVe("47624","47624","47624","TCP");
+        categorylist[0].app[6].rule[1]=new iVe("6073","6073","6073","TCP");
+        categorylist[0].app[6].rule[2]=new iVe("2300","2400","2300","TCP or UDP");
+    categorylist[0].app[7]=new cV("EliteForce", 4);
+        categorylist[0].app[7].rule[0]=new iVe("26000","26000","26000","UDP");
+        categorylist[0].app[7].rule[1]=new iVe("27500","27500","27500","UDP");
+        categorylist[0].app[7].rule[2]=new iVe("27910","27910","27910","UDP");
+        categorylist[0].app[7].rule[3]=new iVe("27960","27960","27960","UDP");
+    categorylist[0].app[8]=new cV("EverQuest", 2);
+        categorylist[0].app[8].rule[0]=new iVe("7000","7000","7000","TCP");
+        categorylist[0].app[8].rule[1]=new iVe("1024","6000","1024","UDP");
+    categorylist[0].app[9]=new cV("Fighter Ace II", 1);
+        categorylist[0].app[9].rule[0]=new iVe("50000","50100","50000","TCP or UDP");
+    categorylist[0].app[10]=new cV("Half Life", 2);
+        categorylist[0].app[10].rule[0]=new iVe("27015","27015","27015","TCP");
+        categorylist[0].app[10].rule[1]=new iVe("27010","27010","27010","TCP");
+    categorylist[0].app[11]=new cV("Heretic II", 1);
+        categorylist[0].app[11].rule[0]=new iVe("28910","28910","28910","TCP");
+    categorylist[0].app[12]=new cV("Hexen II", 1);
+        categorylist[0].app[12].rule[0]=new iVe("26900","26905","26900","UDP");
+    categorylist[0].app[13]=new cV("Kali", 2);
+        categorylist[0].app[13].rule[0]=new iVe("6666","6666","6666","UDP");
+        categorylist[0].app[13].rule[1]=new iVe("2213","2218","2213","UDP");
+    categorylist[0].app[14]=new cV("Motorhead", 2);
+        categorylist[0].app[14].rule[0]=new iVe("16000","16000","16000","TCP or UDP");
+        categorylist[0].app[14].rule[1]=new iVe("16010","16030","16010","TCP or UDP");
+    categorylist[0].app[15]=new cV("MSN Gaming Zone", 2);
+        categorylist[0].app[15].rule[0]=new iVe("6667","6667","6667","TCP");
+        categorylist[0].app[15].rule[1]=new iVe("28800","29000","28800","TCP");
+    categorylist[0].app[16]=new cV("Myth: The Fallen Lords", 1);
+        categorylist[0].app[16].rule[0]=new iVe("3453","3453","3453","TCP");
+    categorylist[0].app[17]=new cV("Need for Speed Porche", 1);
+        categorylist[0].app[17].rule[0]=new iVe("9442","9442","9442","UDP");
+    categorylist[0].app[18]=new cV("Need for Speed 3", 1);
+        categorylist[0].app[18].rule[0]=new iVe("1030","1030","1030","UDP");
+    categorylist[0].app[19]=new cV("Outlows", 1);
+        categorylist[0].app[19].rule[0]=new iVe("5310","5310","5310","TCP");
+    categorylist[0].app[20]=new cV("Rainbow 6", 1);
+        categorylist[0].app[20].rule[0]=new iVe("2346","2346","2346","TCP");
+    categorylist[0].app[21]=new cV("Rogue Spear", 1);
+        categorylist[0].app[21].rule[0]=new iVe("2346","2346","2346","TCP");
+    categorylist[0].app[22]=new cV("Starcraft", 1);
+        categorylist[0].app[22].rule[0]=new iVe("6112","6112","6112","UDP");
+    categorylist[0].app[23]=new cV("Tiberian Sun", 2);
+        categorylist[0].app[23].rule[0]=new iVe("4000","4000","4000","TCP");
+        categorylist[0].app[23].rule[1]=new iVe("1140","1234","1140","TCP or UDP");
+    categorylist[0].app[24]=new cV("Ultima", 5);
+        categorylist[0].app[24].rule[0]=new iVe("5001","5010","5001","TCP");
+        categorylist[0].app[24].rule[1]=new iVe("7775","7777","7775","TCP");
+        categorylist[0].app[24].rule[2]=new iVe("8800","8900","8800","TCP");
+        categorylist[0].app[24].rule[3]=new iVe("9999","9999","9999","TCP");
+        categorylist[0].app[24].rule[4]=new iVe("7875","7875","7875","TCP");
+    categorylist[0].app[25]=new cV("Unreal Tournment", 4);
+        categorylist[0].app[25].rule[0]=new iVe("7777","7781","7777","UDP");
+        categorylist[0].app[25].rule[1]=new iVe("27500","27500","27500","UDP");
+        categorylist[0].app[25].rule[2]=new iVe("27900","27900","27900","UDP");
+        categorylist[0].app[25].rule[3]=new iVe("8080","8080","8080","TCP");
+    categorylist[0].app[26]=new cV("Quake 3 Server", 1);
+        categorylist[0].app[26].rule[0]=new iVe("27660","27665","27660","UDP");
+    categorylist[0].app[27]=new cV("Quake 2 Server", 1);
+        categorylist[0].app[27].rule[0]=new iVe("27910","27910","27910","UDP");
+    categorylist[0].app[28]=new cV("Unreal Server", 1);
+        categorylist[0].app[28].rule[0]=new iVe("7777","7777","7777","UDP");
+
+categorylist[1]=new category("_(Game Consoles)_", 3);
+    categorylist[1].app[0]=new cV("PS2 PS3 ", 2);
+        categorylist[1].app[0].rule[0]=new iVe("4658","4658","4658","TCP or UDP");
+        categorylist[1].app[0].rule[1]=new iVe("4659","4659","4659","TCP or UDP");
+    categorylist[1].app[1]=new cV("Wii", 4);
+        categorylist[1].app[1].rule[0]=new iVe("28910","28910","28910","TCP");
+        categorylist[1].app[1].rule[1]=new iVe("29900","29900","29900","TCP");
+        categorylist[1].app[1].rule[2]=new iVe("29901","29901","29901","TCP");
+        categorylist[1].app[1].rule[3]=new iVe("29920","29920","29920","TCP");
+    categorylist[1].app[2]=new cV("XBox", 3);
+        categorylist[1].app[2].rule[0]=new iVe("53","53","53","TCP or UDP");
+        categorylist[1].app[2].rule[1]=new iVe("88","88","88","UDP");
+        categorylist[1].app[2].rule[2]=new iVe("3074","3074","3074","TCP or UDP");
+
+categorylist[2]=new category("_(VPN)_", 2);
+    categorylist[2].app[0]=new cV("IPSEC L2TP", 3);
+        categorylist[2].app[0].rule[0]=new iVe("500","500","500","UDP");
+        categorylist[2].app[0].rule[1]=new iVe("0","0","0","ESP");
+        categorylist[2].app[0].rule[2]=new iVe("4500","4500","4500","UDP");
+    categorylist[2].app[1]=new cV("PPTP", 2);
+        categorylist[2].app[1].rule[0]=new iVe("1723","1723","1723","TCP");
+        categorylist[2].app[1].rule[1]=new iVe("0","0","0","GRE");
+
+c = 3;
+
+categorylist[c]=new category("_(Audio/Video)_", 5);
+    categorylist[c].app[0]=new cV("DirecTV Receiver", 3);
+        categorylist[c].app[0].rule[0]=new iVe("27161","27163","27161","TCP");
+        categorylist[c].app[0].rule[1]=new iVe("27171","27173","27171","TCP");
+        categorylist[c].app[0].rule[2]=new iVe("27181","27183","27181","TCP");
+    categorylist[c].app[1]=new cV("Net2Phone", 1);
+        categorylist[c].app[1].rule[0]=new iVe("6613","6613","6613","TCP or UDP");
+    categorylist[c].app[2]=new cV("Netmeeting", 6);
+        categorylist[c].app[2].rule[0]=new iVe("1024","1064","1024","TCP or UDP");
+        categorylist[c].app[2].rule[1]=new iVe("1503","1503","1503","TCP");
+        categorylist[c].app[2].rule[2]=new iVe("1720","1720","1720","TCP");
+        categorylist[c].app[2].rule[3]=new iVe("1731","1731","1731","TCP");
+        categorylist[c].app[2].rule[4]=new iVe("522","522","522","TCP");
+        categorylist[c].app[2].rule[5]=new iVe("389","389","389","TCP");
+    categorylist[c].app[3]=new cV("Quick Time 4 Server", 2);
+        categorylist[c].app[3].rule[0]=new iVe("554","554","554","TCP");
+        categorylist[c].app[3].rule[1]=new iVe("6970","7000","6970","UDP");
+    categorylist[c].app[4]=new cV("VoiceWing", 4);
+        categorylist[c].app[4].rule[0]=new iVe("69","69","69","UDP");
+        categorylist[c].app[4].rule[1]=new iVe("5060","5061","5060","UDP");
+        categorylist[c].app[4].rule[2]=new iVe("53","53","53","UDP");
+        categorylist[c].app[4].rule[3]=new iVe("20000","60000","10000","UDP");
+
+c = 4;
+
+categorylist[c]=new category("_(Apps)_", 9);
+    categorylist[c].app[0]=new cV("VNC", 3);
+        categorylist[c].app[0].rule[0]=new iVe("5500","5500","5500","TCP");
+        categorylist[c].app[0].rule[1]=new iVe("5800","5800","5800","TCP");
+        categorylist[c].app[0].rule[2]=new iVe("5900","5900","5900","TCP");
+    categorylist[c].app[1]=new cV("Win2k Terminal", 1);
+        categorylist[c].app[1].rule[0]=new iVe("3389","3389","3389","TCP or UDP");
+    categorylist[c].app[2]=new cV("PcAnywhere", 4);
+        categorylist[c].app[2].rule[0]=new iVe("5631","5631","5631","TCP");
+        categorylist[c].app[2].rule[1]=new iVe("65301","65301","65301","TCP");
+        categorylist[c].app[2].rule[2]=new iVe("22","22","22","UDP");
+        categorylist[c].app[2].rule[3]=new iVe("5632","5632","5632","UDP");
+    categorylist[c].app[3]=new cV("Netbios", 1);
+        categorylist[c].app[3].rule[0]=new iVe("137","139","137","TCP or UDP");
+    categorylist[c].app[4]=new cV("RemoteAnything", 2);
+        categorylist[c].app[4].rule[0]=new iVe("3996","3998","3996","UDP");
+        categorylist[c].app[4].rule[1]=new iVe("3999","4000","3999","TCP");
+    categorylist[c].app[5]=new cV("Radmin", 1);
+        categorylist[c].app[5].rule[0]=new iVe("4899","4899","4899","TCP");
+    categorylist[c].app[6]=new cV("LapLink", 1);
+        categorylist[c].app[6].rule[0]=new iVe("1547","1547","1547","TCP");
+    categorylist[c].app[7]=new cV("CarbonCopy", 2);
+        categorylist[c].app[7].rule[0]=new iVe("1680","1680","1680","TCP");
+        categorylist[c].app[7].rule[1]=new iVe("1023","1679","1023","UDP");
+    categorylist[c].app[8]=new cV("Gnutella", 2);
+        categorylist[c].app[8].rule[0]=new iVe("1214","1214","1214","TCP");
+        categorylist[c].app[8].rule[1]=new iVe("6346","6346","6346","TCP or UDP");
+
+c = 5;
+
+categorylist[c]=new category("_(Servers)_", 13);
+    categorylist[c].app[0]=new cV("Web Server", 2);
+        categorylist[c].app[0].rule[0]=new iVe("80","80","80","TCP");
+        categorylist[c].app[0].rule[1]=new iVe("443","443","443","TCP");
+    categorylist[c].app[1]=new cV("FTP Server", 2);
+        categorylist[c].app[1].rule[0]=new iVe("21","21","21","TCP");
+        categorylist[c].app[1].rule[1]=new iVe("20","20","20","TCP");
+    categorylist[c].app[2]=new cV("TELNET Server", 1);
+        categorylist[c].app[2].rule[0]=new iVe("23","23","23","TCP");
+    categorylist[c].app[3]=new cV("DNS Server", 1);
+        categorylist[c].app[3].rule[0]=new iVe("53","53","53","UDP");
+    categorylist[c].app[4]=new cV("LDAP Server", 2);
+        categorylist[c].app[4].rule[0]=new iVe("389","389","389","TCP");
+        categorylist[c].app[4].rule[1]=new iVe("636","636","636","TCP");
+    categorylist[c].app[5]=new cV("NNTP Server", 1);
+        categorylist[c].app[5].rule[0]=new iVe("119","119","119","TCP");
+    categorylist[c].app[6]=new cV("SMTP Server", 1);
+        categorylist[c].app[6].rule[0]=new iVe("25","25","25","TCP");
+    categorylist[c].app[7]=new cV("POP 2 Server", 1);
+        categorylist[c].app[7].rule[0]=new iVe("109","109","109","TCP");
+    categorylist[c].app[8]=new cV("POP 3 Server", 1);
+        categorylist[c].app[8].rule[0]=new iVe("110","110","110","TCP");
+    categorylist[c].app[9]=new cV("IMAP Server", 3);
+        categorylist[c].app[9].rule[0]=new iVe("143","143","143","TCP");
+        categorylist[c].app[9].rule[1]=new iVe("585","585","585","TCP");
+        categorylist[c].app[9].rule[2]=new iVe("993","993","993","TCP");
+    categorylist[c].app[10]=new cV("IRC Server", 3);
+        categorylist[c].app[10].rule[0]=new iVe("6667","6667","6667","TCP");
+        categorylist[c].app[10].rule[1]=new iVe("194","194","194","TCP");
+        categorylist[c].app[10].rule[2]=new iVe("5100","5100","5100","TCP");
+    categorylist[c].app[11]=new cV("Lotus Server", 1);
+        categorylist[c].app[11].rule[0]=new iVe("1352","1352","1352","TCP");
+    categorylist[c].app[12]=new cV("Remotely Possible Server", 1);
+        categorylist[c].app[12].rule[0]=new iVe("799","799","799","TCP");
+
+<%ejGetOther(customRules)%>
+
+function category(name, entryNum){
+   this.name = name;
+   this.eNum = entryNum;
+   this.app = new Array(entryNum);
+}
+
+function cV(name, entryNum)
+{
+   this.name = name;
+   this.eNum = entryNum;
+   this.rule = new Array(entryNum);
+}
+
+function iVe(eStart, eEnd, iStart, proto)
+{
+   this.eStart = eStart;
+   this.eEnd = eEnd;
+   this.proto = proto;
+   this.iStart = iStart;
+   this.iEnd = iStart;
+}

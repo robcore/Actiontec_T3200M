@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(IP Address)_ - _(MoCA LAN Setup - Advanced)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var moca_channel_v= '<%ejGetOther(lanMoca,channel)%>'; //MoCA Channel
+var moca_beaconPower_v='<%ejGetOther(lanMoca,beaconPower)%>'; //MoCA Beacon Power
+var moca_preferredNC_v= '<%ejGetOther(lanMoca,preferredNC)%>'; //MoCA Preferred NC
+var moca_controlMac_v= htmlDecodeStr('<%ejGetOther(lanMoca,macAddress)%>'); //MoCA Network Controller MAC
+function do_load()
+{
+    side_nav("advancedsetup_moca");
+
+    document.getElementById("id_moca_channel").value = moca_channel_v;
+    document.getElementById("id_moca_beaconPower").value = moca_beaconPower_v;
+    if(moca_preferredNC_v == "1")
+        document.getElementById("moca_preferredNC_on").checked = true;
+    else
+        document.getElementById("moca_preferredNC_off").checked = true;
+    document.getElementById("moca_controlMac").innerHTML = moca_controlMac_v;
+}
+
+function doApply() 
+{
+    if(document.getElementById("moca_preferredNC_on").checked)
+        document.getElementById("moca_preferredNC").value = "1";
+    else
+        document.getElementById("moca_preferredNC").value = "0";
+    
+    document.getElementById("moca_channel").value = document.getElementById("id_moca_channel").value;
+    document.getElementById("moca_beaconPower").value = document.getElementById("id_moca_beaconPower").value;
+    document.getElementById("sessionKey").value = sessionKey;
+
+    if(confirm("_(Equivalent changes must be applied to all other MoCA devices in your network after making this change.)_"))
+        document.getElementById("formSubmit").submit();
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <%ejInclude(top_btn_nav5.html)%>
+    <%ejInclude(adv_left.html)%>
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+        <div id="content_right_header"></div>
+        <div id="content_right_contentarea">
+            <h1 class="advancedsetup_security">_(MoCA LAN Setup - Advanced)_ </h1>
+            <form method="post" id="formSubmit" action="advancedsetup_moca_advanced.cgi">
+                <input type="hidden" name="sessionKey" id="sessionKey"/>
+                <input type="hidden" name="moca_channel" id="moca_channel"/>
+                <input type="hidden" name="moca_beaconPower" id="moca_beaconPower"/>
+                <input type="hidden" name="moca_preferredNC" id="moca_preferredNC"/>
+            </form>
+
+            <p><strong>1. _(Advanced config settings for MoCA LAN.)_</strong></p>
+            <table border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                    <td>_(Channel)_: </td>
+                    <td>
+                        <select id="id_moca_channel">
+                            <option value="0">_(Automatic)_</option>
+                            <option value="1150">&nbsp;_(D1(1150 MHz))_&nbsp;</option>
+                            <option value="1200">&nbsp;_(D2(1200 MHz))_&nbsp;</option>
+                            <option value="1250">&nbsp;_(D3(1250 MHz))_&nbsp;</option>
+                            <option value="1300">&nbsp;_(D4(1300 MHz))_&nbsp;</option>
+                            <option value="1350">&nbsp;_(D5(1350 MHz))_&nbsp;</option>
+                            <option value="1400">&nbsp;_(D6(1400 MHz))_&nbsp;</option>
+                            <option value="1450">&nbsp;_(D7(1450 MHz))_&nbsp;</option>
+                            <option value="1500">&nbsp;_(D8(1500 MHz))_&nbsp;</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>_(Beacon Power Reduction(dB))_: </td>
+                    <td>
+                        <input type="text" id="id_moca_beaconPower"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>_(Preferred NC)_: </td>
+                    <td>
+                        <input type="radio" name="id_moca_preferredNC" id="moca_preferredNC_on" checked/>_(Enable)_
+                        &nbsp;&nbsp;&nbsp;
+                        <input type="radio" name="id_moca_preferredNC" id="moca_preferredNC_off"/>_(Disable)_
+                    </td>
+                </tr>
+                <tr>
+                    <td>_(Network Controller MAC)_: </td>
+                    <td><span id="moca_controlMac" >xx:xx:xx:xx:xx:xx</span></td>
+                </tr>
+                <tr>
+                    <td colspan="2"><span style="color:#FF0000;">_(WARNING: Enabling or modifying MoCA Privacy settings will result in loss of connectivity to all other MoCA devices on your network that do not have matching Privacy settings.  You must make equivalent changes on all MoCA devices in your network (refer to User Manual for those devices for instructions).)_</span></td>
+                </tr>
+            </table>
+            <p><strong>2. _(Click Apply to save changes.)_ </strong></p>
+            <p><a class="button1" onclick="doApply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+            <p></p>
+            <p><strong>3. _(Click View to view MoCA Link Status.)_ </strong></p>
+            <p><a class="button1" href="advancedsetup_moca_status.html" id="btn_view"><span>_(View)_</span></a></p>
+        </div>
+        <div id="content_right_footer"></div>
+    </div>
+    <div class="clear_left"></div>
+    <div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

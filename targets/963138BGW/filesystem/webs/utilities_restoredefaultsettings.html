@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Restore Defaults)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+//<!---hide
+var availInfNames = '<%ejGetOther(availInfNames, all)%>';
+var wanInfNames = '<%ejGetOther(wanInterfaces, all)%>';
+var traffictype = '<%ejGetOther(trafficType, 0)%>';
+var wanInf="";
+var redirect="utilities_restoredefaultsettings.html";
+var infname='atm0/(0_0_35)';
+var layer2Infoptm = '<%ejGetOther(layer2Info, PTM)%>';
+var l2infoptm=layer2Infoptm.split('|');
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+vId=l2infoptm[8];
+vPr=l2infoptm[9];
+
+function RestorePPP()
+{
+    var loc = 'quicksetup.cmd' ;
+    var code;
+    if(wanInfNames !='')
+    {
+        var wanNameTypes  = wanInfNames.split('|');
+        var nameType = wanNameTypes[0].split(':');
+        var wanEntryInfo=nameType[4].split('/');
+            wanInf = htmlDecodeStr(nameType[1]);
+            infname= htmlDecodeStr(nameType[0]);
+     }
+    else
+    {
+        var names = availInfNames.split('|');
+        var regexp = /^ptm/ ;
+
+        if ( traffictype == 'PTM' )
+            regexp = /^ptm/ ;
+        else if ( traffictype == 'ATM' )
+            regexp = /^atm|^pppoa|^ipoa/ ;
+        else {
+            regexp = /^ptm/ ;
+            traffictype="PTM";
+            //return;
+        }
+
+        for ( var i = 0; i < names.length; i++ ) {
+            names[i] = htmlDecodeStr(names[i]);
+            if (names[i].search(regexp) != -1) {
+                infname = names[i];
+                break;
+            }
+        }
+    }
+
+    if (wanInf=='')
+        loc += '?serviceId=0';
+     else /* editing */
+        loc += '?serviceId=1&wanInf=' + wanInf;
+
+     loc += '&wanL2IfName=' + infname;
+     loc += '&pppUserName=' + "**********"
+     loc += '&pppPassword=' + "**********";
+     loc+='&ntwkPrtcl=0';
+     if(traffictype == "PTM" )
+     {
+        loc += '&vlanMuxId='+vId;
+        loc += '&vlanMuxPr='+vPr;
+     }
+
+     loc += '&redirect=' + redirect;
+	 loc += '&sessionKey=' + sessionKey;
+     loc +='&needthankyou=utilities_restoredefaultsettings.html';
+     //code = 'location="' + loc + '"';
+     //eval(code);
+	 postSubmit(loc);
+}
+
+function RestoreWanPort()
+{
+    var loc = 'WANPortRestoredefault.cmd' ;
+    var code;
+     loc += '?redirect=' + redirect;
+	 loc += '&sessionKey=' + sessionKey;
+     loc +='&needthankyou=utilities_restoredefaultsettings.html';
+     //code = 'location="' + loc + '"';
+     //eval(code);
+     postSubmit(loc);
+
+}
+
+function RestoreFireWall()
+{
+    var loc = 'FirewallRestoredefault.cmd' ;
+    var code;
+     loc += '?redirect=' + redirect;
+	 loc += '&sessionKey=' + sessionKey;
+     loc +='&needthankyou=utilities_restoredefaultsettings.html';
+     //code = 'location="' + loc + '"';
+     //eval(code);
+     postSubmit(loc);
+}
+
+function do_load()
+{
+	//highlight the button after user click on it
+	side_nav("restoredefaultsettings");
+}
+
+function doRestoreFactoryDefaults(restore)
+{
+    var form = document.frmRestore ;
+    if(restore == 2)
+    {
+        // Restore Default Wireless Settings
+      if(confirm("_(To restore default wireless settings, click OK.)_") )
+      {
+	  location.href="restorewireless.html";
+      }
+    }
+    else if(restore == 3)
+    {
+        //Restore Default Firewall Settings
+      if(confirm("_(To restore default firewall settings, click OK.)_") )
+      {
+          RestoreFireWall();
+      }
+    }
+    else if (restore == 4 )
+    {
+      if(confirm("_(Restoring the modem to default settings will remove all custom user configurations. Click OK to restore factory default settings.)_") )
+      {
+           location.href="restoreinfo.html";
+      }
+   }
+    else if (restore == 5 )
+    {
+      if(confirm("_(Restoring the WAN Ports to default settings,please make sure the DSL line is unpluged. Select OK to continue.)_") )
+      {
+          RestoreWanPort();
+      }
+   }
+   else
+   {
+           return ;
+   }
+}
+//--hide-->
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="utilities_restoredefaults">_(Restore Defaults)_ </h1>
+					<p>_(To restore default settings, click the appropriate Restore button.)_</p>
+					<table border="0" align="center" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                      <tr>
+                        <th width="310">_(EVENT)_</th>
+                        <th width="80"></th>
+                      </tr>
+                      <tr align="center">
+                        <td><div align="left">_(Restore WAN Port Settings)_:</div>
+                        </td>
+                        <td><a class="button1" onclick="javascript:doRestoreFactoryDefaults(5);" style="text-decoration:none;" id="btn_restore_wan"><span>_(Restore)_</span></a></td>
+                      </tr>
+                      <tr align="center">
+                        <td><div align="left">_(Restore Default Wireless Settings)_:</div>
+                        </td>
+                        <td><a class="button1" onclick="javascript:doRestoreFactoryDefaults(2);" style="text-decoration:none;" id="btn_restore_wireless"><span>_(Restore)_</span></a></td>
+                      </tr>
+                      <tr align="center">
+                        <td><div align="left">_(Restore Default Firewall Settings)_:</div></td>
+                        <td><a class="button1" onclick="javascript:doRestoreFactoryDefaults(3);" style="text-decoration:none;" id="btn_restore_firewall"><span>_(Restore)_</span></a></td>
+                      </tr>
+                      <tr align="center">
+                        <td><div align="left">_(Restore Modem to Factory Default State)_:</div></td>
+                        <td><a class="button1" onclick="javascript:doRestoreFactoryDefaults(4);" style="text-decoration:none;" id="btn_restore"><span>_(Restore)_</span></a></td>
+                      </tr>
+                    </table>
+					<p>&nbsp;</p>
+					<div class="clear_left"></div>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

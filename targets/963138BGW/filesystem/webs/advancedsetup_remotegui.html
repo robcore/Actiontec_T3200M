@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Remote)_ - _(Remote GUI)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var reload = '<%ejGetOther(remoteGuiInfo)%>';
+var dummy_passwd = "k@5/n(t@d(a";
+var remoteName = htmlDecodeStr("<%ejGet(remoteGuiUserName)%>");
+var remotePort = htmlDecodeStr("<%ejGet(remGuiPort)%>");
+
+
+function configstate()
+{
+    if(document.getElementById("remote_management_enabled").checked == true)
+    {
+	document.getElementById("remotegui_user_name").disabled = false;
+	document.getElementById("remotegui_password").disabled = false;
+	document.getElementById("remote_management_port").disabled = false;
+	document.getElementById("remote_management_timeout").disabled = false;
+    }
+    else if (document.getElementById("remote_management_disabled").checked == true)
+    {
+	document.getElementById("remotegui_user_name").disabled = true;
+	document.getElementById("remotegui_password").disabled = true;
+	document.getElementById("remote_management_port").disabled = true;
+	document.getElementById("remote_management_timeout").disabled = true;
+    }
+}
+
+
+function do_load()
+{
+    htmlDecode();
+    var remgui = htmlDecodeStr("<%ejGet(serCtlHttp)%>");
+    var remguiTimeout= htmlDecodeStr("<%ejGet(remGuiTimeout)%>");
+
+    if ( remgui == "1" ) {
+        document.getElementById("remote_management_enabled").checked = true;
+        document.getElementById("remote_management_disabled").checked = false;
+    } else {
+        document.getElementById("remote_management_enabled").checked = false;
+        document.getElementById("remote_management_disabled").checked = true;
+    }
+
+    document.getElementById("remotegui_password").value = dummy_passwd;
+    document.getElementById("remotegui_user_name").value = remoteName;
+    document.getElementById("remote_management_port").value = remotePort;
+
+
+/* for debug only */
+//    var remguiTimeout= "3600";
+    var timeSel = document.getElementById("remote_management_timeout");
+    for (var i=0; i<timeSel.length; i++) {
+	if (timeSel.options[i].value == remguiTimeout) {
+	    timeSel.options[i].selected = true;
+	    break;
+	}
+    }
+    if (i == timeSel.length)
+	timeSel.options[0].selected = true;
+
+    configstate();
+
+	//highlight the button after user click on it
+	side_nav("advancedsetup_remotegui");
+}
+
+function do_apply()
+{
+    var numericExpression = /^[0-9]+$/;
+    var port;
+
+    if ( document.getElementById("remote_management_enabled").checked == true ) {
+        document.fapply.elements[0].value = "1";
+    } else {
+        document.fapply.elements[0].value = "0";
+    }
+
+       new_username = document.getElementById("remotegui_user_name").value;
+       new_password = document.getElementById("remotegui_password").value;
+       if ( new_password.length == 0 ) {
+	    document.fapply.elements[1].disabled = true;
+	    document.fapply.elements[2].disabled = true;
+       }
+       else {
+	   if ( new_password.length > 15 ) {
+	       alert("_(The password should cannot be longer than 15 characters.)_");
+	       return;
+	   }
+	   if ( new_password.indexOf(' ') != -1 ) {
+	       alert("_(The password cannot contain a space.)_");
+	       return;
+	   }
+
+	   if ( new_username.length < 1 ) {
+	       alert("_(The username cannot be left blank.)_");
+	       return;
+	   }
+	   if ( new_username.length > 15 ) {
+	       alert("_(Username cannot be longer than 15 characters.)_");
+	       return;
+	   }
+	   if (isValidName(new_username) == false)
+	   return;
+
+	   document.fapply.elements[1].value = new_username;
+	   document.fapply.elements[2].value = new_password;
+       }
+
+    document.fapply.elements[3].value = document.getElementById("remote_management_timeout").value;
+
+    document.fapply.elements[4].value = document.getElementById("remote_management_port").value;
+    //validate port value
+    if(!document.fapply.elements[4].value.match(numericExpression))
+    {
+	alert("_(The port number is invalid. You must enter a port number between 0 and 65535.)_");
+	return;
+    }
+    else
+    {
+	//further check whether port number is in the right range
+	port = parseInt(document.fapply.elements[4].value);
+	if( (port < 1) || (port > 65535))
+	{
+	    alert("_(Enter a port number between 0 to 65535.)_");
+	    return;
+	}
+    }
+
+    document.fapply.submit();
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+    <form name="fapply" action="advancedsetup_remotegui.cgi" method="post">
+        <input type="hidden" name="serCtlHttp" value="1">
+        <input type="hidden" name="remoteGuiUserName" value="admin">
+        <input type="hidden" name="remoteGuiPassword" value="">
+        <input type="hidden" name="remGuiTimeout" value="0">
+        <!--input type="hidden" name="remGuiPassChanged" value="0"-->
+        <input type="hidden" name="remGuiPort" value="8443">
+		<input type="hidden" name="sessionKey" value='<%ejGetOther(sessionKey)%>' >
+        <input type="hidden" name="nothankyou" value="0">
+    </form>
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="advancedsetup_remotemgmt">_(Remote GUI)_ </h1>
+    <p><em> _(If you want to access the web interface of the modem remotely, you must activate Remote GUI. the username and password for Remote GUI is root username and password.)_</em></p>
+    <p><em>_(Remote GUI is default set to port 8443 for HTTPS access. If port 8443 has been forwarded to a device on the LAN you will need to change the default remote GUI port below to allow for remote access. To access your modem remotely you will need to use https:// followed by the modem IP.)_</em><br />
+</p>
+					<form>
+						<p><strong>1. _(Set the remote GUI state below.)_</strong></p>
+						<p>&nbsp;&nbsp;&nbsp;&nbsp;_(Remote GUI)_<strong>:
+	    <input name="remote_management" id="remote_management_enabled" type="radio" value="remote_management_enabled" onClick="configstate();" />
+	    </strong>
+			_(Enable)_
+	    <strong>
+	    <input name="remote_management" type="radio" id="remote_management_disabled" value="remote_management_disabled" onClick="configstate();" checked="checked" />
+</strong>_(Disable)_</p>
+<div style="display:none">
+					  <p><strong>2. _(Enter the remote GUI username and password below.)_</strong></p>
+						<p>&nbsp;&nbsp;&nbsp;&nbsp;_(Remote GUI Username)_:<strong>
+							<input name="remotegui_user_name" id="remotegui_user_name" type="text" style="height:18px;"/>
+						</strong></p>
+						<p>&nbsp;&nbsp;&nbsp;&nbsp;_(Remote GUI Password)_:&nbsp;&nbsp; <strong>
+							<input type="password" name="remotegui_password" id="remotegui_password" style="height:18px;"/>
+						</strong></p>
+</div>
+						<p><strong>2. _(Set the remote management port.)_</strong></p>
+						<p>&nbsp;&nbsp;&nbsp;&nbsp;_(Remote Management Port)_:
+							<input name="remote_management_port" id="remote_management_port" type="text" style="height:18px;"/>
+</p>
+					<p><strong>3. _(Set the remote management timeout.)_</strong></p>
+						<p>&nbsp;&nbsp;&nbsp;&nbsp;_(Disable Remote Management After)_:
+			    <select name="remote_management_timeout" id="remote_management_timeout">
+				    <option value="900">15 _(Minutes)_&nbsp;&nbsp;</option>
+				    <option value="1800">30 _(Minutes)_</option>
+				    <option value="3600">60 _(Minutes)_</option>
+			    </select>
+					<p><strong>4. _(Click Apply to save changes.)_ </strong></p>
+					<p><a class="button1" onclick="do_apply()" id="btn_apply"><span>_(Apply)_</span></a></p>
+				</form>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

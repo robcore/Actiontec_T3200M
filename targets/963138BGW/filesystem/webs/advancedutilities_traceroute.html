@@ -1,0 +1,365 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Traceroute)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/functions.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+var hostName = htmlDecodeStr("<%ejGet(hostName)%>");
+var pingSign =  htmlDecodeStr("<%ejGet(pingSign)%>");
+var traceroute_res = "<%ejGetOther(traceResult)%>";
+var res = new Array();
+function do_load(val)
+{
+    htmlDecode();
+    var i=0;
+    var j=0;
+    if(val !=0 && val != "")
+    {
+        //auto refresh
+        var val_array = val.split('+');
+        pingSign = val_array[0];
+        traceroute_res = val_array[1];
+    }
+
+    if(pingSign == "1")
+    {
+        document.getElementById("simple_result").innerHTML = '<font color="#006600">_(Test is in progress)_ ...</font>';
+        document.myform.pingSign.value = 0;
+        document.getElementById("testBtn").innerHTML="<a class='button2' id='btn_test_disable'><span>_(Test)_</span></a>";
+        setTimeout("http_refresh()", 3000);
+    }
+    else
+    {
+        document.getElementById("simple_result").innerHTML = "_(No Test in Progress)_";
+        document.getElementById("testBtn").innerHTML="<a class='button1' onclick='traceTest()' id='btn_test'><span>_(Test)_</span></a>";
+    }
+
+    document.getElementById("hostName").value = hostName;
+    document.getElementById("pingSign").value = pingSign;
+
+    //Show Result
+    var table = document.getElementById("result_tbl");
+
+    //Delete all old data.
+    while(table.rows.length>2)table.deleteRow(-1);
+
+    if(traceroute_res != "" && traceroute_res.indexOf(" ms") != -1)
+    {
+        res = traceroute_res.split("|");
+        if(res.length > 0)
+        {
+            var item_num=1;
+            for(i=0; i<res.length; i++)
+            {
+                res[i] = htmlDecodeStr(res[i]);
+                var details = res[i].replace(/ ms/g, "ms").replace(/\*/g, " _(N/A)_").split("  ");
+                while(details.length<5) details[details.length]="_(N/A)_";
+                if (details[0]!=item_num  )
+                    continue;
+                var host=details[1];
+                //May be begin with *
+                for(var n = 1; n<details.length; n++)
+                {
+                    if(trim(details[n]) != "N/A")
+                    {
+                        host = details[n];
+                        break;
+                    }
+                }
+                if(isValidIpAddress(host.split(" ")[0]))
+                    host=host.split(" ")[0];
+
+                var tab_details = new Array(5);
+                tab_details[0]= item_num;
+                tab_details[1]= "_(N/A)_";
+                tab_details[2]= "_(N/A)_";
+                tab_details[3]= "_(N/A)_";
+                tab_details[4]= host;
+                var time_index=1;
+                var dt_index=2;
+                while (time_index<=3 && dt_index<details.length)
+                {
+                    var ms_index = details[dt_index].indexOf("ms");
+                    if ( ms_index!=-1)
+                    {
+                        tab_details[time_index]=details[dt_index].substring(0,ms_index+2);
+                        time_index++;
+                    }
+                    dt_index++;
+                }
+                appendTableRow(table, "center", tab_details);
+                item_num++;
+                j++;
+            }
+        }
+    }
+    else
+    {
+        if(pingSign != "1" && val !=0 && val != "")
+        {
+            alert("_(Unknown host, or the network is unavailable.)_");
+        }
+    }
+    for(; j<5; j++)
+    {
+        var details = ["_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_"];
+        appendTableRow(table, "center", details);
+    }
+
+    //highlight the button after user click on it
+    side_nav("advancedutilities_traceroute");
+}
+
+function checkInvalidchar(Address)
+{
+    var s = Address;
+    var num = /^\d+/;
+    var web_rule = /[\w-]+(\.[\w-]+)+(\/\w+)*\/?/;
+    var isIp = false;
+    var isUrl = false;
+
+    if(s=="" || s==null)
+    {
+        alert("_(You must enter a valid address.)_");
+        return false;
+    }
+
+    if (isValidIpAddress(s))
+		isIp = true;
+    else
+		isUrl = true;
+
+    if (isIp)
+    {
+		if (!isValidIpAddress(s))
+		{
+		alert("_(The IP Address is invalid. You must enter a valid IP Address.)_");
+		return false;
+		}
+    }
+
+    if (isUrl)
+    {
+		if(!checkDomain(s))
+		{
+			alert("_(The URL is invalid. You must enter a valid URL.)_");
+			return false;
+		}
+		if (!web_rule.test(s))
+		{
+		alert("_(The URL is invalid. You must enter a valid URL.)_");
+		return false;
+		}
+    }
+
+    return true;
+}
+
+
+
+function traceTest()
+{
+    var form = document.forms[0];
+    var lochead='advancedutilities_traceroute.cgi?';
+    var i = 0;
+    var loc="";
+
+    if(!checkInvalidchar(document.getElementById("url").value))
+    {
+        return false;
+    }
+    form.elements[0].value = document.getElementById("url").value;
+    form.elements[0].disabled = false;
+    form.elements[1].value = 1;
+
+    for(i=0;i<form.elements.length;i++)
+    {
+        if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+        {
+            if(i!=0)
+              loc+="&";
+            loc+=form.elements[i].name;
+            loc+="=";
+            if(i == 0)
+               loc+=newEncodeUrl(form.elements[i].value);
+            else
+               loc+=form.elements[i].value;
+        }
+    }
+    lochead+=loc;
+    document.getElementById("simple_result").innerHTML = '<font color="#006600">_(Test is in progress)_ ...</font>';
+    document.myform.pingSign.value = 0;
+    document.getElementById("testBtn").innerHTML="<a class='button2' id='btn_test_disable'><span>_(Test)_</span></a>";
+    //Delete all old data.
+    var table = document.getElementById("result_tbl");
+    while(table.rows.length>2)table.deleteRow(-1);
+
+    var xmlhttp = getXmlhttp();
+    if(xmlhttp != null)
+    {
+     xmlhttp.open("POST",lochead,true);
+     xmlhttp.onreadystatechange =function()
+     {
+        if(xmlhttp.readyState == 4) {
+            if(xmlhttp.status == 200) {
+                statusval = xmlhttp.responseText;
+                //window.location.href="advancedutilities_traceroute.html";
+                setTimeout("http_refresh()", 3000);
+            }
+        }
+     }
+     xmlhttp.send(null);
+    }
+
+}
+
+function http_refresh()
+{
+    var statusval = "";
+    var xmlhttp = getXmlhttp();
+    if(xmlhttp != null)
+    {
+        var curTime = new Date();
+        curTime = curTime.getTime();
+        xmlhttp.open("GET","./advancedutilities_traceroute_refresh.html?time="+curTime,true);
+        xmlhttp.onreadystatechange =function()
+        {
+            if(xmlhttp.readyState==4)
+            {
+                statusval = xmlhttp.responseText;
+                if(statusval == "" || statusval.indexOf("+") == -1)
+                {
+                    setTimeout("http_refresh();", 5000);
+                }
+                else
+                {
+                    do_load(statusval);
+                }
+            }
+        }
+        xmlhttp.send(null);
+        //no_response = 1;
+        //setTimeout("Watch_Dog();", 5000);
+    }
+    return statusval;
+}
+
+function getXmlhttp()
+{
+    if(window.XMLHttpRequest)  //Mozilla
+    {
+        xmlhttp = new XMLHttpRequest();
+    }
+    else if(window.ActiveXObject) //IE
+    {
+        try
+        {
+            xmlhttp = new ActiveXObject("Msxml2.XMLHTTP"); //new IE
+        }
+        catch(e)
+        {
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP"); //old IE
+        }
+    }
+    return xmlhttp;
+}
+
+
+function keyDown(e)
+{
+    if(navigator.appName == "Microsoft Internet Explorer")
+    {
+        var keycode = event.keyCode;
+    }else
+    {
+        var keycode = e.which;
+    }
+    switch (keycode)
+    {
+        case 13:
+            traceTest();
+            return true;
+        default:
+            return true;
+    }
+}
+document.onkeydown = keyDown;
+
+function dom_load(){ do_load(0); }
+
+</script>
+</head>
+<body>
+<form name="myform" action="advancedutilities_traceroute.cgi" method="POST">
+<!--0--><input type="hidden" name="hostName" id="hostName" value="<%ejGet(hostName)%>" disabled>
+<!--2--><input type="hidden" name="pingSign" id="pingSign" value="<%ejGet(pingSign)%>" >
+<!--0--><input type="hidden" name="sessionKey" value='<%ejGetOther(sessionKey)%>' >
+<!--3--><input type="hidden" name="nothankyou" value="1" >
+</form>
+
+
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="utilities_webactivitylog">&nbsp;_(Traceroute)_</h1>
+            <p>_(Traceroute is used to determine the route taken by packets across a network.)_</p>
+			<form onsubmit="return false;">
+			<p><strong>1. _(Insert a URL or IP Address below.)_ </strong></p>
+			<table border="0" cellspacing="0" cellpadding="0">
+		    <table>
+                <tr>
+                  <td width="121">_(URL or IP)_:
+                  </td>
+                  <td>
+						<input type="text" name="url" id="url" style="height:18px;"/>
+                  </td>
+                </tr>
+			</table>
+			<p>&nbsp;</p>
+			<p><strong>2. _(Select test.)_ </strong></p>
+            <p><span id="testBtn"><a class="button1" onclick="traceTest()" id="btn_test"><span>_(Test)_</span></a></span></p>
+            <table width="48%" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;">
+              <tr align="center">
+                <th>_(Test Status)_</th>
+              </tr>
+              <tr align="center">
+               <td id="simple_result" text-align="center">_(No Test in Progress)_</td>
+              </tr>
+            </table>
+            <p>&nbsp;</p>
+			<table width="85%" border="0" cellpadding="10" cellspacing="0" class="defaultstyle" style="margin-top:10px;" name="result_tbl" id="result_tbl">
+				<tr>
+					<th style="text-align:center;" colspan=5>_(Traceroute Results)_: </th>
+				</tr>
+				<tr>
+                    <th>_(Hop)_</th>
+                    <th>_(Time 1)_</th>
+                    <th>_(Time 2)_</th>
+                    <th>_(Time 3)_</th>
+                    <th>_(Host / IP Address)_</th>
+				</tr>
+			</table>
+			</form>
+			<p></p>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

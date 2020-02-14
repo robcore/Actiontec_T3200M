@@ -1,0 +1,557 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Firewall)_ - _(Applications)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+<%ejInclude(alg)%>
+
+var list_rule_applied_all = new Array();
+var list_rule_applied_all_ip = new Array ();
+var list_rule_applied_all_pc = new Array();
+var list_dhcp_ip = new Array();
+var list_dhcp_pc = new Array();
+var num_rules_all=0;
+
+var ethIpAddress=htmlDecodeStr('<%ejGetOther(IPInterfaceIPAddress)%>');
+var ethSubnetMask = htmlDecodeStr('<%ejGetOther(IPInterfaceSubnetMask)%>');
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function do_load()
+{
+    var i;
+    var form = document.forms[0];
+    var table = document.getElementById("rulelist_tbl");
+    var hostinfo = '<%ejGetOther(hostinfo)%>';
+    var info = hostinfo.split('|');
+    if(location.pathname.indexOf("scpmapp.cmd") != -1)
+        document.getElementById("new_rule_div").style.display='block';
+    else
+        document.getElementById("applications_div").style.display='block';
+    if (info != ''){
+        for ( i = 0; i < info.length; i++) {
+            var details = info[i].split('/');
+
+            details[0] = htmlDecodeStr(details[0]);
+            details[1] = htmlDecodeStr(details[1]);
+            
+			var strhostName = details[0];
+			list_dhcp_pc[i] = strhostName;
+			list_dhcp_ip[i] = details[1];
+			form.lan_device[i+1] = new Option(strhostName+"("+details[1]+")", strhostName);
+        }
+    }
+    for(i=0; i<7; i++){
+        form.category[i+1] = new Option(categorylist[i].name);
+        load_apps(i, 0);
+    }
+    var applied_rules="<%ejGetOther(currVrtSrv)%>".split('|');
+    if (applied_rules != '')
+    {
+        for(i=0; i<applied_rules.length-1; i++){
+            var content = new Array();
+            details=applied_rules[i].split('/');
+            
+            details[0] = htmlDecodeStr(details[0]);
+            details[1] = htmlDecodeStr(details[1]);
+
+            list_rule_applied_all_ip[i]=details[1];
+            list_rule_applied_all_pc[i]=details[1];
+            list_rule_applied_all[i]=details[0];
+            num_rules_all++;
+            for ( j = 0; j < list_dhcp_pc.length; j++ ) {
+                if (list_rule_applied_all_ip[i]==list_dhcp_ip[j])
+                    list_rule_applied_all_pc[i]=list_dhcp_pc[j];
+            }
+            content[0] = '<img src = "images/icon' + '_computer.png" width = "39" height = "39" />';
+            content[1] = list_rule_applied_all_pc[i];
+            content[2] = list_rule_applied_all_ip[i];
+            content[3] = list_rule_applied_all[i];
+            var btn_remove = "btn_remove_"+i;
+            content[4] = '<a style="text-decoration:none;" class="button1" type="button" onClick=remove_rule(' + i + ') id="'+btn_remove+'"><span>_(Remove)_</span></a>';
+            appendTableRow(table, "center", content);
+        }
+    }
+    else
+    {
+        var blank = "_(No Entries Defined)_";
+        appendTableEmptyRow(table, "center", "5", blank);
+    }
+    load_cus_rules();
+
+	//highlight the button after user click on it
+	side_nav("advancedsetup_applications");
+}
+
+function load_apps(c, clear){
+    var app_box = document.forms[0].application;
+    var i=0;
+    if(clear){
+        while(app_box.length) app_box.remove(app_box.length-1);
+    }
+    if(c<0){
+        for(i=0; i<7; i++) load_apps(i, 0);
+        return;
+    }
+    for(i=0; i<categorylist[c].eNum; i++){
+        categorylist[c].app[i].name = htmlDecodeStr(categorylist[c].app[i].name);
+        app_box[app_box.length] = new Option(categorylist[c].app[i].name, categorylist[c].app[i].name);
+    }
+    if (c == 6 && clear == 1)
+	document.getElementById("add_btn_span").style.display = "inline";
+    else
+	document.getElementById("add_btn_span").style.display = "none";
+}
+
+function get_host_ip(){
+    var form = document.forms[0];
+    if(form.lan_device.selectedIndex==0)
+        return form.ip_address.value;
+    return list_dhcp_ip[form.lan_device.selectedIndex-1];
+}
+
+function show_host_ip()
+{
+	var form = document.forms[0];
+
+	if (form.lan_device.selectedIndex > 0)
+	{
+		form.ip_address.disabled = 1; // disable
+		form.ip_address.value = get_host_ip(); // show the select device ip address
+	}
+	else
+	{
+		form.ip_address.disabled = 0; // enable
+	}
+}
+
+function add_rule(){
+    var form = document.forms[0];
+    var lochead = 'scvrtsrv.cmd?';
+    var loc = 'action=add';
+    var name_rule;
+    var desc_rulw;
+    var i;
+    var host_ip=get_host_ip();
+
+    if (!host_ip)
+    {
+        alert ("_(Select a LAN device.)_");
+        return;
+    }
+
+    if (!isValidIpAddress(host_ip) || compareSubNet(host_ip, ethSubnetMask, ethIpAddress, ethSubnetMask) != 0){
+        //alert ("Please input a valid IP address!");
+        alert("_(The LAN IP Address is invalid.)_");
+        return;
+    }
+
+    if (form.application.selectedIndex < 0)
+    {
+        alert ("_(Add a rule.)_");
+        return;
+    }
+    name_rule = form.application.options[form.application.selectedIndex].value;
+    i=ruleUsed(name_rule);
+    if (i >= 0) {
+        if (list_rule_applied_all_pc[i].length > 0)
+            alert ("_(This rule is in use for PC)_  " + list_rule_applied_all_pc[i] + ".");
+        else
+            alert ("_(This rule is in use for PC)_  " + list_rule_applied_all_ip[i] + ".");
+        return;
+    }
+srvWanAddr = "0.0.0.0";
+
+    var app=get_selected_app();
+    loc += '&srvName=' + name_rule;
+    loc += '&srvAddr=' + host_ip;
+   // loc += '&srvWanAddr=' + srvWanAddr;
+    var  protoLoc = '&proto=';
+    var  eStartLoc = '&eStart=';
+    var  eEndLoc = '&eEnd=';
+    var  iStartLoc = '&iStart=';
+    var  iEndLoc = '&iEnd=';
+      for (i = 0; i < app.eNum; i++) {
+         eStartLoc = eStartLoc + app.rule[i].eStart + ',';
+         eEndLoc = eEndLoc + app.rule[i].eEnd + ',';
+         if(app.rule[i].proto == "TCP")
+             protoLoc = protoLoc + "1" + ',';
+         else if(app.rule[i].proto == "UDP")
+             protoLoc = protoLoc + "2" + ',';
+         else if(app.rule[i].proto == "ESP")
+             protoLoc = protoLoc + "6" + ',';
+         else if(app.rule[i].proto == "GRE")
+             protoLoc = protoLoc + "7" + ',';
+         else
+             protoLoc = protoLoc + "0" + ',';
+         iStartLoc = iStartLoc + app.rule[i].iStart + ',';
+	  if(app.rule[i].iStart == app.rule[i].eStart)
+		iEndLoc = iEndLoc + app.rule[i].eEnd + ',';
+	  else
+		iEndLoc = iEndLoc + app.rule[i].iEnd + ',';
+      }
+   loc = loc + protoLoc + eStartLoc + eEndLoc + iStartLoc + iEndLoc;
+   loc += '&sessionKey=' + sessionKey;
+   loc += '&needthankyou=advancedsetup_applications.html';
+   lochead+=loc;
+   //var code = 'location="' + loc + '"';
+   //eval(code);
+   postSubmit(lochead);
+
+}
+
+function remove_rule(rule_id){
+    var app=find_app(list_rule_applied_all[rule_id]);
+    var lochead = 'scvrtsrv.cmd?';
+    var loc = 'action=remove&rmLst=';
+    for (i = 0; i < app.eNum; i++) {
+        loc += list_rule_applied_all_ip[rule_id];
+        loc += '|' + app.rule[i].eStart;
+        loc += '|' + app.rule[i].eEnd;
+        loc += '|' + app.rule[i].proto;
+        loc += '|' + app.rule[i].iStart;
+	 if(app.rule[i].iStart == app.rule[i].eStart)
+           loc += '|' + app.rule[i].eEnd + ',';
+        else
+	    loc += '|' + app.rule[i].iEnd + ',';
+    }
+         loc += '&sessionKey=' + sessionKey;
+
+        loc += '&needthankyou=advancedsetup_applications.html';
+   lochead+=loc;
+    //var code = 'location="' + loc + '"';
+    //eval(code);
+   postSubmit(lochead);
+}
+
+function load_cus_rules(){
+    var table = document.getElementById("cus_rule_tbl");
+    var i, j;
+
+    if (categorylist[6].eNum == 0)
+    {
+        var blank = "_(No Entries Defined)_";
+        appendTableEmptyRow(table, "center", "6", blank);
+    }
+
+    for(i=0; i<categorylist[6].eNum; i++){
+        var content = new Array();
+        var app = categorylist[6].app[i];
+        for (j = 0; j < app.eNum; j++) {
+            content[0] = app.name;
+            content[1] = app.rule[j].proto;
+            content[2] = app.rule[j].eStart;
+            content[3] = app.rule[j].eEnd;
+            content[4] = app.rule[j].iStart;
+            var btn_remove = "btn_remove_"+i+"_"+j;
+			content[5] = '<a style="text-decoration:none;" class="button1" type="button"  onClick=do_remove(' + i + ',' + j + ') id="'+btn_remove+'"><span>_(Remove)_</span></a>';
+            appendTableRow(table, "center", content);
+        }
+    }
+}
+
+function view_rule(){
+    var app = get_selected_app();
+    var table = document.getElementById("view_rule_tbl");
+    var i;
+    /* fix js error, no rule in select list, just return */
+    if (app == -1) return;
+    while(table.rows.length>1)table.deleteRow(-1);
+    for (i = 0; i < app.eNum; i++) {
+        var content = new Array();
+        content[0] = app.name;
+        content[1] = app.rule[i].proto;
+	if (content[1] == "ESP" || content[1] == "GRE")
+	{
+	    content[2] = "*";
+	    content[3] = "*";
+	    content[4] = "*";
+	}
+	else
+	{
+	    content[2] = app.rule[i].eStart;
+	    content[3] = app.rule[i].eEnd;
+	    content[4] = app.rule[i].iStart;
+	}
+        appendTableRow(table, "center", content);
+    }
+    showHideSteps("applications_div", "view_rule_div");
+}
+
+function create_rule(){
+    showHideSteps("applications_div", "new_rule_div");
+}
+
+function do_remove(app_id, rule_id){
+   var lochead = 'scpmapp.cmd?';
+   var loc = 'action=del&app_id='+app_id+'&rule_id='+rule_id;
+
+   loc += '&sessionKey=' + sessionKey;
+   loc += '&needthankyou=advancedsetup_applications.html';
+   lochead+=loc;
+   //var code = 'location="' + loc + '"';
+   //eval(code);
+   postSubmit(lochead);
+}
+
+function do_create(){
+   var lochead = 'scpmapp.cmd?';
+   var loc = 'action=add';
+
+   with ( document.forms[0] ) {
+      if ( rule_name.value == '' ) {
+         msg = "_(Enter an outgoing IP filtering name.)_";
+         alert(msg);
+         return false;
+      }
+
+      if ( isValidName(rule_name.value) == false ) {
+         msg = "_(You must enter a valid Application name. The name cannot have any special characters.)_";
+         alert(msg);
+         return false;
+      }
+
+      if ( isValidPort(port_start.value) == false ) {
+         msg = "_(Enter a starting port number between 1 and 65535.)_";
+         alert(msg);
+         return false;
+      }
+
+      if ( isValidPort(port_end.value) == false || parseInt(port_end.value)<parseInt(port_start.value)) {
+         msg = "_(You must enter an end port number between 1 and 65535.)_";
+         alert(msg);
+         return false;
+      }
+
+      if ( isValidPort(port_map.value) == false ) {
+         msg = "_(Please enter valid map port : 1 ~ 65535.)_";
+         alert(msg);
+         return false;
+      }
+      // outgoing IP filter name
+      loc += '&pmAppName=' + rule_name.value;
+      // protocol
+      idx = protocol.selectedIndex;
+      val = protocol.options[idx].value;
+      loc += '&protocol1=' + val;
+      if ( port_start.value != "" )
+          loc += '&eStart1=' + port_start.value;
+      if ( port_end.value != "" )
+          loc += '&eEnd1=' + port_end.value;
+      if ( port_map.value != "" )
+          loc += '&iStart1=' + port_map.value;
+      loc += '&iEnd1=' + port_map.value;
+
+        var i;
+        for(i=0; i<categorylist[6].eNum; i++){
+        var app = categorylist[6].app[i];
+        for (j = 0; j < app.eNum; j++) {
+            if(((app.rule[j].eStart == port_start.value) ||
+               (app.rule[j].eEnd == port_end.value))&&
+               (app.rule[j].proto == val)){
+		msg = "_(Rule already existed.)_";
+                alert(msg);
+                return false;
+               }
+            }
+        }
+
+   }
+   loc += '&sessionKey=' + sessionKey;
+       loc += '&needthankyou=advancedsetup_applications.html';
+   lochead+=loc;
+   //var code = 'location="' + loc + '"';
+   //eval(code);
+   postSubmit(lochead);
+}
+
+function find_app(rule_name){
+    for(i=0; i<7; i++){
+        for(j=0; j<categorylist[i].eNum; j++)
+            if(categorylist[i].app[j].name == rule_name)
+                return categorylist[i].app[j];
+    }
+}
+
+function get_selected_app(){
+    var form = document.forms[0];
+    var cat_cur = form.category.selectedIndex;
+    var i=0, num=0;
+    if(cat_cur){
+	if (categorylist[cat_cur-1].app.length == 0)
+	    return -1;
+	else
+	    return categorylist[cat_cur-1].app[form.application.selectedIndex];
+    }
+    else{
+        for(i=0; i<7 && num <= form.application.selectedIndex; i++) num+=categorylist[i].eNum;
+        return categorylist[i-1].app[form.application.selectedIndex-num+categorylist[i-1].eNum];
+    }
+}
+
+function ruleUsed (rule_name)
+{
+    for (i=0; i<num_rules_all; i++) {
+        if (htmlDecodeStr(list_rule_applied_all[i]) == rule_name) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav4.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(fw_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="advancedsetup_applications">_(Applications)_ </h1>
+				<form name="myform" method="POST" action="scvrtsrv.cmd" onSubmit="return do_create();">
+                    <div id="applications_div" style="display:none">
+					<p>_(Applications forwards ports to the selected LAN device by application name.)_</p>
+					 <p><strong>1. _(Select Device)_.</strong></p>
+					<table border="0" cellspacing="0" cellpadding="0">
+						<tr>
+							<td>&nbsp;&nbsp;&nbsp;_(Select Device)_: <br />
+							&nbsp;&nbsp;
+                                <select name="lan_device" id="lan_device" onchange="show_host_ip()">
+                                    <option>_(Manually enter the IP address)_</option>
+								</select></td>
+                            <!--td valign="bottom" >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td-->
+			    <td>&nbsp;</td>
+							<td>_(Enter IP Address)_: <br />
+								<input type="text" name="ip_address" id="ip_address" style="height:18px;"/></td>
+						</tr>
+					</table>
+					<p>&nbsp;</p>
+					<p><strong>2. _(Select the application category, then the application to forward.)_ </strong></p>
+					<p>&nbsp;</p>
+		    <table border="0" cellspacing="0" cellpadding="0" width="80%">
+			<tr>
+                            <td>&nbsp;&nbsp;&nbsp;&nbsp;_(Application Category)_:</td>
+                            <td><select name="category" id="category" onchange="load_apps(form.category.selectedIndex-1, 1)">
+					<option value="ALL">_(All)_</option>
+				</select></td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;&nbsp;&nbsp;&nbsp;_(Applications)_:</td>
+                            <td><select name="application" id="application">
+								</select></td>
+                            <td><p><a href="#" class="button1" onclick="view_rule()" id="btn_view"><span>_(View Rule)_</span></a></p></td>
+			</tr>
+                        <tr>
+                            <td>&nbsp;</td>
+			    <td><span id="add_btn_span" style="display:none"><a class="button1" onclick="create_rule()" id="btn_createRule"><span>_(Create Rule)_</span></a></span></td>
+			    <td>&nbsp;</td>
+			</tr>
+		    </table>
+					<p></p>
+					<p><strong>3. _(Click Apply to save changes.)_</strong></p>
+					<table border="0" cellspacing="0" cellpadding="0">
+						<tr>
+							<p><a class="button1" onclick="add_rule();" id="btn_apply"><span>_(Apply)_</span></a></p>
+                        </tr>
+                    </table>
+					<p>&nbsp;</p>
+                    <p align="center"><strong>_(Forwarded Applications List)_: </strong></p>
+                    <table width="480" border="0" align="center" cellpadding="10" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;" name="rulelist_tbl" id="rulelist_tbl">
+                        <tr>
+                            <th>&nbsp;</th>
+                            <th width="60"><strong>_(DEVICE NAME)_ </strong></th>
+                            <th width="80"><strong>_(IP ADDRESS)_ </strong></th>
+                            <th width="129"><strong>_(APPLICATION FORWARDED)_ </strong></th>
+                            <th width="92"><strong>_(EDIT)_</strong></th>
+                        </tr>
+                    </table>
+		    <p>&nbsp;</p>
+		    <p>&nbsp;</p>
+                </div>
+                <div id="view_rule_div" style="display:none">
+					<p align="center"><strong>_(View Rule Manager)_</strong></p>
+					<table width="500" border="0" align="center" cellpadding="0" cellspacing="0" class="defaultstyle" style="margin:0 auto;" name="view_rule_tbl" id="view_rule_tbl">
+						<tr>
+							<th>_(RULE NAME)_ </th>
+							<th>_(PROTOCOL)_</th>
+							<th>_(PORT START)_</th>
+							<th>_(PORT END)_ </th>
+							<th>_(PORT MAP)_ </th>
+						</tr>
+					</table>
+					<p><a class="button1" onclick='showHideSteps("view_rule_div", "applications_div")' id="btn_back"><span>_(Back)_</span></a></p>
+					<p>&nbsp;</p>
+                </div>
+                <div id="new_rule_div" style="display:none">
+					<p> <strong>_(Create Rule Management)_</strong><br />
+					<p> <strong>1. _(Add rule information below)_.</strong><br />
+					<table border="0" cellspacing="0" cellpadding="0">
+						<tr>
+							<td><strong>_(Rule Name)_: </strong></td>
+							<td><input name="rule_name" id="rule_name" type="text" size="45"/></td>
+						</tr>
+						<tr>
+							<td><strong>Protocol:</strong></td>
+							<td><select name="protocol" id="protocol">
+								<option value="TCP" selected="selected">TCP</option>
+								<option value="UDP">UDP</option>
+								<option value="TCP or UDP">TCP, UDP</option>
+							</select>
+							</td>
+						</tr>
+						<tr>
+							<td><strong>_(Port Start)_: </strong></td>
+							<td><input type="text" name="port_start" id="port_start" />
+						</tr>
+						<tr>
+                            <td><strong>_(Port End)_:</strong>
+                            <td><input type="text" name="port_end" id="port_end" /></td>
+						</tr>
+						<tr>
+							<td><strong>_(Port Map)_: </strong></td>
+							<td><input name="port_map" id="port_map" type="text" size="30"/></td>
+						</tr>
+					</table>
+                    <p>&nbsp;</p>
+					<p> <strong>2. _(Click Apply to save changes.)_</strong><br />
+					<p><a class="button1" onclick="do_create();" id="btn_create"><span>_(Create Rule)_</span></a></p>
+					<p align="center"><strong>_(User Created Rule List)_:</strong></p>
+					<table width="500" border="0" align="center" cellpadding="0" cellspacing="0" class="defaultstyle" style="margin:0 auto;" name="cus_rule_tbl" id="cus_rule_tbl">
+						<tr>
+							<th>_(RULE NAME)_ </th>
+							<th>_(PROTOCOL)_</th>
+							<th>_(PORT START)_ </th>
+							<th>_(PORT END)_ </th>
+							<th>_(PORT MAP)_ </th>
+							<th>_(EDIT)_ </th>
+						</tr>
+					</table>
+					<p><a class="button1" onclick='showHideSteps("new_rule_div", "applications_div")' id="btn_create_back"><span>_(Back)_</span></a></p>
+					<p></p>
+                </div>
+				</form>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

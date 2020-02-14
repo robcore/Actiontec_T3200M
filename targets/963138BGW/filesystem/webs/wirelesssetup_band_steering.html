@@ -1,0 +1,837 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>_(Wireless Setup)_ - _(Manual Steering)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/functions.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/nav.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/util.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/htmldecode.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/BigInt.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/Barrett.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/RSA_Stripped.js" type="text/javascript"></script>
+<script language="Javascript">
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var userId=htmlDecodeStr('<%ejGet(userID)%>');
+var wlIndex = '0';// initial default selection of band frequency.
+var APDeviceStr = '<%ejGetApSerialNumListForAbs()%>';
+var clientDeviceStr = '<%ejGetWlStaMacListForAbs()%>';
+    //  CLIENT1_MAC/BAND_CAP/CUR_BAND/CUR_AP_INDEX/CUR_SSID_INDEX,CLIENT2_MAC/BAND_CAP/CUR_BAND/CUR_AP_INDEX/CUR_SSID_INDEX,CLIENT3_MAC
+var bandSteeringStr = '<%ejGetWlAbsMacList()%>';
+    // 'Alice iPhone/00:10:18:1a:d7:94/Any/5G/ALL|WSTB-123456/94:de:80:02:28:53/5G/5G/SSID1';
+var bandSteeringStateOrg = htmlDecodeStr("<%ejGetWl(wlAbsEnable)%>");
+var bandSteeringState = htmlDecodeStr("<%ejGetWl(wlAbsEnable)%>");
+
+
+var clientDeviceList = new Array();
+var APDeviceList = new Array();
+var bandSteeringList = new Array();
+var client_hostnameList = new Array();
+var client_macList = new Array();
+var client_selBandList = new Array();
+var client_curBandList = new Array();
+var client_curApList = new Array();
+var client_curSsidList = new Array();
+
+var absStaMacAddr;
+var guestssidstate_2G = htmlDecodeStr("<%ejGetWl(wlEnbl_wl0v1)%>");
+var guestssidstate_5G = htmlDecodeStr("<%ejGetWl(wlEnbl_wl1v1)%>");
+var absStaTgtBand = "3"; //ANY
+var absStaTgtAp = "1"; // RG
+var absStaTgtSsid = "0"; // SSID 1
+var ssida0 = "<%ejGetWl(wlSsid_wl1v0)%>";
+
+
+function changeState()
+{
+    if(document.getElementById("on").checked)
+    {
+        bandSteeringState = "1";
+    }
+    else if(document.getElementById("off").checked)
+    {
+        bandSteeringState = "0";
+    }
+
+    if(document.getElementById("on").checked && bandSteeringStateOrg!=0)
+        document.getElementById("bandSteering_on").style.display = "";
+    else
+        document.getElementById("bandSteering_on").style.display = "none";
+}
+
+function selMacAddress()
+{
+    var mac_address_sel = document.getElementById("mac_address").value;
+    var curStaIdx = document.getElementById("mac_address").selectedIndex;
+    if(mac_address_sel == "")
+    {
+        document.getElementById("manual_mac_address").disabled = false;
+        document.getElementById("manual_mac_address").setAttribute("class","greyed_out");
+    }
+    else
+    {
+        document.getElementById("manual_mac_address").disabled = true;
+        document.getElementById("manual_mac_address").setAttribute("class","");
+        document.getElementById("manual_mac_address").value = mac_address_sel;
+    }
+    showSelClientCurInfo(curStaIdx);
+}
+
+function showSelClientCurInfo(curStaIdx)
+{
+    if(curStaIdx == 0)
+    {
+        document.getElementById("mac_bandInfo").style.display = "none";
+        document.getElementById("2.4g").disabled = false;
+        document.getElementById("5g").disabled = false;
+        document.getElementById("any").disabled = false;
+    }
+    else
+    {
+        var client_capability = "_(N/A)_";
+        var client_band = "_(N/A)_";
+        var client_ssid = client_curSsidList[curStaIdx-1];
+        document.getElementById("mac_bandInfo").style.display = "";
+
+
+        if(client_selBandList[curStaIdx-1] == "1")
+            client_capability = " _(5G only)_";
+        else if(client_selBandList[curStaIdx-1] == "2")
+            client_capability = " _(2.4G only)_";
+        else if(client_selBandList[curStaIdx-1] == "3")
+            client_capability = "_(Dual-band)_";
+        else
+            client_capability = "_(Unknown)_";
+
+        if(client_curBandList[curStaIdx-1] == "1")
+            client_band = "_(5G)_";
+        else
+            client_band = "_(2.4G)_";
+
+        document.getElementById("mac_bandInfo").style.display = "";
+        document.getElementById("client_capability").innerHTML = client_capability;
+        document.getElementById("client_band").innerHTML = client_band;
+
+        document.getElementById("targetAP").value = client_curApList[curStaIdx-1];
+        absStaTgtAp = client_curApList[curStaIdx-1];
+        document.getElementById("targetSSID").selectedIndex = client_ssid;
+        absStaTgtSsid = client_ssid;
+        if(client_selBandList[curStaIdx-1] == "1")
+        {
+            document.getElementById("2.4g").disabled = true;
+            document.getElementById("5g").disabled = false;
+            document.getElementById("any").disabled = true;
+            document.getElementById("5g").checked = true;
+        }
+        else if(client_selBandList[curStaIdx-1]== "2")
+        {
+            document.getElementById("2.4g").disabled = false;
+            document.getElementById("5g").disabled = true;
+            document.getElementById("any").disabled = true;
+            document.getElementById("2.4g").checked = true;
+        }
+        else
+        {
+            document.getElementById("2.4g").disabled = false;
+            document.getElementById("5g").disabled = false;
+            document.getElementById("any").disabled = false;
+            if(client_curBandList[curStaIdx-1]== "1")
+            {
+                document.getElementById("2.4g").checked = false;
+                document.getElementById("any").checked = false;
+                document.getElementById("5g").checked = true;
+            }
+            else if(client_curBandList[curStaIdx-1]== "2")
+            {
+                document.getElementById("5g").checked = false;
+                document.getElementById("any").checked = false;
+                document.getElementById("2.4g").checked = true;
+            }
+            else
+            {
+                document.getElementById("5g").checked = false;
+                document.getElementById("2.4g").checked = false;
+                document.getElementById("any").checked = true;
+            }
+        }
+        absStaTgtBand = client_curBandList[curStaIdx-1];
+    }
+}
+
+function changeTargetBand()
+{
+    if(document.getElementById("2.4g").checked)
+    {
+        absStaTgtBand = "2";
+    }
+    else if(document.getElementById("5g").checked)
+    {
+        absStaTgtBand = "1";
+    }
+    else if(document.getElementById("any").checked)
+    {
+        absStaTgtBand = "0";
+    }
+}
+
+function changeTargetAP()
+{
+    absStaTgtAp = document.getElementById("targetAP").value;
+}
+
+function changeTargetSsid()
+{
+    absStaTgtSsid = document.getElementById("targetSSID").selectedIndex;
+}
+
+
+function init_orig_vars()
+{
+    clientDeviceList =  clientDeviceStr.split("|");
+    APDeviceList =  APDeviceStr.split("|");
+}
+
+
+function loadClientList()
+{
+    if(clientDeviceStr == "")
+        return;
+
+    for(var i=0; i<clientDeviceList.length;i++)
+    {
+        var client_signalInfo = clientDeviceList[i].split("/");
+        client_hostnameList[i] = htmlDecodeStr(client_signalInfo[0]);
+        client_macList[i] = htmlDecodeStr(client_signalInfo[1]);
+        client_selBandList[i] = client_signalInfo[2];
+        client_curBandList[i] = client_signalInfo[3];
+        client_curApList[i] = client_signalInfo[4];
+        client_curSsidList[i] = client_signalInfo[5];
+        var opt_show = client_hostnameList[i];
+        var opt_value = client_macList[i];
+        if(opt_show == '')
+          opt_show = client_macList[i]
+        else
+          opt_show = opt_show+" ("+client_macList[i]+")";
+        document.getElementById("mac_address")[i+1] = new Option(opt_show, opt_value);
+    }
+}
+
+function loadAPList()
+{
+    document.getElementById("targetAP").options.length = 0;
+    if(APDeviceStr == "")
+        return;
+
+    if(APDeviceList.length == 1)
+    {
+        document.getElementById("targetAP")[0] = new Option("_(RG)_"+"("+APDeviceList[0]+")", "1");
+        return;
+    }
+
+    document.getElementById("targetAP")[0] = new Option("_(Any)_", "0");
+    document.getElementById("targetAP")[1] = new Option("_(RG)_"+"("+APDeviceList[0]+")", "1");
+
+    for(var i=1; i<APDeviceList.length;i++)
+    {
+        document.getElementById("targetAP")[i+1] = new Option("EXT"+i+"("+APDeviceList[i]+")", i+1);
+    }
+}
+
+function loadBandSteeringTable()
+{
+    var table = document.getElementById("bandSteeringTable");
+    if(bandSteeringStr == "")
+    {
+        var blank = "_(No Entries Defined)_";
+        appendTableEmptyRow(table, "center", "8", blank);
+        document.getElementById("table_remv_all").style.display = "none";
+    }
+    else
+    {
+        bandSteeringList = bandSteeringStr.split("|");
+        for(var i=0; i< bandSteeringList.length; i++)
+        {
+            var bandSteeringInfo = bandSteeringList[i].split("/");
+            var cols = new Array();
+            cols[0] = htmlDecodeStr(bandSteeringInfo[0]);
+            cols[1] = htmlDecodeStr(bandSteeringInfo[1]);
+            cols[2] = bandSteeringInfo[2];
+            cols[3] = bandSteeringInfo[3];
+            var tgtAp = bandSteeringInfo[5];
+
+            if(cols[2] == "1")
+                cols[2] = " _(5G Only)_";
+            else if(cols[2] == "2")
+                cols[2] = " _(2.4G Only)_";
+            else if(cols[2] == "3")
+                cols[2] = "_(Dual-band)_";
+            else
+                cols[2] = "_(Unknown)_";
+            if(cols[3] == "1")
+                cols[3] = " _(5G)_";
+            else if(cols[3] == "2")
+                cols[3] = " _(2.4G)_";
+            else
+                cols[3] = "_(Any)_";
+
+            if(tgtAp == "0")
+                cols[4] = "_(Any)_"
+            else if(tgtAp == "1")
+                cols[4] = "_(RG)_"+"("+APDeviceList[tgtAp-1]+")";
+            else
+            {
+                if(tgtAp > APDeviceList.length)
+                    continue;
+                cols[4] = "EXT"+(tgtAp-1)+"("+APDeviceList[tgtAp-1]+")";
+            }
+
+            cols[5] = "<%ejGetWl(wlSsid_wl1v0)%>";
+            if(bandSteeringInfo[4] == "0")
+                cols[5] = "<%ejGetWl(wlSsid_wl1v0)%>";
+            else if(bandSteeringInfo[4] == "1")
+                cols[5] = "<%ejGetWl(wlSsid_wl1v1)%>";
+
+            var btn_remove = "btn_remove_"+i;
+            cols[6] = '<a style="text-decoration:none;" class="button1" type="button" onClick=doRemove("'+ bandSteeringInfo[1] + '") id="'+btn_remove+'"><span>_(Remove)_</span></a>';
+            appendTableRow(table, "center", cols);
+        }
+        document.getElementById("table_remv_all").style.display = "";
+    }
+}
+
+function loadBandSteeringState()
+{
+    if(bandSteeringState == 1)
+    {
+        document.getElementById("on").checked = true;
+        document.getElementById("bandSteering_on").style.display = "";
+    }
+    else
+    {
+        document.getElementById("off").checked = true;
+        document.getElementById("bandSteering_on").style.display = "none";
+    }
+}
+
+function disable_input_all()
+{
+    var form = document.forms[0];
+    var i=0;
+    //gui input
+    document.getElementById("on").disabled = true;
+    document.getElementById("off").disabled = true;
+    document.getElementById("mac_address").disabled = true;
+    document.getElementById("manual_mac_address").disabled = true;
+    document.getElementById("2.4g").disabled = true;
+    document.getElementById("5g").disabled = true;
+    document.getElementById("any").disabled = true;
+    document.getElementById("targetAP").disabled = true;
+    document.getElementById("targetSSID").disabled = true;
+
+    // post
+    for(i=0;i<form.elements.length;i++)
+    {
+        if(form.elements[i].type == "hidden")
+        {
+            form.elements[i].disabled = true;
+        }
+    }
+    document.getElementById("uiPostThankYou").disabled = false;
+}
+
+function getUnifiedPopSsid()
+{
+    var str = ssida0;
+    if(str.charAt(str.length-1) == 'G' && str.charAt(str.length-2) == '5' && str.charAt(str.length-3) == '-')
+    {
+        return ' '+str.substring(0,str.length - 3)+' ';
+    }
+    else
+    {
+        return ' '+str+' ';
+    }
+}
+
+function getAbsOffSsid(idx)
+{
+    var str = ssida0;
+    if(str.charAt(str.length-1) == 'G' && str.charAt(str.length-2) == '5' && str.charAt(str.length-3) == '-')
+    {
+        str = str.substring(0,str.length - 3);
+    }
+    else if(str.charAt(str.length-1) == 'G' && str.charAt(str.length-2) == '4' && str.charAt(str.length-3) == '.' && str.charAt(str.length-4) == '2' && str.charAt(str.length-5) == '-')
+    {
+        str = str.substring(0,str.length - 5);
+    }
+
+    if(idx==1)
+        return ' '+str+'-2.4G'+' ';
+    else
+        return ' '+str+'-5G'+' ';
+}
+
+function do_apply()
+{
+    var lochead='wirelesssetup_band_steering.wl?';
+    var loc="";
+    var i;
+    var key = '<%ejGetOther(encrypt_key, 0)%>';
+    var form = document.forms[0];
+    var commit = 1;
+
+    if(bandSteeringState == bandSteeringStateOrg)
+        return;
+
+    if(bandSteeringState == 1 && bandSteeringStateOrg == 0)
+    {
+        if(!confirm("_(Enabling SmartSteering will configure your T3200M to use the 5 GHz wireless name and passphrase. If you have a WEB6000Q WiFi extender it will also be configured to use the same wireless name and passphrase. Your SSID will be)_"+getUnifiedPopSsid()+"_(for both 2.4 and 5 GHz wireless.)_"))
+            commit = 0;
+    }
+    else if(bandSteeringState == 0 && bandSteeringStateOrg == 1)
+    {
+         if(!confirm("_(Disabling SmartSteering will change your T3200M from one single wireless name and passphrase to two unique wireless names and passphrases. If you have a WEB6000Q WiFi extender the wireless settings will be reset to factory default by disabling SmartSteering. Your SSID will be)_"+getAbsOffSsid(1)+"_(for 2.4 GHz and)_"+getAbsOffSsid(0)+"_(for 5 GHz wireless.)_"))
+            commit = 0;
+    }
+
+    if(bandSteeringState != bandSteeringStateOrg)
+        wlIndex = '2';
+
+    if(commit == 1)
+    {
+        disable_input_all();
+        document.getElementById("uiPostAbsEnabled").disabled = false;
+        document.getElementById("uiPostAbsEnabled").value = bandSteeringState;
+        document.getElementById("uiPostAction").disabled = false;
+        if(bandSteeringState == 1)
+        {
+            document.getElementById("uiPostAction").value = "enable";
+        }
+        else
+        {
+            document.getElementById("uiPostAction").value = "disable";
+        }
+
+        loc += 'wlSetBandMode='+wlIndex;
+        if(bandSteeringState != bandSteeringStateOrg)
+        {
+            loc += '&wlquantenna_basic_setup_wl1=1';
+            if(1 == bandSteeringState && 0 == bandSteeringStateOrg)
+            {
+                loc += '&wlRadio_wl0=1';
+                loc += '&wlRadio_wl1=1';
+                loc += '&wlEnbl_wl0v0=1';
+                loc += '&wlEnbl_wl1v0=1';
+                if(1 == guestssidstate_2G || 1 == guestssidstate_5G)
+                {
+                    loc += '&wlEnbl_wl0v1=1';
+                    loc += '&wlEnbl_wl1v1=1';
+                }
+            }
+        }
+        for(i=0;i<form.elements.length;i++)
+        {
+            if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+            {
+                loc+="&";
+                loc+=form.elements[i].name;
+                loc+="=";
+                loc+=form.elements[i].value;
+            }
+        }
+        if(bandSteeringState != bandSteeringStateOrg)
+        {
+            loc += '&wlAbsAction=3';
+        }
+        else
+        {
+            loc += '&wlAbsAction=5';
+        }
+        loc += '&sessionKey=' + sessionKey;
+        loc=encrypt_query(loc,key);
+        lochead+=loc;
+        postSubmit(lochead);
+    }
+}
+
+  function checkMACAddress(mac)
+  {
+      if (mac.length == 0)
+      {
+          alert("_(The MAC address entered is not valid. Please enter a valid MAC address.)_");
+          return false;
+      }
+
+      if (mac.match("^[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}$") == null)
+      {
+          alert("_(The MAC address entered is not valid. Please enter a valid MAC address.)_");
+          return false;
+      }
+      else
+      {
+          var list = document.getElementById("bandSteeringTable").getElementsByTagName("td");
+          for (var i=0; i<list.length; i++)
+          {
+              if (mac.toUpperCase() == list[i].innerHTML.toUpperCase())
+              {
+                  alert("_(This MAC address is already in the list.)_");
+                  return false;
+              }
+          }
+          return true;
+      }
+  }
+
+function do_add()
+{
+    var lochead='wirelesssetup_band_steering.wl?';
+    var loc="";
+    var i;
+    var key = '<%ejGetOther(encrypt_key, 0)%>';
+    var form = document.forms[0];
+
+    if(document.getElementById("on").checked && bandSteeringState!=0)
+    {
+        // determin MAC
+        if (document.getElementById("mac_address").selectedIndex == 0)
+        {
+            absStaMacAddr = document.getElementById("manual_mac_address").value;
+        }
+        else
+        {
+            absStaMacAddr = document.getElementById("mac_address").options[document.getElementById("mac_address").selectedIndex].value;
+        }
+
+        // check MAC
+        absStaMacAddr = absStaMacAddr.replace(/\-/ig,":");
+
+        if(absStaMacAddr.length == 12)
+            absStaMacAddr = checkMACcharter(absStaMacAddr);
+
+        absStaMacAddr = absStaMacAddr.substr(0, 17);
+        if (!checkMACAddress(absStaMacAddr))
+        {
+            return false;
+        }
+    }
+
+    disable_input_all();
+    // Add submit
+    document.getElementById("uiPostAbsEnabled").disabled = false;
+    document.getElementById("uiPostAbsEnabled").value = bandSteeringState;
+    document.getElementById("uiPostAbsStaMacAddr").disabled = false;
+    document.getElementById("uiPostAbsStaMacAddr").value = absStaMacAddr;
+    document.getElementById("uiPostAbsStaTgtBand").disabled = false;
+    document.getElementById("uiPostAbsStaTgtBand").value = absStaTgtBand;
+    document.getElementById("uiPostAbsStaTgtAp").disabled = false;
+    document.getElementById("uiPostAbsStaTgtAp").value = absStaTgtAp;
+    document.getElementById("uiPostAbsStaTgtSsid").disabled = false;
+    document.getElementById("uiPostAbsStaTgtSsid").value = absStaTgtSsid;
+    document.getElementById("uiPostAction").disabled = false;
+    document.getElementById("uiPostAction").value = "add";
+
+    loc += 'wlSetBandMode='+wlIndex;
+    for(i=0;i<form.elements.length;i++)
+    {
+        if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+        {
+            loc+="&";
+            loc+=form.elements[i].name;
+            loc+="=";
+            loc+=form.elements[i].value;
+        }
+    }
+    if(bandSteeringState != bandSteeringStateOrg)
+    {
+        loc += '&wlAbsAction=3';
+    }
+    else
+    {
+        loc += '&wlAbsAction=5';
+    }
+    loc += '&sessionKey=' + sessionKey;
+    //alert('loc='+loc);
+    //return false;
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+    // var code = 'location="' + lochead + '"';
+    //eval(code);
+    postSubmit(lochead);
+    //     form.submit();
+    return true;
+}
+
+function doRemove(macAddr)
+{
+    var lochead='wirelesssetup_band_steering.wl?';
+    var loc="";
+    var i;
+    var key = '<%ejGetOther(encrypt_key, 0)%>';
+    var form = document.forms[0];
+
+    disable_input_all();
+    document.getElementById("uiPostAbsEnabled").disabled = false;
+    document.getElementById("uiPostAbsEnabled").value = bandSteeringState;
+    document.getElementById("uiPostAbsStaMacAddr").disabled = false;
+    document.getElementById("uiPostAbsStaMacAddr").value = macAddr;
+    document.getElementById("uiPostAction").disabled = false;
+    document.getElementById("uiPostAction").value = "remove";
+
+    loc += 'wlSetBandMode='+wlIndex;
+    for(i=0;i<form.elements.length;i++)
+    {
+        if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+        {
+            loc+="&";
+            loc+=form.elements[i].name;
+            loc+="=";
+            loc+=form.elements[i].value;
+        }
+    }
+    if(bandSteeringState != bandSteeringStateOrg)
+    {
+        loc += '&wlAbsAction=3';
+    }
+    else
+    {
+        loc += '&wlAbsAction=5';
+    }
+    loc += '&sessionKey=' + sessionKey;
+    //alert('loc='+loc);
+    //return false;
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+    // var code = 'location="' + lochead + '"';
+    //eval(code);
+    postSubmit(lochead);
+    //     form.submit();
+    return true;
+}
+
+function do_remove_all()
+{
+    if(confirm("_(All entries will be deleted. Continue?)_"))
+    {
+        var lochead='wirelesssetup_band_steering.wl?';
+        var loc="";
+        var i;
+        var key = '<%ejGetOther(encrypt_key, 0)%>';
+        var form = document.forms[0];
+
+        disable_input_all();
+        document.getElementById("uiPostAbsEnabled").disabled = true;
+        document.getElementById("uiPostAbsStaMacAddr").disabled = true;
+        document.getElementById("uiPostAction").disabled = false;
+        document.getElementById("uiPostAction").value = "removeAll";
+
+        loc += 'wlSetBandMode='+wlIndex;
+        for(i=0;i<form.elements.length;i++)
+        {
+            if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+            {
+                loc+="&";
+                loc+=form.elements[i].name;
+                loc+="=";
+                loc+=form.elements[i].value;
+            }
+        }
+        if(bandSteeringState != bandSteeringStateOrg)
+        {
+            loc += '&wlAbsAction=3';
+        }
+        else
+        {
+            loc += '&wlAbsAction=5';
+        }
+        loc += '&sessionKey=' + sessionKey;
+        //alert('loc='+loc);
+        //return false;
+        loc=encrypt_query(loc,key);
+        lochead+=loc;
+        // var code = 'location="' + lochead + '"';
+        //eval(code);
+        postSubmit(lochead);
+        //     form.submit();
+        return true;
+    }
+}
+
+
+function do_load()
+{
+  htmlDecode();
+  side_nav("wirelesssetup_band_steering");
+  init_orig_vars();
+  document.getElementById("mac_address").value = "";
+  document.getElementById("manual_mac_address").value = "";
+  loadClientList();
+  loadAPList();
+  loadBandSteeringTable();
+  loadBandSteeringState();
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav3.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(wireless_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+        <div id="content_right_header"></div>
+        <div id="content_right_contentarea">
+            <h1 class="advancedsetup_security">_(SmartSteering&#8482 Configuration)_</h1>
+        <form name="mainform" action="wirelesssetup_band_steering.wl" method="POST" onSubmit="return do_apply();">
+        <input type="hidden" name="wlAbsEnable"           value=""                               id="uiPostAbsEnabled">
+        <input type="hidden" name="wlAbsStaMacAddr"       value=""                               id="uiPostAbsStaMacAddr">
+        <input type="hidden" name="wlAbsStaTgtBand"       value=""                               id="uiPostAbsStaTgtBand">
+        <input type="hidden" name="wlAbsStaTgtAp"         value=""                               id="uiPostAbsStaTgtAp">
+        <input type="hidden" name="wlAbsStaTgtSsid"       value=""                               id="uiPostAbsStaTgtSsid">
+
+        <input type="hidden" name="action"                value=""                               id="uiPostAction">
+		  <input type="hidden" name="needthankyou"          value="1"                              id="uiPostThankYou">
+                <p>_(If SmartSteering is enabled the T3200M will configure the same wireless network name and passphrase on both 2.4 and 5 GHz wireless radios. Wireless clients will be moved back and forth between the 2.4 GHz and 5 GHz wireless radios based upon signal strength to improve performance. If you have a WEB6000Q extender SmartSteering will allow the T3200M to move clients to and from the wireless extender, too.)_ </p>
+                <p>
+                    <strong>1. _(Set the SmartSteering&#8482 state.)_ </strong>
+                </p>
+                <table border="0" cellspacing="0" cellpadding="0" style="width:85%">
+                    <tr>
+                        <td style="width:25%">_(SmartSteering&#8482)_:</td>
+                        <td>
+                            <input type="radio" name="bandSteeringState" id="on" value="1" checked onchange="changeState();"/>_(Enable)_
+                            &nbsp;&nbsp;&nbsp;
+                            <input type="radio" name="bandSteeringState" id="off" value="0" onchange="changeState();"/>_(Disable)_
+                        </td>
+                    </tr>
+                </table>
+                <p>
+                    <strong>2. _(Click Apply to save changes.)_ </strong>
+                </p>
+                <p>
+                  <a class="button1" onclick="do_apply();" id="btn_apply"><span>_(Apply)_</span></a>
+                  &nbsp;&nbsp;&nbsp;
+                  <script language="javascript">
+                  if (userId==3 && bandSteeringStateOrg!=0)
+                      document.write("<a  href=\"#\" style='color:#0000FF'  onClick=\"return goThere('wireless_advanced_steering_events.html');\" id=\"advanced_steering_events\" class=\"link\">View Advanced Steering Events</a>");
+                  </script>
+                </p>
+            </form>
+
+            <form>
+                <div id="bandSteering_on">
+                   <h1 class="advancedsetup_security">_(Manual Steering Configuration)_</h1>
+                    <p>
+                        <strong>1. _(Enter the MAC address of the wireless LAN device.)_ </strong>
+                    </p>
+                    <table border="0" cellspacing="0" cellpadding="0" style="width:85%">
+                        <tr>
+                            <td style="width:40%">_(Select MAC Address)_:</td>
+                            <td style="width:5%">&nbsp;</td>
+                            <td style="width:55%">_(Manually Add MAC Address)_:</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <select name="mac_address" id="mac_address" onchange="selMacAddress();">
+                                    <option value="" selected>_(Manually Enter MAC)_</option>
+                                </select>
+                            </td>
+                            <td>_(or)_</td>
+                            <td>
+                                <input name="manual_mac_address" id="manual_mac_address" type="text" size="25"/>
+                            </td>
+                        </tr>
+                        <tr id="mac_bandInfo" style="display:none">
+                        <td colspan="3">(_(Client Capability)_:<span id="client_capability" style="color:#006600;font-weight:bold;">_(Dual-band)_</span>;&nbsp;&nbsp;_(Current Band)_:<span id="client_band" style="color:#006600;font-weight:bold;">_(5G)_</span>)</td>
+                        </tr>
+                    </table>
+                    <p>
+                        <strong>2. _(Select assigned band.)_ </strong>
+                    </p>
+                    <table border="0" cellspacing="0" cellpadding="0" style="width:85%">
+                        <tr>
+                            <td style="width:18%">_(Assigned Band)_:</td>
+                            <td>
+                                <input type="radio" name="bandAssigned" id="2.4g" onchange="changeTargetBand();"/>_(2.4G)_
+                                &nbsp;&nbsp;&nbsp;
+                                <input type="radio" name="bandAssigned" id="5g" onchange="changeTargetBand();"/>_(5G)_
+                                &nbsp;&nbsp;&nbsp;
+                                <input type="radio" name="bandAssigned" id="any" checked onchange="changeTargetBand();"/>_(Any)_
+                            </td>
+                        </tr>
+                    </table>
+                    <p>
+                        <strong>3. _(Select target access point (Modem or Extender).)_ </strong>
+                    </p>
+                    <table border="0" cellspacing="0" cellpadding="0" style="width:85%">
+                        <tr>
+                          <td style="width:28%">_(Target AP (Serial Number))_:</td>
+                          <td>
+                            <select name="targetAP" id="targetAP" onchange="changeTargetAP();">
+                                <option>_(Any)_</option>
+                                <option>_(RG)_</option>
+                                <option>_(EXT1)_</option>
+                            </select>
+                          </td>
+                        </tr>
+                    </table>
+                    <p>
+                        <strong>4. _(Select target SSID.)_ </strong>
+                    </p>
+                    <table border="0" cellspacing="0" cellpadding="0" style="width:85%">
+                        <tr>
+                          <td style="width:18%">_(Target SSID)_:</td>
+                          <td>
+                            <select name="targetSSID" id="targetSSID" onchange="changeTargetSsid();">
+                                <option><%ejGetWl(wlSsid_wl1v0)%></option>
+                                <option><%ejGetWl(wlSsid_wl1v1)%></option>
+                            </select>
+                          </td>
+                        </tr>
+                    </table>
+                    <p>
+                        <strong>5. _(Click Add to create a manual steering rule.)_</strong>
+                    </p>
+                    <p>
+                        <a class="button1" onclick="do_add();" id="btn_add"><span id="btn_add_span">_(Add)_</span></a>
+                    </p>
+                    <p></p>
+                    <p></p>
+                    <p align="center"><strong>_(Manual Steering List)_</strong></p>
+                    <table border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px 40px 0 auto;" width="80%" id="bandSteeringTable">
+                        <tr>
+                            <th>_(CLIENT DEVICE)_</th>
+                            <th>_(MAC ADDRESS)_</th>
+                            <th>_(CLIENT CAPABILITY)_</th>
+                            <th>_(TARGET BAND)_</th>
+                            <th>_(TARGET AP)_</th>
+                            <th>_(TARGET SSID)_</th>
+                            <th>_(REMOVE)_</th>
+                        </tr>
+                    </table>
+                    <table id="table_remv_all" border="0" align="center" cellpadding="5" cellspacing="0" style="display:none; margin:10px auto 0 auto;">
+                      <tr>
+                        <td>
+                          <a id="id_remv_all" class="button1" onclick="do_remove_all();"><span>_(Remove full list)_</span></a>
+                        </td>
+                      </tr>
+                    </table>
+
+                </div>
+            </form>
+        </div>
+        <div id="content_right_footer"></div>
+    </div>
+    <div class="clear_left"></div>
+    <div id="footer">&nbsp;</div>
+</div>
+<script language="JavaScript">
+var foobar = new domFunction(dom_load);
+</script>
+</body>
+</html>

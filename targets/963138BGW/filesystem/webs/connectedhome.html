@@ -1,0 +1,456 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Status)_ - _(System Monitor)_ - _(Network Device Table)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript" SRC="js/util.js" TYPE="text/javascript"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript" SRC="js/nav.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="JavaScript" src="js/jquery.js"></script>
+<script language="Javascript">
+//WP Summary
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+
+var wpinfo = "<%ejGetOther(wpinfo)%>".toUpperCase();
+//wpinfo format: mac/state/port|  e.g. '00:18:01:00:61:b8/2/4'
+//state: AEI_WP_INIT=0,AEI_WP_SYNCING=1,AEI_WP_SUCCESSFUL=2,AEI_WP_FAIL=3
+var wpclientinfo = htmlDecodeStr("<%ejGetOther(wpclientinfo)%>").toUpperCase();
+//wpclientinfo format: mac/port|  e.g. '00:14:d1:19:9e:62/4'
+var stbinfo = htmlDecodeStr("<%ejGetOther(stbinfo)%>").toUpperCase();
+var gv_old_autoEnabled = "<%ejGetOther(enblDhcpSrvStatus, Default_autoscanstatus)%>";
+var gv_autoScanTime = "<%ejGetOther(enblDhcpSrvStatus, Default_autoscantime)%>";
+var gv_autoScanCount = "<%ejGetOther(autoscan_count)%>";
+var brinfo = '<%ejGetOther(brinfo)%>';
+var gv_autoEnabled;
+var diffTdStyle = false;/*set different td color*/
+var scan_result='';
+var scan_state = 0;
+
+
+function isWP(mac_addr)
+{
+    if(wpinfo.indexOf(mac_addr.toUpperCase()) == -1)
+    {
+        return false;
+    }
+    return true;
+}
+
+function getWPState(mac_addr)
+{
+    var wpinfolist = wpinfo.split('|');
+    for( i=0; i < wpinfolist.length; i++)
+    {
+        if(wpinfolist[i].indexOf(mac_addr.toUpperCase()) == -1 ) {
+            continue;
+        }
+        var details = wpinfolist[i].split('/');
+        return details[1];
+    } 
+    return 0;
+}
+
+function isWPClient(mac_addr)
+{
+    if(wpclientinfo.indexOf(mac_addr.toUpperCase()) == -1)
+    {
+        return false;
+    }
+    return true;
+}
+
+function init_orig_vars()
+{
+    gv_autoEnabled = document.getElementById("uiPostAutoScanEnable").value;
+}
+
+function onClickAutoScanEnable()
+{
+    if (document.getElementById("id_auto_scan_on").checked) {
+        gv_autoEnabled = "1";
+    } else if (document.getElementById("id_auto_scan_off").checked) {
+        gv_autoEnabled = "0";
+    }
+    uiset_section_scan_state();
+}
+
+function uiset_section_scan_state()
+{
+    if (gv_autoEnabled == "1") {
+        document.getElementById("id_auto_scan_on").checked = true;
+        document.getElementById("id_auto_scan_off").checked = false;
+        document.getElementById("auto_scan_time").value = gv_autoScanTime;
+    } else {
+        document.getElementById("id_auto_scan_on").checked = false;
+        document.getElementById("id_auto_scan_off").checked = true;
+    }
+}
+
+function get_net_info(in_str)
+{
+	var e_list=in_str.split('|');
+
+	var out_list=e_list[0];
+	var ip_array=new Array();
+
+	var first_ip=htmlDecodeStr((e_list[0].split('/'))[1]);
+
+	if(first_ip!='')
+	{
+		if (isValidIpAddress(first_ip))
+			ip_array[0]=first_ip;
+		else
+			return out_list;
+	}
+
+	var i,j;
+
+	for (i=1;i<e_list.length;i++)
+	{
+		var details=e_list[i].split('/');
+		var dup=false;
+		for (j=0;j<i;j++)
+		{
+			if (htmlDecodeStr(details[1])==ip_array[j])
+			{
+				dup=true;
+				break;
+			}
+		}
+
+		if (!dup)
+			out_list+="|"+e_list[i];
+
+	}
+	return out_list;
+}
+
+
+function build_table(icon,hostname,mac,conntype,port,speed,ip,sourcetype,frequency){
+    scan_result += '<table width="275" border="0" cellspacing="0" cellpadding="0" style="margin-top:5px; border:1px solid #CCC;cursor:pointer"><tr><td width="58" rowspan="4" align="center" style="padding:0;" ><img src="images/';
+    scan_result += icon;
+    scan_result += '" /></td><td width="89" style="font-size:9px; line-height:12px; padding:2px;">';
+    if(hostname == "")
+        scan_result += '_(Unknown)_';
+    else
+        scan_result += hostname;
+    scan_result += '</td><td width="126"  style="font-size:9px; line-height:12px; padding:2px;">';
+    scan_result += mac;
+    scan_result += '</td></tr><tr><td style="font-size:9px; line-height:12px; padding:2px;">';
+    scan_result += conntype;
+    if(port == '6')
+    {
+        scan_result += '</td><td style="font-size:9px; line-height:12px; padding:2px;">_(Frequency)_: ';
+        if(frequency == "is5G"){
+            scan_result += '_(5G)_';
+        }else{
+            scan_result += '_(2.4G)_';
+        }
+        scan_result += ' </td></tr><tr><td style="font-size:9px; line-height:12px; padding:2px;">';
+    }
+    else if(port == '7')
+    {
+        scan_result += '</td><td style="font-size:9px; line-height:12px; padding:2px;">';
+        scan_result += speed;
+        scan_result += ' _(Mbps)_</td></tr><tr><td style="font-size:9px; line-height:12px; padding:2px;">';
+    }
+    else
+    {
+        scan_result += '</td><td style="font-size:9px; line-height:12px; padding:2px;">_(Port)_  ';
+        if(parseInt(port) > 4)
+            port = 4;
+        scan_result += port;
+        scan_result += ' &ndash; ';
+        if(speed==1)
+            scan_result += 100;
+        else if(speed==2)
+            scan_result += 10;
+        else 
+            scan_result += 1000;
+        scan_result += ' _(Mbps Full)_</td></tr><tr><td style="font-size:9px; line-height:12px; padding:2px;">';
+    }
+    scan_result += ip;
+    scan_result += '</td><td style="font-size:9px; line-height:12px; padding:2px;">';
+    scan_result += sourcetype;
+    scan_result += '</td></tr></table>';
+}
+function checkSTB(mac_addr)
+{
+    if (stbinfo.indexOf(mac_addr.toUpperCase())==-1)
+    {
+        return  false;
+    }
+
+    return true;
+}
+function do_load()
+{
+    side_nav("devicestatus");
+    var getTb = document.getElementById("scan_result");
+    var numofwl = 0;
+    var numofmoca = 0;
+    var etherinfo = '';
+    var icon_image='';
+    //     var hosttype='';
+    scan_result='';
+    if(brinfo !='')
+        etherinfo=get_net_info(brinfo).split('|');
+
+    if(etherinfo != '')
+    {
+        for(i=0 ; i < etherinfo.length; i++)
+        {
+            var details = etherinfo[i].split('/');
+            var connectionType = "_(Ethernet)_";
+
+            details[2] = htmlDecodeStr(details[2]);
+
+            if (details.length>5)
+            {
+            if (details[6] == "802.11")
+            {
+                connectionType = "_(Wireless)_";
+                if (checkSTB(details[2]))
+                    icon_image="wstb_icon_on.png";
+                else
+                    icon_image="wrls_icon_on.png";
+                numofwl++;
+            }
+            else
+            {
+                if (details[8] == "Moca")
+                {
+                    connectionType = "_(MoCA)_";
+                    numofmoca++;
+                }
+
+                if (checkSTB(details[2]))
+                    // STB client
+                    icon_image="stb_icon_on.png";
+                else if(isWP(details[2]))
+                    // WP Host
+                    icon_image="wphost_icon_on.png";
+                else if(isWPClient(details[2]))
+                    // WP client
+                    icon_image="wpclient_icon_on.png";
+                else 
+                    // ethernet client
+                    icon_image="pc_icon_on.png";
+
+            }
+            if(details[3]=='6')
+            build_table(icon_image,details[0],details[2],connectionType,details[3],null,details[1],details[4],details[8])
+            else
+            build_table(icon_image,details[0],details[2],connectionType,details[3],details[6],details[1],details[4],null)
+            }
+        }
+        document.getElementById("ether_devices").innerHTML = etherinfo.length - numofwl - numofmoca;
+        document.getElementById("moca_devices").innerHTML = numofmoca;
+        document.getElementById("wire_devices").innerHTML = numofwl;
+        getTb.innerHTML = scan_result;
+    }
+    init_orig_vars();
+    uiset_section_scan_state();
+    if(gv_autoEnabled == 1)
+    autoRefresh();
+}
+
+
+function do_apply()
+{
+    var form = document.forms[0];
+    var lochead = 'connectedhome.cgi?';
+	var loc = "";
+    var scantime;
+
+    if (gv_autoEnabled == "1") {
+        document.getElementById("uiPostAtuoScanTime").disabled = false;
+        scantime = document.getElementById("auto_scan_time").value;
+        if (trim(scantime) == "") {
+            alert("_(Auto scan time cannot be empty)_.");
+            return false;
+        }
+        if (isNaN(scantime))
+        {
+            alert("_(Auto scan time is invalid)_.");
+            return false;
+        }
+        if (scantime<=0 || scantime>32767)
+        {
+            alert("_(Auto scan time is not in range)_.");
+            return false;
+
+        }
+        document.getElementById("uiPostAtuoScanTime").value = scantime;
+    }
+    else
+    {
+        document.getElementById("uiPostAtuoScanTime").disabled = true;
+    }
+    document.getElementById("uiPostAutoScanEnable").disabled = false;
+    document.getElementById("uiPostAutoScanEnable").value = gv_autoEnabled;
+    document.getElementById("uiPostManualScan").disabled = false;
+    document.getElementById("uiPostManualScan").value = "0";
+
+    for(i=0;i<form.elements.length;i++)
+    {
+        if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+        {
+            if(i!=0)
+                loc+="&";
+            loc+=form.elements[i].name;
+            loc+="=";
+            loc+=form.elements[i].value;
+        }
+    }
+    loc += '&sessionKey=' + sessionKey;
+    loc = encrypt_query(loc,key);
+	lochead+=loc;
+	postSubmit(lochead)
+
+}
+
+function onClickScan()
+{
+    var form = document.forms[0];
+    var lochead = 'connectedhome.cgi?';
+	var loc = "";
+
+    if (scan_state)
+        return;
+    scan_state = 1;
+    document.getElementById("scan_status").style.display = "block";
+    document.getElementById("refresh").style.cursor = "";
+
+    document.getElementById("uiPostManualScan").disabled = false;
+    document.getElementById("uiPostManualScan").value = "1";
+    loc+=form.elements[2].name;
+    loc+="=";
+    loc+=form.elements[2].value;
+    loc+="&nothankyou=1";
+
+    loc += '&sessionKey=' + sessionKey;
+    loc = encrypt_query(loc,key);
+
+	lochead+=loc;
+	postSubmit(lochead);
+}
+
+var countDownTime = parseInt(gv_autoScanTime)*60  - parseInt(gv_autoScanCount);
+var countDownFlag;
+function autoRefresh()
+{
+    if(gv_autoScanTime !=0)
+    {
+        if (countDownTime <= 0)
+            countDownTime = parseInt(gv_autoScanTime)*60;    
+        document.getElementById("autoScanInterval").innerHTML = showTime(countDownTime);
+        countDownFlag= setInterval("countDown()",1000);
+    }
+}
+function countDown()
+{
+    countDownTime = countDownTime-1;
+    document.getElementById("autoScanInterval").innerHTML = showTime(countDownTime);
+    if(countDownTime == 0)
+    {
+        page_reload();
+        clearInterval(countDownFlag);
+    }
+}
+//auto scan time style should like mm:ss
+function showTime(time_s)
+{
+    var time_mm = parseInt(time_s/60);
+    var time_ss = parseInt(time_s%60);
+    if(time_mm<10)
+        time_mm = "0"+time_mm;
+    if(time_ss<10)
+        time_ss = "0"+time_ss;
+    var time_str = time_mm +":"+ time_ss;
+    return time_str;
+}
+function page_reload()
+{
+    window.location.reload();
+}
+
+</script>
+</head>
+
+<body onload="do_load()">
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+        <div id="content_right_header"></div>
+        <div id="content_right_contentarea">
+            <h1 class="quicksetup">_(Network - Devices)_</h1>
+            <form>
+            <input type="hidden" name="autoscanstatus"        value="<%ejGetOther(enblDhcpSrvStatus, Default_autoscanstatus)%>" id="uiPostAutoScanEnable" disabled>
+            <input type="hidden" name="autoscantime"        value="<%ejGetOther(enblDhcpSrvStatus, Default_autoscantime)%>" id="uiPostAtuoScanTime" disabled>
+            <input type="hidden" name="manualscan"        value="" id="uiPostManualScan" disabled>
+            <table>
+                <tr>
+                    <td width="150">
+                    <strong>_(Auto Scan)_:</strong>
+                    </td>
+                    <td><input name="autoscan_onoff" id="id_auto_scan_on" type="radio" value="on" onchange="onClickAutoScanEnable();" checked="checked"/>
+                    _(Enable)_ </td>
+                    <td><input name="autoscan_onoff" id="id_auto_scan_off" type="radio" value="off" onchange="onClickAutoScanEnable();" />
+                    _(Disable)_ </td>
+                </tr>
+                <tr>
+                    <td width="150"><strong>_(Scan Interval)_: </strong></td>
+                    <td colspan="2"><input type="text" maxlength="8" name="textfield3" id="auto_scan_time"/>&nbsp;_(Minutes)_</td>
+                </tr>
+                <tr>
+                    <td colspan="3"><a onclick="do_apply();" id="btn_apply" class="button1"><span>_(Apply)_</span></a></td>
+                <tr>
+            </table>
+
+            <table>
+                <tr>
+                    <td width="150"><strong>_(Ethernet Devices)_: </strong>&nbsp;<span class="status_text" id='ether_devices'>0</span></td>
+                    <td rowspan="2"><img src='images/icon-arrow2.png' id="refresh" style="cursor:pointer" onclick="onClickScan()"/></td>
+                    <td rowspan="2"><span id="autoScanInterval" class="blue"></span></td>
+                </tr>
+                <tr>
+                    <td><strong>_(MoCA Devices)_: </strong>&nbsp;<span class="status_text" id='moca_devices'>0</span></td>
+                </tr>
+                <tr>
+                    <td><strong>_(Wireless Devices)_: </strong>&nbsp;<span class="status_text" id='wire_devices'>0</span></td>
+                </tr>
+            </table>
+
+            <div id="scan_status" style="display:none">
+             <table>
+             <tr>
+                 <td><strong>_(Scan in progress)_ ...</strong></td>
+             </tr>
+            </table>
+            </div>
+
+            <div id="scan_result">
+            </div>
+            </form>
+        </div>
+        <div id="content_right_footer"></div>
+    </div>
+    <div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+//var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

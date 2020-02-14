@@ -1,0 +1,213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Firewall)_ - _(IPv6 DMZ Hosting)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/ipv6_util.js"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+var list_dhcp_ip = new Array();
+ var service_name = new Array();
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+var address_prefix= htmlDecodeStr("<%ejGetOther(ipv6_parameter,lan_ipv6curprefixid)%>");
+var prefix=address_prefix.split('/')[0];
+var service_ip=new Array();
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function do_load()
+{
+           var addrinfo = "<%ejGetOther(ipv6_firewall_sevlist)%>";
+	     var addr="";
+           var addrarray;
+	    var  m;
+	 if(prefix=="")
+	 {
+        document.getElementById("ipv6_ip_address").value="No PD get from wan side";
+        document.getElementById("ipv6_ip_address").disabled=true;
+	 }
+	 else
+	 {
+	 document.getElementById("ipv6_ip_address").value="";
+	  document.getElementById("ipv6_ip_address").disabled=false;
+	   if(prefix.split(':').length>5)
+		prefix=prefix.split(':')[0]+":"+prefix.split(':')[1]+":"+prefix.split(':')[2]+":"+prefix.split(':')[3]+":";
+        document.getElementById("ipv6_address_prefix").innerHTML=prefix;
+	 }
+
+	    if(addrinfo!="")
+		{
+	        addrarray=addrinfo.split('|');
+		 for(m=0;m<addrarray.length-1;m++)
+			{
+                       var onearray=addrarray[m];
+			       if(onearray.split('/')[6]=='5' && onearray.split('/')[1] != "advanced")
+					addr+=onearray.split('/')[2]+'/'+onearray.split('/')[8]+'|';
+		      }
+
+		}
+    var form= document.myform;
+    var table = document.getElementById("ipv6_dmz_table");
+
+      // addr='fd00::0/````.rules.%d|'
+    if (addr == '') {
+        var blank = "_(No Entries Defined)_";
+        appendTableEmptyRow(table, "center", "4", blank);
+    }
+    else {
+	  var addrlength=addr.split('|').length-1;
+       for(m=0;m<addrlength;m++)
+	{
+	var cols = new Array();
+	service_ip[m]=htmlDecodeStr(addr.split('|')[m].split('/')[0]);
+	cols[0] = '<img src="../images/icon_computer.png" width="39" height="39" />';
+	cols[1] = addr.split('|')[m].split('/')[0];
+       // cols[3] = '<a style="text-decoration:none;" class="button1" type="button" onClick=doRemove("'+ addr + '") ><span>_(Remove)_</span></a>'; //remove button
+	     var addrrules = addr.split('|')[m].split('/')[1];
+	    var a_idx =addrrules.split('.');
+			var idx = a_idx[a_idx.length-1];
+        var btn_remove = "btn_remove";
+        cols[2]='<a style="text-decoration:none;" class="button1" id="remove_btn" onClick="doRemove(\'' + idx + '\')" id="'+btn_remove+'"><span>_(Remove)_</span></a>';
+	appendTableRow(table, "center", cols);
+	}
+    }
+	//highlight the button after user click on it
+	side_nav("ipv6_dmzhosting");
+}
+
+
+
+function btnApply()
+{
+    var form = document.myform;
+    var ip=prefix+form.ipv6_ip_address.value;
+    var lochead = 'ipv6_dmzhosting.cgi?';
+    var loc = '';
+
+    if(prefix=="")
+	{
+	  msg="_(No PD get from wan side.)_";
+         pop_up(msg,0);
+	   return;
+	}
+
+    if (!form.ipv6_ip_address.value)
+    {
+        alert ("_(Enter a LAN device.)_");
+        return false;
+    }
+    if (!(isipv6(ip))||form.ipv6_ip_address.value=="")
+    {
+        alert("_(The DMZ Host IP Address is invalid.)_");
+        return false;
+    }
+   for(var k=0;k<service_ip.length;k++)
+    {
+     if(right_switchIPv6Address(switchIPv6Address(service_ip[k]))==right_switchIPv6Address(switchIPv6Address(ip)))
+	{
+        pop_up("_(This rule you are adding is already existed!)_",0);
+        return;
+	 }
+   }
+ // var lan_ula = switchCase("<%ejGetOther(ipv6_parameter, lan_ula)%>");
+ // var switch_lanula=switchIPv6Address(lan_ula);
+  //var ulasubstr=switch_lanula.substring(0,64);
+//  var ipswitch=switchIPv6Address(ip);
+  //var ipsubstr=ipswitch.substring(0,64);
+// if (!(isipv6(ip)) || compareSubNet(ip, ethSubnetMask, ethIpAddress, ethSubnetMask) != 0)
+
+
+        loc += 'ipv6_address=' + ip;
+		loc += "&ipv6_dmzhostrmidx=0";
+		loc += "&ipv6_firewallrmidx=0";
+		loc += "&ipv6_servprotocol=5";
+        loc += "&ipv6_admz_enable=0";
+        loc += "&ipv6_servicetype=basic"
+        loc += '&sessionKey=' + sessionKey;
+		lochead+=loc;
+	//alert("lockhead="+lochead);
+	postSubmit(lochead);
+}
+
+
+function doRemove(rule_id)
+{
+
+   var lochead = 'ipv6_dmzhosting.cgi?';
+   var loc = '';
+    loc+="ipv6_dmzhostrmidx"+"="+rule_id;
+	loc += '&sessionKey=' + sessionKey;
+    loc+="&ipv6_firewallrmidx=0";
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+    postSubmit(lochead);
+}
+
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav4.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(fw_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="advancedsetup_dmzhosting">_(IPv6 DMZ Hosting)_ </h1>
+				<form name="myform" onSubmit="return false;">
+				<input type="hidden" name="ipv6_dmzhostrmidx" value="-1">
+					<p>_(DMZ hosting enables a LAN device to use the modem's WAN IP address as its own. DMZ places the LAN device outside the firewall.)_</p>
+					<p>_(WARNING! Using a device in DMZ mode creates a security risk by exposing the device to outside intrusion.)_</p>
+		<!--
+					<p><strong>2. Set the DMZ Persist State. </strong> </p>
+					<p>&nbsp;&nbsp;&nbsp;&nbsp;
+						<input name="dmzPersistState" type="radio" value="Persist" id="dmzon" " checked="checked"/>
+						  Enable
+						<input name="dmzPersistState" type="radio" value="Temporary" id="dmzoff" "/>
+						Disable</p> -->
+					<p><strong>1._( Enter an Ipv6 Address)_.</strong></p>
+			<table border="0" cellpadding="0" cellspacing="0">
+                      <tr>
+                      <td>&nbsp;</td>
+                        <td>_(Enter The last 64 bits of Ipv6 Address)_:</td>
+                        <td>&nbsp;</td>
+                        <td>
+                            <span id="ipv6_address_prefix"></span><input type="text" name="ipv6_ip_address" id="ipv6_ip_address" size="30" style="height:18px;"/>
+                        </td>
+                      </tr>
+                    </table>
+					<p>&nbsp;					</p>
+					<p><strong>2. _(Click Apply to save changes.)_ </strong></p>
+					<p><a class="button1" onclick="btnApply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+					<!-- <p><a href="#" id="apply_btn" class="btn" onClick="btnApply()"></a></p> -->
+					<p align="center"><strong>_(Ipv6 DMZ Hosted Device)_</strong></p>
+				    <table id="ipv6_dmz_table" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;">
+                      <tr>
+                        <th width="39" height="28" align="center">&nbsp;</th>
+                        <th width="201">_(IP ADDRESS)_</th>
+                        <th width="87">_(EDIT)_</th>
+                      </tr>
+                    </table>
+				    <p>&nbsp;</p>
+				</form>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

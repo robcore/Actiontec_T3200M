@@ -1,0 +1,729 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(DSL Status)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="javascript" src="js/functions.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script type="text/javascript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var board_id=htmlDecodeStr('<%ejGet(boardID)%>');
+var bonding = '<%ejGetOther(isDslBondingEnabled)%>';
+var layer2Infoatm = '<%ejGetOther(layer2Info,ATM)%>';
+var layer2Infoptm = '<%ejGetOther(layer2Info,PTM)%>';
+var DSLStatisticsClearLog = '<%ejGetOther(DSLStatisticsClearLog)%>';
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var lines = 2;
+
+var dslstatus = new Array(lines+1);
+var adslLprs = new Array(lines+1);
+var adslLoss = new Array(lines+1);
+var adslRetrLom = new Array(lines+1);
+var adslInitErr = new Array(lines+1);
+var adslUAS = new Array(lines+1);
+var chType = new Array(lines+1);
+var stat_packets = new Array(lines+1);
+
+var switchToLine1 = '<%ejGetOther(switchToDSLLine, 1)%>';
+dslstatus[1] = '<%ejGetOther(dslget)%>';
+adslLprs[1] = htmlDecodeStr('<%ejGet(adslLprs)%>');
+adslLoss[1] = htmlDecodeStr('<%ejGet(adslLoss)%>');
+adslRetrLom[1] = htmlDecodeStr('<%ejGet(adslRetrLom)%>');
+adslInitErr[1] = htmlDecodeStr('<%ejGet(adslInitErr)%>');
+adslUAS[1] = htmlDecodeStr('<%ejGet(adslUAS)%>');
+chType[1] = htmlDecodeStr('<%ejGet(chType)%>');
+stat_packets[1] = '<%ejGetOther(boardbandPacketsInfo)%>'.split("|");
+
+var switchToLine2 = '<%ejGetOther(switchToDSLLine, 2)%>';
+dslstatus[2] = '<%ejGetOther(dslget)%>';
+adslLprs[2] = htmlDecodeStr('<%ejGet(adslLprs)%>');
+adslLoss[2] = htmlDecodeStr('<%ejGet(adslLoss)%>');
+adslRetrLom[2] = htmlDecodeStr('<%ejGet(adslRetrLom)%>');
+adslInitErr[2] = htmlDecodeStr('<%ejGet(adslInitErr)%>');
+adslUAS[2] = htmlDecodeStr('<%ejGet(adslUAS)%>');
+chType[2] = htmlDecodeStr('<%ejGet(chType)%>');
+stat_packets[2] = '<%ejGetOther(boardbandPacketsInfo)%>'.split("|");
+
+var clearlog = DSLStatisticsClearLog.split("|");
+var dslsts_temp;
+var tag = 0;
+
+function time_to_str(time)
+{
+    var days = 0, hours = 0, minutes = 0, seconds = 0;
+    var time_str;
+
+    while (time > 86400)
+    {
+        days++;
+        time = time - 86400;
+    }
+
+    while (time > 3600)
+    {
+        hours++;
+        time = time - 3600;
+    }
+
+    while (time > 60)
+    {
+        minutes++;
+        time = time - 60;
+    }
+
+    seconds = time;
+    time_str = days+" Days, " + hours + "H:" + minutes + "M:" + seconds + "S";
+    return time_str;
+}
+
+function get_mode(str)
+{
+    var Mode;
+
+    if(str == "ADSL_G.dmt")
+        Mode = "G.DMT";
+    else if(str == "ADSL_ANSI_T1.413")
+        Mode = "T1.413";
+    else if(str == "ADSL_G.dmt.bis")
+        Mode = "ADSL2";
+    else if(str == "ADSL_G.lite")
+        Mode = "G.Lite";
+    else if(str == "ADSL_2plus")
+        Mode = "ADSL2+";
+    else if (str == "8a")
+        Mode = "VDSL2 - 8A";
+    else if(str == "8b")
+        Mode = "VDSL2 - 8B";
+    else if(str == "8c")
+        Mode = "VDSL2 - 8C";
+    else if(str == "8d")
+        Mode = "VDSL2 - 8D";
+    else if(str == "12a")
+        Mode = "VDSL2 - 12A";
+    else if(str == "12b")
+        Mode = "VDSL2 - 12B";
+    else if(str == "17a")
+        Mode = "VDSL2 - 17A";
+    else
+        Mode = "MULTIMODE";
+
+    return Mode;
+}
+
+function show_dsl_status(val)
+{
+    var total_downstream_rate = 0;
+    var total_upstream_rate = 0;
+
+    if (tag == 1)
+    {
+        var value = val.split("+");
+
+        bonding = value[0];
+        layer2Infoatm = value[1];
+        layer2Infoptm = value[2];
+        clearlog = value[3].split("|");
+
+        dslstatus[1] = value[5];
+        adslLprs[1] = value[6];
+        adslLoss[1] = value[7];
+        adslRetrLom[1] = value[8];
+        adslInitErr[1] = value[9];
+        adslUAS[1] = value[10];
+        chType[1] = value[11];
+        stat_packets[1] = value[12].split("|");
+
+        dslstatus[2] = value[14];
+        adslLprs[2] = value[15];
+        adslLoss[2] = value[16];
+        adslRetrLom[2] = value[17];
+        adslInitErr[2] = value[18];
+        adslUAS[2] = value[19];
+        chType[2] = value[20];
+        stat_packets[2] = value[21].split("|");
+    }
+
+    for (var i=1; i<=lines; i++)
+    {
+        document.getElementById("vpi_"+i).innerHTML = "_(N/A)_";
+        document.getElementById("vci_"+i).innerHTML = "_(N/A)_";
+        document.getElementById("qos_class_"+i).innerHTML = "_(N/A)_";
+        document.getElementById("dsl_mode_"+i).innerHTML = "_(N/A)_";
+        document.getElementById("nego_mode_"+i).innerHTML = "_(N/A)_";
+        if (dslstatus[i] != "")
+        {
+            dslsts_temp = dslstatus[i].split("|") ;
+            if(dslsts_temp[0] == "Up" && dslsts_temp.length == 22)
+            {
+                var rxPacket = stat_packets[i][0];
+                var rxPacketErr = stat_packets[i][1];
+                var txPacket = stat_packets[i][2];
+                var txPacketErr =stat_packets[i][3];
+
+                document.getElementById("txPacket_"+i).innerHTML = txPacket-clearlog[i==1?i+6:i+26];
+                document.getElementById("rxPacket_"+i).innerHTML = rxPacket-clearlog[i==1?i+7:i+27];
+                document.getElementById("txPacketErr_"+i).innerHTML = txPacketErr-clearlog[i==1?i+8:i+28];
+                document.getElementById("rxPacketErr_"+i).innerHTML = rxPacketErr-clearlog[i==1?i+9:i+29];
+                document.getElementById("adslLprs_"+i).innerHTML = adslLprs[i]-clearlog[i==1?i+1:i+21];
+                document.getElementById("adslLoss_"+i).innerHTML = adslLoss[i]-clearlog[i==1?i+2:i+22];
+                document.getElementById("adslRetrLom_"+i).innerHTML = adslRetrLom[i]-clearlog[i==1?i+3:i+23];
+                document.getElementById("adslInitErr_"+i).innerHTML = adslInitErr[i]-clearlog[i==1?i+4:i+24];
+                document.getElementById("adslUAS_"+i).innerHTML = adslUAS[i]-clearlog[i==1?i+5:i+25];
+                if (chType[i] == '0')
+                    document.getElementById("chType_"+i).innerHTML =  'Interleaved';
+                else
+                    document.getElementById("chType_"+i).innerHTML =  'FastChannel';
+
+                if((dslsts_temp[6] != undefined) && (dslsts_temp[0] == "Up"))
+                   document.getElementById("retains_num_"+i).innerHTML = dslsts_temp[6]-clearlog[i==1?i-1:i+19];
+                if((dslsts_temp[6] != undefined) && (dslsts_temp[7] != undefined) && (dslsts_temp[0] == "Up"))
+                   document.getElementById("retains_num_last24H_"+i).innerHTML = dslsts_temp[21]-clearlog[i==1?i:i+20];
+
+                var l2infoatm = layer2Infoatm.split('|');
+                var l2infoptm = layer2Infoptm.split('|');
+                var dsl_time_temp = 0;
+                var up_power = 0;
+                var down_power = 0;
+
+                if (dslsts_temp[7] != undefined)
+                    dsl_time_temp = parseInt(dslsts_temp[7], 10);
+                document.getElementById("retains_time_"+i).innerHTML = time_to_str(dsl_time_temp);
+
+                if(dslsts_temp[17] != undefined)
+                {
+                    up_power = parseInt(dslsts_temp[17].split('/')[0]);
+                    down_power = parseInt(dslsts_temp[17].split('/')[1]);
+                    if (up_power != 0) up_power = (up_power / 10);
+                    if (down_power != 0) down_power = (down_power / 10);
+                }
+                document.getElementById("up_power_"+i).innerHTML =  up_power;
+                document.getElementById("down_power_"+i).innerHTML =  down_power;
+
+                if(dslsts_temp[2] != undefined)
+                {
+                    total_downstream_rate += parseInt(dslsts_temp[2]);
+                    document.getElementById("speed_d_"+i).innerHTML = dslsts_temp[2];
+                }
+                if(dslsts_temp[3] != undefined)
+                {
+                    total_upstream_rate += parseInt(dslsts_temp[3]);
+                    document.getElementById("speed_u_"+i).innerHTML = dslsts_temp[3];
+                }
+                if(dslsts_temp[19] != undefined)
+                    document.getElementById("a_speed_d_"+i).innerHTML = dslsts_temp[19];
+                if(dslsts_temp[20] != undefined)
+                    document.getElementById("a_speed_u_"+i).innerHTML = dslsts_temp[20];
+                if(dslsts_temp[8] != undefined)
+                    document.getElementById("Near_endCRC_"+i).innerHTML = dslsts_temp[8].split('/')[0]-clearlog[i==1?i+12:i+32];
+                if(dslsts_temp[9] != undefined)
+                    document.getElementById("Far_endCRC_"+i).innerHTML = dslsts_temp[9].split('/')[0]-clearlog[i==1?i+13:i+33];
+                if(dslsts_temp[10] != undefined)
+                    document.getElementById("Near_endCRC_cnt_"+i).innerHTML = dslsts_temp[10].split('/')[0]-clearlog[i==1?i+14:i+34];
+                if(dslsts_temp[11] != undefined)
+                    document.getElementById("Far_endCRC_cnt_"+i).innerHTML = dslsts_temp[11].split('/')[0]-clearlog[i==1?i+15:i+35];
+                if(dslsts_temp[12] != undefined)
+                    document.getElementById("Near_endRS_"+i).innerHTML = dslsts_temp[12].split('/')[0]-clearlog[i==1?i+16:i+36];
+                if(dslsts_temp[13] != undefined)
+                    document.getElementById("Far_endRS_"+i).innerHTML = dslsts_temp[13].split('/')[0]-clearlog[i==1?i+17:i+37];
+                if(dslsts_temp[14] != undefined)
+                    document.getElementById("Near_endFEC_"+i).innerHTML = dslsts_temp[14].split('/')[0]-clearlog[i==1?i+18:i+38];
+                if(dslsts_temp[15] != undefined)
+                    document.getElementById("Far_endFEC_"+i).innerHTML = dslsts_temp[15].split('/')[0]-clearlog[i==1?i+19:i+39];
+                if(dslsts_temp[16] != undefined)
+                {
+                    document.getElementById("discard_pkt_up_"+i).innerHTML = dslsts_temp[16].split('/')[0]-clearlog[i==1?i+10:i+30];
+                    document.getElementById("discard_pkt_down_"+i).innerHTML = dslsts_temp[16].split('/')[1]-clearlog[i==1?i+11:i+31];
+                }
+                if(dslsts_temp[4] != undefined)
+                {
+                    document.getElementById("snr_margin_"+i).innerHTML = dslsts_temp[4].split('/')[0];
+                    document.getElementById("snr_margin_u_"+i).innerHTML = dslsts_temp[4].split('/')[1];
+                }
+                if(dslsts_temp[5] != undefined)
+                {
+                    document.getElementById("attenuation_"+i).innerHTML = dslsts_temp[5].split('/')[0];
+                    document.getElementById("attenuation_u_"+i).innerHTML = dslsts_temp[5].split('/')[1];
+                }
+
+                if (dslsts_temp[1] == "ATM")
+                {
+                    document.getElementById("vpi_"+i).innerHTML = l2infoatm[2];
+                    document.getElementById("vci_"+i).innerHTML = l2infoatm[3];
+                    document.getElementById("dsl_mode_"+i).innerHTML = get_mode(htmlDecodeStr(l2infoatm[11]));
+                    if (dslsts_temp[0] == "Up")
+                        document.getElementById("nego_mode_"+i).innerHTML = get_mode(dslsts_temp[18]);
+                    else
+                        document.getElementById("nego_mode_"+i).innerHTML = "Not Trained";
+                    document.getElementById("qos_class_"+i).innerHTML = l2infoatm[4];
+                }
+                else if (dslsts_temp[1] == "PTM")
+                {
+                    document.getElementById("dsl_mode_"+i).innerHTML = get_mode(htmlDecodeStr(l2infoptm[7]));
+                    if (dslsts_temp[0] == "Up")
+                        document.getElementById("nego_mode_"+i).innerHTML = get_mode(dslsts_temp[18]);
+                    else
+                        document.getElementById("nego_mode_"+i).innerHTML = "Not Trained";
+                }
+            }
+            else
+            {
+                setBroadbandStatusDef(i);
+                setTransportStatusDef(i);
+                setChannelStatusDef(i);
+                setLevelsStatusDef(i);
+            }
+        }
+        else
+        {
+            setBroadbandStatusDef(i);
+            setTransportStatusDef(i);
+            setChannelStatusDef(i);
+            setLevelsStatusDef(i);
+        }
+    }
+    if (bonding == '1')
+    {
+        document.getElementById("bonding_status").innerHTML = "Bonding";
+        document.getElementById("bonding_downstream_rate").innerHTML = total_downstream_rate+" Kbps";
+        document.getElementById("bonding_upstream_rate").innerHTML = total_upstream_rate+" Kbps";;
+    }
+    else
+    {
+        document.getElementById("bonding_status").innerHTML = "Non-Bonding";
+        document.getElementById("bonding_downstream_rate").innerHTML = "_(N/A)_";
+        document.getElementById("bonding_upstream_rate").innerHTML = "_(N/A)_";
+    }
+}
+
+function setBroadbandStatusDef(i)
+{
+    document.getElementById("retains_time_"+i).innerHTML = "_(N/A)_" ;
+    document.getElementById("retains_num_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("retains_num_last24H_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("adslLprs_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("adslLoss_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("adslRetrLom_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("adslInitErr_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("adslUAS_"+i).innerHTML = "_(N/A)_";
+}
+
+function setChannelStatusDef(i)
+{
+    document.getElementById("chType_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("Near_endCRC_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("Far_endCRC_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("Near_endCRC_cnt_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("Far_endCRC_cnt_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("Near_endRS_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("Far_endRS_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("Near_endFEC_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("Far_endFEC_"+i).innerHTML = "_(N/A)_";
+}
+
+function setLevelsStatusDef(i)
+{
+    document.getElementById("speed_d_"+i).innerHTML = "0";
+    document.getElementById("speed_u_"+i).innerHTML = "0";
+    document.getElementById("a_speed_d_"+i).innerHTML = "0";
+    document.getElementById("a_speed_u_"+i).innerHTML = "0";
+    document.getElementById("snr_margin_"+i).innerHTML = "0";
+    document.getElementById("snr_margin_u_"+i).innerHTML = "0";
+    document.getElementById("attenuation_"+i).innerHTML = "0";
+    document.getElementById("attenuation_u_"+i).innerHTML = "0";
+    document.getElementById("down_power_"+i).innerHTML = "0";
+    document.getElementById("up_power_"+i).innerHTML = "0";
+}
+
+function setTransportStatusDef(i)
+{
+    document.getElementById("txPacket_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("rxPacket_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("txPacketErr_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("rxPacketErr_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("discard_pkt_up_"+i).innerHTML = "_(N/A)_";
+    document.getElementById("discard_pkt_down_"+i).innerHTML = "_(N/A)_";
+}
+
+function do_load(val)
+{
+    show_dsl_status(val);
+    setTimeout("http_refresh()", 5000);
+}
+
+function DSLStatusClear()
+{
+    var loc = '';
+    var lochead = 'dslStateClear.cmd?';
+
+    for (var i=1; i<=lines; i++)
+    {
+        if (i == lines)
+            loc += '&';
+        loc += 'retains_num_'+i+'='+document.getElementById("retains_num_"+i).innerHTML;
+        loc += '&retains_num_last24H_'+i+'='+document.getElementById("retains_num_last24H_"+i).innerHTML;
+        loc += '&adslLprs_'+i+'='+document.getElementById("adslLprs_"+i).innerHTML;
+        loc += '&adslLoss_'+i+'='+document.getElementById("adslLoss_"+i).innerHTML;
+        loc += '&adslRetrLom_'+i+'='+document.getElementById("adslRetrLom_"+i).innerHTML;
+        loc += '&adslInitErr_'+i+'='+document.getElementById("adslInitErr_"+i).innerHTML;
+        loc += '&adslUAS_'+i+'='+document.getElementById("adslUAS_"+i).innerHTML;
+        loc += '&txPacket_'+i+'='+document.getElementById("txPacket_"+i).innerHTML;
+        loc += '&rxPacket_'+i+'='+document.getElementById("rxPacket_"+i).innerHTML;
+        loc += '&txPacketErr_'+i+'='+document.getElementById("txPacketErr_"+i).innerHTML;
+        loc += '&rxPacketErr_'+i+'='+document.getElementById("rxPacketErr_"+i).innerHTML;
+        loc += '&discard_pkt_up_'+i+'='+document.getElementById("discard_pkt_up_"+i).innerHTML;
+        loc += '&discard_pkt_down_'+i+'='+document.getElementById("discard_pkt_down_"+i).innerHTML;
+        loc += '&Near_endCRC_'+i+'='+document.getElementById("Near_endCRC_"+i).innerHTML;
+        loc += '&Far_endCRC_'+i+'='+document.getElementById("Far_endCRC_"+i).innerHTML;
+        loc += '&Near_endCRC_cnt_'+i+'='+document.getElementById("Near_endCRC_cnt_"+i).innerHTML;
+        loc += '&Far_endCRC_cnt_'+i+'='+document.getElementById("Far_endCRC_cnt_"+i).innerHTML;
+        loc += '&Near_endRS_'+i+'='+document.getElementById("Near_endRS_"+i).innerHTML;
+        loc += '&Far_endRS_'+i+'='+document.getElementById("Far_endRS_"+i).innerHTML;
+        loc += '&Near_endFEC_'+i+'='+document.getElementById("Near_endFEC_"+i).innerHTML;
+        loc += '&Far_endFEC_'+i+'='+document.getElementById("Far_endFEC_"+i).innerHTML;
+    }
+    loc += '&sessionKey=' + sessionKey;
+    loc += '&nothankyou=0';
+    loc = encrypt_query(loc,key);
+    lochead += loc;
+    postSubmit(lochead);
+}
+
+function http_refresh()
+{
+    var xmlhttp;
+    try
+    {
+        if (window.ActiveXObject)
+        {
+            for (var i = 5; i > -1; i--)
+            {
+                try
+                {
+                    if (i == 2)
+                    {
+                      xmlhttp = new ActiveXObject ("Microsoft.XMLHTTP");
+                    }
+                    else
+                    {
+                        xmlhttp =
+                        new ActiveXObject ("Msxml2.XMLHTTP." + i + ".0");
+                    }
+                    break;
+                }
+                catch (e)
+                {
+                    xmlhttp = false;
+                }
+            }
+        }
+        else if (window.XMLHttpRequest)
+        {
+            xmlhttp = new XMLHttpRequest ();
+        }
+    }
+
+    catch (e)
+    {
+        xmlhttp = false;
+    }
+
+    if (xmlhttp != null)
+    {
+        var curTime = new Date();
+
+        curTime = curTime.getTime();
+        xmlhttp.open("GET","./dslbondingstatus_refresh.html",true);
+        xmlhttp.onreadystatechange = function()
+        {
+            if (xmlhttp.readyState==4)
+            {
+                var statusval = xmlhttp.responseText;
+                tag = 1;
+                do_load(statusval);
+            }
+        }
+
+        xmlhttp.send(null);
+    }
+}
+function dom_load()
+{
+    do_load(0);
+}
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+ <div id="left_column">
+    <div id="left_column_header"></div>
+    <div id="left_column_content">
+        <ul id="subnav">
+        <li><a href="#" class="link" onClick="return goThere('dsl.html');">_(DSL Status)_</a></li>
+        </ul>
+    </div>
+    <div id="left_column_footer"></div>
+</div>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+        <div id="content_right_header"></div>
+            <div id="content_right_contentarea">
+                <h1>DSL Status</h1>
+                <form>
+                  <!--<p>Connection Status</p>-->
+                  <table width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                      <tr>
+                          <th width="50%" style="text-align:left">_(Connection)_</th>
+                          <th width="50%" style="text-align:left">_(Status)_</th>
+                      </tr>
+                      <tr>
+                          <td>_(DSL Bonding Status)_:</td>
+                          <td><span id='bonding_status'>_(Bonding)_</span></td>
+                      </tr>
+                      <tr>
+                          <td>_(Bonded Group Downstream Rate)_: </td>
+                          <td><span id='bonding_downstream_rate'>_(N/A)_</span></td>
+                      </tr>
+                      <tr>
+                          <td>_(Bonded Group Upstream Rate)_: </td>
+                          <td><span id='bonding_upstream_rate'>_(N/A)_</span></td>
+                      </tr>
+                  </table>
+
+                    <!--<p>Broadband Status</p>                -->
+                    <table id='link_table' width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                     <tr>
+                        <th width="50%" style="text-align:left">_(DSL Link)_</th>
+                        <th width="25%" style="text-align:left">_(Line)_ 1</th>
+                        <th width="25%" style="text-align:left">_(Line)_ 2</th>
+                     </tr>
+                     <tr>
+                        <td>_(Broadband Mode Setting)_:</td>
+                        <td><span id='dsl_mode_1'>_(N/A)_</span></td>
+                        <td><span id='dsl_mode_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Broadband Negotiated Mode)_:</td>
+                        <td><span id='nego_mode_1'>_(N/A)_</span></td>
+                        <td><span id='nego_mode_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(DSL Link Uptime)_:</td>
+                        <td><span id='retains_time_1'>0 Days, 0H:0M:0S</span></td>
+                        <td><span id='retains_time_2'>0 Days, 0H:0M:0S</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Retrains)_:</td>
+                        <td><span id='retains_num_1'>_(N/A)_</span></td>
+                        <td><span id='retains_num_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Retrains in Last 24 Hours)_:</td>
+                        <td><span id='retains_num_last24H_1'>_(N/A)_</span></td>
+                        <td><span id='retains_num_last24H_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Loss of Power Link Failures)_:</td>
+                        <td><span id='adslLprs_1'>_(N/A)_</span></td>
+                        <td><span id='adslLprs_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Loss of Signal Link Failure)_:</td>
+                        <td><span id='adslLoss_1'>_(N/A)_</span></td>
+                        <td><span id='adslLoss_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Loss of Margin Link Failure)_:</td>
+                        <td><span id='adslRetrLom_1'>_(N/A)_</span></td>
+                        <td><span id='adslRetrLom_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Link Train Errors)_:</td>
+                        <td><span id='adslInitErr_1'>_(N/A)_</span></td>
+                        <td><span id='adslInitErr_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Unavailable Seconds)_:</td>
+                        <td><span id='adslUAS_1'>_(N/A)_</span></td>
+                        <td><span id='adslUAS_2'>_(N/A)_</span></td>
+                     </tr>
+                    </table>
+
+                     <table id='transport_table' width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                     <tr>
+                        <th width="50%" style="text-align:left">_(Transport)_</th>
+                        <th width="25%" style="text-align:left">_(Line)_ 1</th>
+                        <th width="25%" style="text-align:left">_(Line)_ 2</th>
+                     </tr>
+                     <tr>
+                        <td>VPI:</td>
+                        <td><span id='vpi_1'>_(N/A)_</span></td>
+                        <td><span id='vpi_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>VCI:</td>
+                        <td><span id='vci_1'>_(N/A)_</span></td>
+                        <td><span id='vci_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(ATM QoS class)_:</td>
+                        <td><span id='qos_class_1'>_(N/A)_</span></td>
+                        <td><span id='qos_class_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Packets Sent)_:</td>
+                        <td><span id='txPacket_1'>_(N/A)_</span></td>
+                        <td><span id='txPacket_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Packets Received)_:</td>
+                        <td><span id='rxPacket_1'>_(N/A)_</span></td>
+                        <td><span id='rxPacket_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Error Packets Sent)_:</td>
+                        <td><span id='txPacketErr_1'>_(N/A)_</span></td>
+                        <td><span id='txPacketErr_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Error Packets Received)_:</td>
+                        <td><span id='rxPacketErr_1'>_(N/A)_</span></td>
+                        <td><span id='rxPacketErr_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(30 Minute Discarded Packets Upstream)_:</td>
+                        <td><span id='discard_pkt_up_1'>_(N/A)_</span></td>
+                        <td><span id='discard_pkt_up_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(30 Minute Discarded Packets Downstream)_:</td>
+                        <td><span id='discard_pkt_down_1'>_(N/A)_</span></td>
+                        <td><span id='discard_pkt_down_2'>_(N/A)_</span></td>
+                     </tr>
+                    </table>
+
+                    <table id='channel_table' width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                     <tr>
+                        <th width="50%" style="text-align:left">_(Channel)_</th>
+                        <th width="25%" style="text-align:left">_(Line)_ 1</th>
+                        <th width="25%" style="text-align:left">_(Line)_ 2</th>
+                     </tr>
+                     <tr>
+                        <td>_(Channel Type)_:</td>
+                        <td><span id='chType_1'>_(Interleaved)_</span></td>
+                        <td><span id='chType_2'>_(Interleaved)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Near End CRC Errors)_:</td>
+                        <td><span id='Near_endCRC_1'>_(N/A)_</span></td>
+                        <td><span id='Near_endCRC_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Far End CRC)_:</td>
+                        <td><span id='Far_endCRC_1'>_(N/A)_</span></td>
+                        <td><span id='Far_endCRC_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(30 Minute Near End CRC)_:</td>
+                        <td><span id='Near_endCRC_cnt_1'>_(N/A)_</span></td>
+                        <td><span id='Near_endCRC_cnt_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(30 Minute Far End CRC)_:</td>
+                        <td><span id='Far_endCRC_cnt_1'>_(N/A)_</span></td>
+                        <td><span id='Far_endCRC_cnt_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Near End RS FEC)_:</td>
+                        <td><span id='Near_endRS_1'>_(N/A)_</span></td>
+                        <td><span id='Near_endRS_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(Far End RS FEC)_:</td>
+                        <td><span id='Far_endRS_1'>_(N/A)_</span></td>
+                        <td><span id='Far_endRS_2'>_(N/A)_</span></td>
+                     </tr>
+                     <tr>
+                        <td>_(30 Minute Near End FEC)_:</td>
+                        <td><span id='Near_endFEC_1'>_(N/A)_</span>
+                        <td><span id='Near_endFEC_2'>_(N/A)_</span>
+                       </td>
+                     </tr>
+                     <tr>
+                        <td>_(30 Minutes Far End FEC)_:</td>
+                        <td><span id='Far_endFEC_1'>_(N/A)_</span></td>
+                        <td><span id='Far_endFEC_2'>_(N/A)_</span></td>
+                     </tr>
+                    </table>
+
+                     <table id='levels_table' width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                     <tr>
+                        <th width="12%" align="left">_(Levels)_</th>
+                        <th width="22%" align="left">_(Line)_ 1<br/>_(Downstream)_</th>
+                        <th width="22%" align="left">_(Line)_ 1<br/>_(Upstream)_</th>
+                        <th width="22%" align="left">_(Line)_ 2<br/>_(Downstream)_</th>
+                        <th width="22%" align="left">_(Line)_ 2<br/>_(Upstream)_</th>
+                     </tr>
+                     <tr>
+                        <td >_(Line Rate)_:</td>
+                        <td align="left"><span id='speed_d_1'>0</span> Kbps</td>
+                        <td align="left"><span id='speed_u_1'>0</span> Kbps</td>
+                        <td align="left"><span id='speed_d_2'>0</span> Kbps</td>
+                        <td align="left"><span id='speed_u_2'>0</span> Kbps</td>
+                     </tr>
+                     <tr>
+                        <td >_(Attainable Line Rate)_:</td>
+                        <td align="left"><span id='a_speed_d_1'>0</span> Kbps</td>
+                        <td align="left"><span id='a_speed_u_1'>0</span> Kbps</td>
+                        <td align="left"><span id='a_speed_d_2'>0</span> Kbps</td>
+                        <td align="left"><span id='a_speed_u_2'>0</span> Kbps</td>
+                     </tr>
+                     <tr>
+                        <td >_(SNR)_:</td>
+                        <td align="left"><span id='snr_margin_1'>0</span> dB</td>
+                        <td align="left"><span id='snr_margin_u_1'>0</span> dB</td>
+                        <td align="left"><span id='snr_margin_2'>0</span> dB</td>
+                        <td align="left"><span id='snr_margin_u_2'>0</span> dB</td>
+                     </tr>
+                     <tr>
+                        <td >_(Attenuation)_:</td>
+                        <td align="left"><span id='attenuation_1'>0</span>dB</td>
+                        <td align="left"><span id='attenuation_u_1'>0</span>dB</td>
+                        <td align="left"><span id='attenuation_2'>0</span>dB</td>
+                        <td align="left"><span id='attenuation_u_2'>0</span>dB</td>
+                     </tr>
+                     <tr>
+                        <td >_(Power)_:</td>
+                        <td align="left"><span id="down_power_1" >0</span> dBm</td>
+                        <td align="left"><span id="up_power_1" >0</span> dBm</td>
+                        <td align="left"><span id="down_power_2" >0</span> dBm</td>
+                        <td align="left"><span id="up_power_2" >0</span> dBm</td>
+                     </tr>
+                  </table>
+                  <table width="80%" style="margin:10px auto 0 auto;">
+                      <tr class="wpstable">
+                          <th><a class="button1" onclick="DSLStatusClear();" id="btn_clear"><span>_(Clear)_</span></a></th>
+                      </tr>
+                  </table>
+                </form>
+            </div>
+            <div id="content_right_footer"></div>
+        </div>
+    <div class="clear_left"></div>
+        <div id="footer">&nbsp;</div>
+    </div>
+<script type="text/javascript">
+var foobar = new domFunction(dom_load);
+</script>
+</body>
+</html>

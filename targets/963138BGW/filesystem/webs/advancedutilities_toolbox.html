@@ -1,0 +1,253 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Tool Box)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="javascript" src="js/functions.js" type="text/javascript"></script>
+<script type="text/javascript" src="js/nav.js"></script>
+<script language="javascript" src="js/util.js"></script>
+<script language="javascript" src="js/htmldecode.js"></script>
+<script language="JavaScript" src="js/myfunc.js"></script>
+<script language="JavaScript">
+
+TrafficType = {
+  NONE      : 0,
+  LAN      : 1,
+  WAN      : 2,
+  LAN_WAN   : 3,
+  ALL_ETH   : 4,
+  ETH1      : 5,
+  ETH2      : 6,
+  ETH3      : 7,
+  ETH4      : 8,
+  ALL_SSID   : 9,
+  SSID1      : 10,
+  SSID2      : 11,
+  SSID3      : 12,
+  SSID4      : 13,
+  HPNA      : 14
+}
+
+var ethIntf = 'eth0,eth1,eth2,eth3';
+//var hpnaIntf = 'eth4';
+//var wlIntf = 'wl0,wl0.1,wl0.2,wl0.3';
+var wlIntf = 'wl0,wl0.1,eth4';
+//var lanIntf = ethIntf + ',' + hpnaIntf + ',' + wlIntf;
+var lanIntf = ethIntf + ',' + wlIntf;
+var dslIntf = 'atm0';
+var ewanIntf = 'ewan0';
+var wanIntf = ewanIntf + ',' + dslIntf;
+var lanWanIntf = lanIntf + ',' + wanIntf;
+
+var wanInfNamesDsl = htmlDecodeStr('<%ejGetOther(wanInterfaces, all)%>');
+var wanInfNamesEwan = '<%ejGetOther(ethwanvlan, ewan0)%>';
+var wanInfNamesSFP = '<%ejGetOther(ethwanvlan, ewan1)%>';
+var glbWanL2IfName = htmlDecodeStr('<%ejGet(wanL2IfName)%>');
+
+var ethWanInfo = wanInfNamesEwan.split(':');
+var sfpWanInfo = wanInfNamesSFP.split(':');
+
+var wanPhy = '<%ejGetOther(physical_wan, all)%>';
+var toolBoxCfg = '<%ejGetOther(toolBoxCfg)%>';
+var selIndexs = toolBoxCfg.split('|');
+
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function btnApply()
+{
+  // lst format: monitorIntf|direction(1[out],0[in])|mirrorIntf|status(1[enabled],0[disabled]),
+  with ( document.forms[0] ) {
+    var lst = '';
+    var lochead = 'engdebug.cmd?';
+    var loc = '';
+
+    var sel1=document.getElementById("monitorIntf");
+    var sel2=document.getElementById("mirrorIntf");
+    var i = sel1.options.selectedIndex;
+    var j = sel2.options.selectedIndex;
+
+    if (i != TrafficType.NONE && j != TrafficType.NONE)
+    {
+      if (monitorIntf[i].value == mirrorIntf[j].value)
+      {
+        alert("_(Cannot mirror traffic to the same port.)_");
+        return false;
+      }
+
+      var monitorIntfs = monitorIntf[i].value.split(',');
+      var mirrorIntfs = mirrorIntf[j].value.split(',');
+
+      if (monitorIntfs.length > 1 && mirrorIntfs.length > 1)
+      {
+        alert("_(A many-to-many mirror is not allowed.)_");
+        return false;
+      }
+
+      loc += 'action=apply';
+      loc += '&monitorTraffic=' + i + '&mirrorTraffic=' + j;
+      loc += '&monitorIntfs=' + monitorIntf[i].value;
+      loc += '&mirrorIntfs=' + mirrorIntf[j].value;
+    }
+    else if (i == TrafficType.NONE && j == TrafficType.NONE)
+    {
+      loc += 'action=del';
+      loc += '&monitorTraffic=' + i + '&mirrorTraffic=' + j;
+    }
+    else if (i == TrafficType.NONE)
+    {
+      alert("_(Select the port for traffic mirroring.)_");
+      return false;
+    }
+    else // j == TrafficType.NONE
+    {
+      alert("_(Please select the port to mirror the traffic to.)_");
+      return false;
+    }
+
+    loc += '&sessionKey=' + sessionKey;
+    loc += '&needthankyou=advancedutilities_toolbox.html';
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+
+   postSubmit(lochead);
+  }
+}
+
+function onSelectMonitorIntf(selIndex)
+{
+   var sel=document.getElementById("monitorIntf");
+
+   sel.options.length=0;
+   sel.options[0]= new Option("_(None)_","none",true,true);
+   sel.options[1]= new Option("_(LAN)_",lanIntf,false,false);
+   sel.options[2]= new Option("_(WAN)_",wanIntf,false,false);
+   sel.options[3]= new Option("_(LAN and WAN)_",lanWanIntf,false,false);
+   sel.options[4]= new Option("_(All Ethernet Ports)_",ethIntf,false,false);
+   sel.options[5]= new Option("_(Ethernet 1)_","eth0",false,false);
+   sel.options[6]= new Option("_(Ethernet 2)_","eth1",false,false);
+   sel.options[7]= new Option("_(Ethernet 3)_","eth2",false,false);
+   sel.options[8]= new Option("_(Ethernet 4)_","eth3",false,false);
+   sel.options[9]= new Option("_(All SSIDs)_",wlIntf,false,false);
+   sel.options[10]= new Option("_(SSID 1)_","wl0",false,false);
+   sel.options[11]= new Option("_(SSID 2)_","wl0.1",false,false);
+   sel.options[12]= new Option("_(SSID 5G)_","eth4",false,false);
+   //sel.options[12]= new Option("SSID 3","wl0.2",false,false);
+   //sel.options[13]= new Option("SSID 4","wl0.3",false,false);
+   //sel.options[12]= new Option("HPNA",hpnaIntf,false,false);
+
+   sel.options[selIndex].selected = true;
+}
+
+function onSelectMirrorIntf(selIndex)
+{
+   var sel=document.getElementById("mirrorIntf");
+
+   sel.options.length=0;
+   sel.options[0]= new Option("_(None)_","none",true,true);
+   sel.options[1]= new Option("_(Ethernet 1)_","eth0",false,false);
+   sel.options[2]= new Option("_(Ethernet 2)_","eth1",false,false);
+   sel.options[3]= new Option("_(Ethernet 3)_","eth2",false,false);
+   sel.options[4]= new Option("_(Ethernet 4)_","eth3",false,false);
+   sel.options[5]= new Option("_(SSID 1)_","wl0",false,false);
+   sel.options[6]= new Option("_(SSID 2)_","wl0.1",false,false);
+   sel.options[7]= new Option("_(SSID 5G)_","eth4",false,false);
+   //sel.options[7]= new Option("SSID 3","wl0.2",false,false);
+   //sel.options[8]= new Option("SSID 4","wl0.3",false,false);
+
+   sel.options[selIndex].selected = true;
+}
+
+function do_load()
+{
+   var wanDatas;
+
+   side_nav("advancedutilities_toolbox");
+
+   if(ethWanInfo[6] =='1')
+   {
+      if(sfpWanInfo[6] != undefined)
+      {
+         if(sfpWanInfo[6] =='1')
+            ewanIntf = 'ewan0,ewan1';
+      }
+   }
+   else
+   {
+      if(sfpWanInfo[6] != undefined)
+      {
+         if(sfpWanInfo[6] =='1')
+            ewanIntf = 'ewan1';
+      }
+   }
+
+   if (glbWanL2IfName.indexOf("ewan")!=-1) // wanEthernet
+   {
+      //wanDatas = wanInfNamesEwan.split(':');
+      //wanIntf = htmlDecodeStr(wanDatas[0]);
+      wanIntf = ewanIntf;
+   }
+   else
+   {
+      var items;
+      var temps;
+
+      items = wanInfNamesDsl.split('|');
+      temps = items[0].split(':');
+      wanDatas = temps[0].split('/');
+      dslIntf = htmlDecodeStr(wanDatas[0]);
+      wanIntf = ewanIntf + ',' + dslIntf;
+   }
+
+   lanWanIntf = lanIntf + ',' + wanIntf;
+
+   onSelectMonitorIntf(selIndexs[0]);
+   onSelectMirrorIntf(selIndexs[1]);
+}
+
+</script>
+</head>
+
+<body onload="do_load();">
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+        <div id="content_right">
+          <div id="content_right_header"></div>
+          <div id="content_right_contentarea">
+            <h1 class="advancedutilities_toolbox">_(Tool Box)_</h1>
+            <p>_(Tool Box provides troubleshooting tools for the modem. Do not enable the Tool Box features unless you are a qualified network technician.)_</p>
+            <form>
+                <p><strong>1. _(Set the traffic type to mirror.)_</strong></p>
+                <table border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td width="100">_(Traffic Type)_:</td>
+                        <td><select name="monitorIntf" id="monitorIntf"></select></td>
+                    </tr>
+                </table>
+                <p><strong>2. _(Select the port to be mirrored.)_</strong></p>
+                <table border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td width="100">_(Traffic Type)_:</td>
+                        <td><select style="width:108px;" name="mirrorIntf" id="mirrorIntf"></select></td>
+                    </tr>
+                </table>
+                <p><strong>3. _(Click Apply to save changes.)_ </strong></p>
+                <p><a class="button1" onclick="btnApply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+            </form>
+          </div>
+          <div id="content_right_footer"></div>
+        </div>
+        <div class="clear_left"></div>
+      <div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">//var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

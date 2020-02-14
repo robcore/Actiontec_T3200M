@@ -1,0 +1,932 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Broadband Settings)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language='javascript' src='js/util.js'></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+// Original variables for DSL settings page
+var all_pvc = htmlDecodeStr('<%ejGetOther(queryallhidepvc)%>');
+var loadFlag=0; // don't remove loadFlag, this is only for auto-detect.
+var layer2Infoatm = '<%ejGetOther(layer2Info, ATM)%>';
+var l2infoatm=layer2Infoatm.split('|');
+var layer2Infoptm = '<%ejGetOther(layer2Info, PTM)%>';
+var l2infoptm=layer2Infoptm.split('|');
+var traffictype = htmlDecodeStr('<%ejGetOther(trafficType, 0)%>');
+var PTMMainConnMode = htmlDecodeStr('<%ejGetOther(PTMMainConnMode)%>');
+var serviceCat;
+var qos;
+var infname = '';
+var portId='';
+var modmode='';
+var oldvpi;
+var oldvci;
+var oldpcr;
+var oldscr;
+var oldmbs;
+var oldvlanid;
+var oldvlanpr;
+var wanInfNamesatm = '<%ejGetOther(wanInterfaces, ATM)%>';
+var wanInfNamesptm = '<%ejGetOther(wanInterfaces, PTM)%>';
+var wanl3inf;
+var linktype='';
+var upRate = parseInt('<%ejGetOther(lineRate, 0, 0)%>');
+var pcrMax = 255000;   // Assuming nitro: 255000 * 49 * 8 = 100Mbps  // SASHA: VDSL
+var wconnMode = '';
+if ( isNaN(upRate) == false )
+   pcrMax = Math.ceil((upRate * 1000) / (49 * 8));  // SASHA new value for VDSL
+
+var redirect="advancedsetup_broadbandsettings.html";
+
+// test variables for WAN IP ADDRESS page
+
+//var glbWanL2IfName = 'atm0/(0_0_32)';
+
+
+// original variables for WAN IP ADDRESS page
+var glbWanL2IfName = htmlDecodeStr('<%ejGet(wanL2IfName)%>');
+
+// test variables for WAN Ethernet
+/*
+var ethWanVlanInfo = 'ewan0:VlanMuxMode:1:7'; //ifname:connectionMode:VlanMux8021p:VlanMuxID
+var wanInfNamestmp='IPoE:ewan0:0:64.193.227.57:255.255.255.128:64.193.227.1:0:1:Connected:00-24-7b-e0-1d-a2:198.6.1.4,198.6.1.3|';
+var WanEthMainConnMode = 'DefaultMode';
+var eth_wanNameTypes;
+var eth_nameType;
+var eth_wanl3inf;
+var ethWanInfo = ethWanVlanInfo.split(':');
+var eth_infname  = ethWanInfo[0];
+var eth_wconnMode = '';
+var eth_oldvlanpr = ethWanInfo[2];
+var eth_oldvlanid = ethWanInfo[3];**************
+*/
+
+// original variables for WAN Ethernet
+var ethWanVlanInfo = '<%ejGetOther(ethwanvlan, ewan0)%>'; //ifname:connectionMode:VlanMux8021p:VlanMuxID
+var wanInfNamestmp='<%ejGetOther(wanInterfaces, ewan0)%>';
+var WanEthMainConnMode = '<%ejGetOther(WanEthMainConnMode)%>';
+if (WanEthMainConnMode != 'VlanMuxMode') {
+    WanEthMainConnMode = 'VlanMuxMode';     // We always program VlanMuxMode in ETH interface
+}
+var eth_wanNameTypes;
+var eth_nameType;
+var eth_wanl3inf;
+var ethWanInfo = ethWanVlanInfo.split(':');
+var eth_infname  = htmlDecodeStr(ethWanInfo[0]);
+var eth_wconnMode = '';
+var eth_oldvlanpr = htmlDecodeStr(ethWanInfo[2]);
+var eth_oldvlanid = htmlDecodeStr(ethWanInfo[3]);
+var Option60 = 0;
+
+
+var sfpWanVlanInfo = '<%ejGetOther(ethwanvlan, ewan1)%>'; //ifname:connectionMode:VlanMux8021p:VlanMuxID
+var sfpInfNamestmp = '<%ejGetOther(wanInterfaces, ewan1)%>';
+
+var sfp_wanNameTypes;
+var sfp_nameType;
+var sfp_wanl3inf;
+var sfpWanInfo = sfpWanVlanInfo.split(':');
+var sfp_infname  = htmlDecodeStr(sfpWanInfo[0]);
+
+// test variables for HPNA
+/*
+  var hpnaLinkEnable_1        = '1';
+  var hpnaLinkStatus_1        = 'Up';
+  var hpnaLinkMACAddress_1    = '';
+  var hpnaLinkInterfaceName_1 = 'eth5';
+  var hpnaLinkVlanID_1        = '4';
+  var hpnaLinkQos_1           = 0;
+  var hpnaLinkServiceType_1   = 'Data';
+
+  var hpnaLinkEnable_2        = '1';
+  var hpnaLinkStatus_2        = 'Up';
+  var hpnaLinkMACAddress_2    = '';
+  var hpnaLinkInterfaceName_2 = 'eth6';
+  var hpnaLinkVlanID_2        = '5';
+  var hpnaLinkQos_2           = 5;
+  var hpnaLinkServiceType_2   = 'Mgmt';
+
+  var hpnaLinkEnable_3        = '1';
+  var hpnaLinkStatus_3        = 'Up';
+  var hpnaLinkMACAddress_3    = '';
+  var hpnaLinkInterfaceName_3 = 'eth7';
+  var hpnaLinkVlanID_3        = '6';
+  var hpnaLinkQos_3           = 4;
+  var hpnaLinkServiceType_3   = 'Video';
+
+  var hpnaLinkEnable_4        = '1';
+  var hpnaLinkStatus_4        = 'Up';
+  var hpnaLinkMACAddress_4    = '';
+  var hpnaLinkInterfaceName_4 = 'eth8';
+  var hpnaLinkVlanID_4        = '7';
+  var hpnaLinkQos_4           = 6;
+  var hpnaLinkServiceType_4   = 'Voice';
+ */
+// original variables for HPNA
+
+  var hpnaLinkEnable_1        = htmlDecodeStr('<%ejGet("hpnaLinkEnable_1")%>');
+  var hpnaLinkStatus_1        = htmlDecodeStr('<%ejGet("hpnaLinkStatus_1")%>');
+  var hpnaLinkMACAddress_1    = htmlDecodeStr('<%ejGet("hpnaLinkMACAddress_1")%>');
+  var hpnaLinkInterfaceName_1 = htmlDecodeStr('<%ejGet("hpnaLinkInterfaceName_1")%>');
+  var hpnaLinkVlanID_1        = htmlDecodeStr('<%ejGet("hpnaLinkVlanID_1")%>');
+  var hpnaLinkQos_1           = htmlDecodeStr('<%ejGet("hpnaLinkQos_1")%>');
+  var hpnaLinkServiceType_1   = htmlDecodeStr('<%ejGet("hpnaLinkServiceType_1")%>');
+
+  var hpnaLinkEnable_2        = htmlDecodeStr('<%ejGet("hpnaLinkEnable_2")%>');
+  var hpnaLinkStatus_2        = htmlDecodeStr('<%ejGet("hpnaLinkStatus_2")%>');
+  var hpnaLinkMACAddress_2    = htmlDecodeStr('<%ejGet("hpnaLinkMACAddress_2")%>');
+  var hpnaLinkInterfaceName_2 = htmlDecodeStr('<%ejGet("hpnaLinkInterfaceName_2")%>');
+  var hpnaLinkVlanID_2        = htmlDecodeStr('<%ejGet("hpnaLinkVlanID_2")%>');
+  var hpnaLinkQos_2           = htmlDecodeStr('<%ejGet("hpnaLinkQos_2")%>');
+  var hpnaLinkServiceType_2   = htmlDecodeStr('<%ejGet("hpnaLinkServiceType_2")%>');
+
+  var hpnaLinkEnable_3        = htmlDecodeStr('<%ejGet("hpnaLinkEnable_3")%>');
+  var hpnaLinkStatus_3        = htmlDecodeStr('<%ejGet("hpnaLinkStatus_3")%>');
+  var hpnaLinkMACAddress_3    = htmlDecodeStr('<%ejGet("hpnaLinkMACAddress_3")%>');
+  var hpnaLinkInterfaceName_3 = htmlDecodeStr('<%ejGet("hpnaLinkInterfaceName_3")%>');
+  var hpnaLinkVlanID_3        = htmlDecodeStr('<%ejGet("hpnaLinkVlanID_3")%>');
+  var hpnaLinkQos_3           = htmlDecodeStr('<%ejGet("hpnaLinkQos_3")%>');
+  var hpnaLinkServiceType_3   = htmlDecodeStr('<%ejGet("hpnaLinkServiceType_3")%>');
+
+  var hpnaLinkEnable_4        = htmlDecodeStr('<%ejGet("hpnaLinkEnable_4")%>');
+  var hpnaLinkStatus_4        = htmlDecodeStr('<%ejGet("hpnaLinkStatus_4")%>');
+  var hpnaLinkMACAddress_4    = htmlDecodeStr('<%ejGet("hpnaLinkMACAddress_4")%>');
+  var hpnaLinkInterfaceName_4 = htmlDecodeStr('<%ejGet("hpnaLinkInterfaceName_4")%>');
+  var hpnaLinkVlanID_4        = htmlDecodeStr('<%ejGet("hpnaLinkVlanID_4")%>');
+  var hpnaLinkQos_4           = htmlDecodeStr('<%ejGet("hpnaLinkQos_4")%>');
+  var hpnaLinkServiceType_4   = htmlDecodeStr('<%ejGet("hpnaLinkServiceType_4")%>');
+
+  var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function is_existed_pvc(vpi, vci)
+{
+    var i = 0;
+    // all_pvc = '|PVC: 0/33|PVC: 8/35';
+    var pvc_arr = all_pvc.split('|');
+
+    for (i=0; i<pvc_arr.length; i++)
+    {
+        pvc_arr[i] = htmlDecodeStr(pvc_arr[i]);
+        if ('' == pvc_arr[i])
+        {
+                continue;
+        }
+        var argv = pvc_arr[i].split(':');
+        if (argv.length < 2 || '' == argv[1])
+        {
+                continue;
+        }
+        var pvc = argv[1].split('/');
+        if (pvc.length < 2)
+        {
+                continue;
+        }
+
+        if (vpi == pvc[0] && vci == pvc[1])
+        {
+                return 1;
+        }
+    }
+
+    return 0;
+}
+
+function vlanClick()
+{
+        with ( document.forms[0] ) {
+                if(vlan[0].checked == true) {
+                        vlanMuxId.disabled=false;
+                        vlanMuxPr.disabled=false;
+                }
+                else {
+                        vlanMuxId.disabled=true;
+                        vlanMuxPr.disabled=true;
+                }
+        }
+}
+
+
+
+function getExistVlanID(addedID,vlan_inf)
+{
+    var allinfo = "<%ejGetOther(util_wan_vlan)%>";
+    var info = allinfo.split('/');
+    len = info.length - 1;
+    for (var i = 0; i < info.length-1; i++ )
+    {
+	    /* Name | Protocol | VLAN ID | Priority | IfName */
+	    var details = info[i].split('|');
+	    var ifname = htmlDecodeStr(details[4]); //ifName
+        if (ifname.indexOf(vlan_inf) < 0){
+            continue;
+        }
+	    addedID[i] = htmlDecodeStr(details[2]);
+    }
+}
+
+function checkVlanID(id,vlan_inf)
+{
+    var addedID = new Array();
+    getExistVlanID(addedID,vlan_inf);
+
+    if (id < 1 || id > 4094 || isNaN(id)==true ) {
+		alert("_(VLAN ID \"" + id + "\" is out of range. It must be between 1 and 4094.)_");
+	    return false;
+	}
+
+    for (var i=0; i<addedID.length; i++) {
+	    if (addedID[i] == id) {
+	        alert("_(The vlan id already exists.)_");
+	        return false;
+        }
+    }
+    return true;
+}
+
+function load_encaps(index) {
+    var form = document.forms[0];
+    switch(index)
+    {
+    case 1 :  //ATM mode
+            form.mode.options.length=0;
+            form.mode.options[0] = new Option("_(Multimode)_", "ADSL_Modulation_All");
+            form.mode.options[1] = new Option("T1.413", "ADSL_ANSI_T1.413");
+            form.mode.options[2] = new Option("G.DMT", "ADSL_G.dmt");
+            form.mode.options[3] = new Option("G.Lite", "ADSL_G.lite");
+            form.mode.options[4] = new Option("ADSL2", "ADSL_G.dmt.bis");
+            form.mode.options[5] = new Option("ADSL2Plus", "ADSL_2plus");
+            document.getElementById("step3").innerHTML = "<strong>2. </strong>";
+            document.getElementById("step4").innerHTML = "<strong>3. </strong>";
+            document.getElementById('dsl_settings').style.display="block";
+            document.getElementById('atmconfig').style.display="block";
+            infname=htmlDecodeStr(l2infoatm[9]);
+            portId=htmlDecodeStr(l2infoatm[1]);
+            oldvpi=htmlDecodeStr(l2infoatm[2]);
+            oldvci=htmlDecodeStr(l2infoatm[3]);
+            qos=htmlDecodeStr(l2infoatm[8]);
+            serviceCat=htmlDecodeStr(l2infoatm[4]);
+            oldpcr=htmlDecodeStr(l2infoatm[5]);
+            oldscr=htmlDecodeStr(l2infoatm[6]);
+            oldmbs=htmlDecodeStr(l2infoatm[7]);
+            modmode=htmlDecodeStr(l2infoatm[11]);
+            linktype=htmlDecodeStr(l2infoatm[10]);
+            wconnMode =htmlDecodeStr(l2infoatm[12]);
+            if( wanInfNamesatm != '')
+            {
+                var wanNameTypes = wanInfNamesatm.split('|');
+                var nameType = wanNameTypes[0].split(':');
+                wanl3inf=htmlDecodeStr(nameType[1]);
+            }
+            else
+                wanl3inf= '';
+
+
+            with ( document.forms[0] )
+            {
+                vpi.value=oldvpi;
+                vci.value=oldvci;
+                pcr.value=oldpcr;
+                scr.value=oldscr;
+                mbs.value=oldmbs;
+            }
+
+            if (serviceCat == 'UBR') {
+                document.forms[0].serviceCategory[0].selected = true;
+            }
+            else if (serviceCat == 'UBRWPCR') {
+                document.forms[0].serviceCategory[1].selected = true;
+            }
+            else if (serviceCat == 'CBR') {
+                document.forms[0].serviceCategory[2].selected = true;
+            }
+            else if (serviceCat == 'VBR-nrt') {
+                document.forms[0].serviceCategory[3].selected = true;
+            }
+            else if (serviceCat == 'VBR-rt') {
+                document.forms[0].serviceCategory[4].selected = true;
+            }
+            else {
+                document.forms[0].serviceCategory[0].selected = true;
+            }
+            var atm_wan_info=wanInfNamesatm.split('|');
+
+            var atmencaps=htmlDecodeStr(l2infoatm[15]);
+            if(atmencaps== "VCMUX")
+		document.forms[0].atmencap[1].checked = true;
+		else
+		document.forms[0].atmencap[0].checked = true;
+
+
+            break;
+        case 0:  //PTM mode
+            form.mode.options.length=0;
+            form.mode.options[0] = new Option("_(Multimode)_", "ADSL_Modulation_All");
+            form.mode.options[1] = new Option("VDSL2 - 8A", "8A");
+            form.mode.options[2] = new Option("VDSL2 - 8B", "8B");
+            form.mode.options[3] = new Option("VDSL2 - 8C", "8C");
+            form.mode.options[4] = new Option("VDSL2 - 8D", "8D");
+            form.mode.options[5] = new Option("VDSL2 - 12A", "12A");
+            form.mode.options[6] = new Option("VDSL2 - 12B", "12B");
+            form.mode.options[7] = new Option("VDSL2 - 17A (U0)", "17A");
+            document.getElementById("step3").innerHTML = "<strong>2. </strong>";
+            document.getElementById("step4").innerHTML = "<strong>3. </strong>";
+			document.getElementById('dsl_settings').style.display="block";
+            document.getElementById('atmconfig').style.display="none";
+
+
+            if( wanInfNamesptm != '')
+            {
+                var wanNameTypes = wanInfNamesptm.split('|');
+                var nameType = wanNameTypes[0].split(':');
+                wanl3inf=htmlDecodeStr(nameType[1]);
+            }
+            else
+                wanl3inf= '';
+
+            infname=htmlDecodeStr(l2infoptm[5]);
+            modmode=htmlDecodeStr(l2infoptm[7]);
+            oldvlanid=htmlDecodeStr(l2infoptm[8]);
+            oldvlanpr=htmlDecodeStr(l2infoptm[9]);
+
+            break;
+
+         case 2:  //Ethernet mode
+            document.getElementById("step4").innerHTML = "<strong>2. </strong>";
+            document.getElementById('dsl_settings').style.display="none";
+            if(wanInfNamestmp != '')
+            {
+                eth_wanNameTypes  = wanInfNamestmp.split('|');
+                eth_nameType = eth_wanNameTypes[0].split(':');
+                eth_wanl3inf =htmlDecodeStr(eth_nameType[1]);
+            }
+            else
+                eth_wanl3inf = '';
+
+           break;
+         case 3:  //sfp mode
+            document.getElementById("step4").innerHTML = "<strong>4. </strong>";
+            document.getElementById('dsl_settings').style.display="none";
+
+            if(sfpInfNamestmp != '')
+            {
+                sfp_wanNameTypes  = sfpInfNamestmp.split('|');
+                sfp_nameType = sfp_wanNameTypes[0].split(':');
+                sfp_wanl3inf = htmlDecodeStr(sfp_nameType[1]);
+            }
+            else
+                sfp_wanl3inf = '';
+
+            break;
+
+         case 4:  //HPNA mode
+
+            document.getElementById("step4").innerHTML = "<strong>3. </strong>";
+            document.getElementById('dsl_settings').style.display="none";
+            //document.forms[0].vlanMuxId.value=hpnaLinkVlanID_1;
+            //document.forms[0].vlanMuxPr[hpnaLinkQos_1].selected=true;
+            vlanClick();
+
+           break;
+
+       }
+
+       if (index<2)
+       {
+       for(var i=0;i<13;i++)
+       {
+        if(modmode==document.forms[0].mode[i].value)
+        {
+           document.forms[0].mode[i].selected=true;
+           break;
+        }
+       }
+
+       }
+}
+
+function selectWanport() {
+    var form = document.forms[0];
+
+
+    var len = form.encaps.length;
+    form.encaps.options[0].selected = true;
+
+    if (glbWanL2IfName.indexOf("atm")!=-1)
+    {
+	// ATM mode selected
+	form.encaps.options[1].selected = true;
+	load_encaps(1);
+    }
+    else if (glbWanL2IfName.indexOf("ptm")!=-1)
+    {
+	// PTM mode selected
+	form.encaps.options[0].selected = true;
+	load_encaps(0);
+    }
+    else if (glbWanL2IfName.indexOf("ewan0")!=-1)
+    {
+	// WAN Ethernet mode selected
+	form.encaps.options[2].selected = true;
+		load_encaps(2);
+	}
+    else if (glbWanL2IfName.indexOf("ewan1")!=-1)
+    {
+	// SFP WAN Ethernet mode selected
+	form.encaps.options[3].selected = true;
+		load_encaps(3);
+	}
+	else if (glbWanL2IfName.indexOf("eth")!=-1)
+    {
+	// WAN HPNA mode selected
+	form.encaps.options[4].selected = true;
+		load_encaps(4);
+	}
+	else
+	{
+		form.encaps.options[0].selected = true;
+		load_encaps(0);
+	}
+
+
+}
+function init_wan_type_option()
+{
+    var form = document.forms[0];
+    form.encaps[0] = new Option("_(WAN DSL PTM)_",  "0");
+    form.encaps[1] = new Option("_(WAN DSL ATM)_",  "1");
+    if(ethWanInfo[6] =='1')
+       form.encaps[2] = new Option("_(WAN ETHERNET)_", "2");
+    if(sfpWanInfo[6] != undefined)
+    {
+       if(sfpWanInfo[6] =='1')
+         form.encaps[3] = new Option("_(WAN SFP)_", "3");
+    }
+    /*4 is used for HPNA WAN*/
+
+}
+
+function do_load()
+{
+    document.forms[0].sessionKey.value = sessionKey;
+	init_wan_type_option();
+	selectWanport();
+
+	//highlight the button after user click on it
+	side_nav("broadbandsettings");
+}
+
+
+function btnEditAtm() {
+      var rege=/[^0-9]/;
+      var mat ;
+    var key = '<%ejGetOther(encrypt_key, 0)%>';
+    var lochead='dslatm.cmd?';
+    var loc="";
+    with ( document.forms[0] ) {
+            //atm mode
+            loc='action=edit&editWanL2IfName=';
+            loc +=infname;
+             mat = vpi.value.match(rege);
+            if (mat) {
+                if (mat.length > 0) {
+                  alert("_(The VPI/VCI combination is invalid. You must enter a valid VPI/VCI combination.)_");
+                  return ;
+              }
+            }
+             mat = vci.value.match(rege);
+            if (mat) {
+                if (mat.length > 0) {
+                  alert("_(The VPI/VCI combination is invalid. You must enter a valid VPI/VCI combination.)_");
+                  return ;
+              }
+            }
+            vpiint = parseInt(vpi.value);
+            if ( vpiint < 0 || vpiint > 255 ) {
+                alert("_(The VPI/VCI combination is invalid. You must enter a valid VPI/VCI combination.)_");
+                return;
+            }
+            vciint = parseInt(vci.value);
+            if ( vciint < 32 || vciint > 65525 ) {
+                alert("_(The VPI/VCI combination is invalid. You must enter a valid VPI/VCI combination.)_");
+                return;
+            }
+            if (is_existed_pvc(vpiint, vciint))
+            {
+                alert("_(The VPI/VCI already exists. You must enter a different VPI/VCI.)_");
+                return;
+             }
+
+            //var allinfo = "DHCPC|dhcp|0|32|(null)/";
+            var allinfo = "<%ejGetOther(util_wan_pvc)%>";
+
+            var info = allinfo.split('/');
+            var addedID = new Array();
+            for (var index = 0; index  < info.length-1; index ++ )
+			{
+				var details = info[index].split('|');
+				if (details.length<4)
+					continue;
+
+        details[2] = htmlDecodeStr(details[2]);
+        details[3] = htmlDecodeStr(details[3]);
+
+				addedID[index] = details[2]+"/"+details[3];
+			}
+
+		var match_str= vpi.value+"/"+vci.value;
+            for (index=0;index<addedID.length;index++)
+		{
+
+				if (addedID[index]==match_str)
+				{
+				alert(match_str+" _(is used by VLAN.)_");
+				return;
+				}
+
+			}
+            loc += '&portId=' + portId;
+            loc += '&atmVpi=' + vpi.value;
+            loc += '&atmVci=' + vci.value;
+
+
+            loc += '&connMode=1';   // Always use VLANMUX connection
+
+	        loc +='&modulationType='+mode.value;
+            loc += '&atmServiceCategory=' + serviceCategory.value;
+            if (serviceCategory.value != 'UBR') {
+                if ( isNaN(parseInt(pcr.value)) == true) {
+                    alert("_(Peak Cell Rate \"" + pcr.value + "\" is invalid.)_");
+                return;
+                }
+                peak = parseInt(pcr.value);
+                if ( peak <= 0 || peak > pcrMax ) {
+                    alert("_(Peak Cell Rate \"" + pcr.value + "\" is out of range. It must be between 1 and " + pcrMax + ".)_");
+                    return;
+                }
+                loc += '&atmPeakCellRate=' + pcr.value;
+            } else
+                loc += '&atmPeakCellRate=0';
+
+            if (serviceCategory.value == 'VBR-nrt' || serviceCategory.value == 'VBR-rt') {
+                if ( isNaN(parseInt(scr.value)) == true) {
+                    alert("_(Sustainable Cell Rate \"" + scr.value + "\" is invalid.)_");
+                    return;
+                }
+                sustainable = parseInt(scr.value);
+                if ( sustainable <= 0 || sustainable > pcrMax ) {
+                    alert("_(Sustainable Cell Rate \"" + scr.value + "\" is out of range. It must be between 1 and " + pcrMax + ".)_");
+                    return;
+                }
+                if ( sustainable >= peak) {
+                    alert("_(Sustainable Cell Rate \"" + scr.value + "\" has to be smaller than Peak Cell Rate.)_");
+                    return;
+                }
+                if ( isNaN(parseInt(mbs.value)) == true) {
+                    alert("_(Maximum Burst Size \"" + mbs.value + "\" is invalid.)_");
+                    return;
+                }
+                maximum = parseInt(mbs.value);
+                if ( maximum <= 0 || maximum > 1000000 ) {
+                    alert("_(Maximum Burst Size \"" + mbs.value + "\" is out of range. It must be between 1-1000000.)_");
+                    return;
+                }
+                loc += '&atmSustainedCellRate=' + scr.value;
+                loc += '&atmMaxBurstSize=' + mbs.value;
+            } else {
+                loc += '&atmSustainedCellRate=0';
+                loc += '&atmMaxBurstSize=0';
+            }
+
+            //if ( enblQos.checked == true )
+                loc += '&enblQos=1';
+            //else
+              //  loc += '&enblQos=0';
+            if(atmencap[0].checked== true)
+                loc +='&atmencaps=LLC';
+            else
+                loc +='&atmencaps=VCMUX';
+
+            }
+      loc +='&wanIfName=';
+      loc += wanl3inf;
+      loc +='&redirect=';
+      loc +=redirect;
+
+      document.getElementById('applyBtn').disabled=true;
+//    var code = 'location="' + loc + '"';
+
+//    eval(code);
+    loc += '&sessionKey=' + sessionKey;
+    loc +='&needthankyou='+redirect;
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+   // var code = 'location="' + lochead + '"';
+   // eval(code);
+    postSubmit(lochead);
+}
+
+function btnEditPtm() {
+    var key = '<%ejGetOther(encrypt_key, 0)%>';
+    var lochead='dslptm.cmd?';
+    var loc="";
+
+    with ( document.forms[0] ) {
+        //ptm mode
+            loc='action=edit&editWanL2IfName=';
+            loc +=infname;
+            loc += '&portId=0';
+            loc +='&ptmPriorityNorm=1';
+            loc +='&ptmPriorityHigh=0';
+            loc += '&enblQos=1';
+            loc += '&connMode=1';
+            loc +='&modulationType='+ mode.value;
+            loc +='&wanIfName=';
+            loc += wanl3inf;
+            loc +='&redirect=';
+            loc +=redirect;
+    }
+	loc += '&sessionKey=' + sessionKey;
+    loc +='&needthankyou='+redirect;
+
+    document.getElementById('applyBtn').disabled=true;
+     loc=encrypt_query(loc,key);
+    lochead+=loc;
+   // var code = 'location="' + lochead + '"';
+   // eval(code);
+    postSubmit(lochead);
+
+}
+
+function btnEditEth()
+{
+    var key = '<%ejGetOther(encrypt_key, 0)%>';
+    var lochead='ethwan.cmd?';
+    var loc="";
+
+    with ( document.forms[0] ) {
+        loc='action=edit&editWanL2IfName=';
+        loc +=eth_infname ;
+
+        loc += '&connMode=1';   /* In SDK6 we always use connection mode VLANMUX */
+
+        loc +='&wanIfName=';
+        loc += eth_wanl3inf;
+        loc +='&redirect=';
+        loc +=redirect;
+        loc += '&mainOption60='+Option60;
+    }
+
+    loc += '&sessionKey=' + sessionKey;
+
+    loc +='&needthankyou='+redirect;
+    document.getElementById('applyBtn').disabled=true;
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+   // var code = 'location="' + lochead + '"';
+   // eval(code);
+    postSubmit(lochead);
+
+}
+
+function btnEditSFP()
+{
+    var key = '<%ejGetOther(encrypt_key, 0)%>';
+    var lochead='ethwan.cmd?';
+    var loc="";
+
+    with ( document.forms[0] ) {
+        loc='action=edit&editWanL2IfName=';
+        loc +=sfp_infname ;
+
+        loc += '&connMode=1';   /* In SDK6 we always use connection mode VLANMUX */
+
+        loc +='&wanIfName=';
+        loc += sfp_wanl3inf;
+        loc +='&redirect=';
+        loc +=redirect;
+        loc += '&mainOption60='+Option60;
+    }
+
+    loc += '&sessionKey=' + sessionKey;
+    loc +='&needthankyou='+redirect;
+    document.getElementById('applyBtn').disabled=true;
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+   // var code = 'location="' + lochead + '"';
+   // eval(code);
+    postSubmit(lochead);
+
+}
+
+function btnEditHPNA()
+{
+	var vlmid = parseInt(document.forms[0].vlanMuxId.value);
+
+	if (vlmid < 1 || vlmid > 4094 || isNaN(vlmid )==true ) {
+		alert("_(VLAN ID \"" + id + "\" is out of range. It must be between 1 and 4094.)_");
+	    return false;
+	}
+
+	if (vlmid == hpnaLinkVlanID_2 ||vlmid == hpnaLinkVlanID_3 ||vlmid == hpnaLinkVlanID_4)
+	{
+		alert("_(The vlan id already exists.)_");
+		return false;
+
+	}
+
+	document.getElementById('applyBtn').disabled=true;
+
+    document.getElementById("ui_hpnaEnable").value = '1';
+    document.getElementById("ui_hpnaMode").value   = "LANWAN";
+
+     document.getElementById("ui_hpnaLinkEnable_1").value = '1';
+     document.getElementById("ui_hpnaLinkVlanID_1").value = vlmid;
+     document.getElementById("ui_hpnaLinkQos_1").value    =document.forms[0].vlanMuxPr.value;
+          //
+          document.getElementById("ui_hpnaLinkEnable_2").value = '1';
+          document.getElementById("ui_hpnaLinkVlanID_2").value = hpnaLinkVlanID_2;
+          document.getElementById("ui_hpnaLinkQos_2").value    = hpnaLinkQos_2 ;
+          //
+          document.getElementById("ui_hpnaLinkEnable_3").value = '1';
+          document.getElementById("ui_hpnaLinkVlanID_3").value = hpnaLinkVlanID_3;
+          document.getElementById("ui_hpnaLinkQos_3").value    = hpnaLinkQos_3;
+          //
+          document.getElementById("ui_hpnaLinkEnable_4").value = '1';
+          document.getElementById("ui_hpnaLinkVlanID_4").value = hpnaLinkVlanID_4;
+          document.getElementById("ui_hpnaLinkQos_4").value    = hpnaLinkQos_4;
+
+	document.forms[0].submit();
+
+}
+
+
+function btnEdit()
+{
+	switch(document.forms[0].encaps.selectedIndex)
+	{
+	case 0:
+		btnEditPtm();
+		break;
+	case 1:
+		btnEditAtm();
+		break;
+	case 2:
+		btnEditEth();
+		break;
+	case 3:
+		btnEditSFP();
+		break;
+	case 4:
+		btnEditHPNA();
+		break;
+	}
+
+
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body onload="loadFlag=1">
+<div id="wrapper">
+    <!-- TOP NAV -->
+<%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+
+    <!-- SIDE NAV -->
+<%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea" >
+                <h1 class="advancedsetup_dslsettings">_(Broadband Settings)_</h1>
+		      <form name="mainform" action="advancedsetup_broadbandsettings.cgi" method="POST" >
+		        <input type="hidden" name="hpnaEnable"       value="" id="ui_hpnaEnable">
+		        <input type="hidden" name="hpnaMode"         value="" id="ui_hpnaMode">
+		        <input type="hidden" name="sessionKey" value="" >
+		        <input type="hidden" name="hpnaLinkEnable_1" value="" id="ui_hpnaLinkEnable_1">
+		        <input type="hidden" name="hpnaLinkVlanID_1" value="" id="ui_hpnaLinkVlanID_1">
+		        <input type="hidden" name="hpnaLinkQos_1"    value="" id="ui_hpnaLinkQos_1">
+                <input type="hidden" name="hpnaLinkEnable_2" value="" id="ui_hpnaLinkEnable_2">
+		        <input type="hidden" name="hpnaLinkVlanID_2" value="" id="ui_hpnaLinkVlanID_2">
+		        <input type="hidden" name="hpnaLinkQos_2"    value="" id="ui_hpnaLinkQos_2">
+		        <input type="hidden" name="hpnaLinkEnable_3" value="" id="ui_hpnaLinkEnable_3">
+		        <input type="hidden" name="hpnaLinkVlanID_3" value="" id="ui_hpnaLinkVlanID_3">
+		        <input type="hidden" name="hpnaLinkQos_3"    value="" id="ui_hpnaLinkQos_3">
+		        <input type="hidden" name="hpnaLinkEnable_4" value="" id="ui_hpnaLinkEnable_4">
+		        <input type="hidden" name="hpnaLinkVlanID_4" value="" id="ui_hpnaLinkVlanID_4">
+		        <input type="hidden" name="hpnaLinkQos_4"    value="" id="ui_hpnaLinkQos_4">
+					<p>_(Broadband settings change the modem's connection parameters. These parameters work with your selected service provider.)_  </p>
+					<p><strong>1. _(Select the WAN interface.)_</strong></p>
+					<table border="0" cellspacing="0" cellpadding="0">
+						<tr>
+							<td>&nbsp;&nbsp;&nbsp;_(WAN Interface)_:</td>
+							<td><select name="encaps" id="encaps" onchange="load_encaps(form.encaps.selectedIndex)">
+					<!--		  <option>_(WAN DSL PTM)_&nbsp;&nbsp;</option>
+							  <option>_(WAN DSL ATM)_</option>
+							  <option>_(WAN ETHERNET)_</option> -->
+                              </select></td>
+                              </tr>
+                     </table>
+
+
+				  <div id="dsl_settings">
+
+					<p><span id="step3"><strong>2. </strong></span><strong>_(Set the DSL information below.)_ </strong></p>
+					<table border="0" cellspacing="0" cellpadding="0">
+
+						<tr>
+							<td width="93" >&nbsp;&nbsp;&nbsp;_(Line Mode)_:</td>
+							<td width="213"><select name="mode" id="mode">
+									<option value="ADSL_Modulation_All" selected="selected">_(Multimode)_</option>
+									<option value="8A" >VDSL2 - 8A </option>
+									<option value="8B" >VDSL2 - 8B </option>
+									<option value="8C" >VDSL2 - 8C </option>
+									<option value="8D" >VDSL2 - 8D </option>
+									<option value="12A">VDSL2 - 12A </option>
+									<option value="12B">VDSL2 - 12B </option>
+									<option value="17A">VDSL2 - 17A (U0)&nbsp;&nbsp; </option>
+									<option value="ADSL_ANSI_T1.413" >T1.413 </option>
+									<option  value="ADSL_G.dmt">G.DMT </option>
+									<option  value="ADSL_G.lite">G.Lite </option>
+									<option value="ADSL_G.dmt.bis" >ADSL2 </option>
+									<option value="ADSL_2plus" >ADSL2Plus </option>
+							</select></td>
+                            <td width="162">&nbsp;</td>
+						</tr>
+					</table>
+					<table border="0" cellspacing="0" cellpadding="0" id="atmconfig" >
+
+                      <tr>
+                        <td width="93">&nbsp;&nbsp;&nbsp;_(VPI)_: </td>
+                        <td width="213"><input name="vpi" type="text" id="vpi" value="0" style="height:18px;"/></td>
+                        <td width="162">(0-255)</td>
+                      </tr>
+
+                      <tr>
+                        <td>&nbsp;&nbsp;&nbsp;_(VCI)_:</td>
+                        <td><input name="vci" type="text" id="vci" value="32" style="height:18px;"/></td>
+                        <td>(32-65525)</td>
+                      </tr>
+                      <tr>
+                          <td>&nbsp;&nbsp;&nbsp;_(QoS)_:</td>
+                  <td><select name="serviceCategory" size="1" id="service_category">
+                        <option value="UBR" selected>
+                        _(UBR Without PCR)_
+                        <option value="UBRWPCR">
+                        _(UBR With PCR)_
+                        <option value="CBR">
+                        _(CBR)_
+                        <option value="VBR-nrt">
+                        _(Non Realtime VBR)_
+                        <option value="VBR-rt">
+                           _(Realtime VBR)_</option>
+                     </select></td>
+
+                        <td>&nbsp;</td>
+                      </tr>
+                      <tr>
+                        <td>&nbsp;&nbsp;&nbsp;_(PCR)_:</td>
+                        <td colspan="2">
+						<input type="text" name="pcr" id="pcr" size="6" style="height:18px;"/>
+						_(SCR)_:
+	<input type="text" name="scr" id="scr" size="6" style="height:18px;"/>
+						_(MBS)_:
+	<input type="text" name="mbs" id="mbs" size="6" style="height:18px;"/>
+						_(CDVT)_:
+	<input type="text" name="cdvt" id="cdvt" size="6" style="height:18px;"/>
+
+                     </td>
+                      </tr>
+                       <tr>
+                        <td>&nbsp;&nbsp;&nbsp;_(Encapsulation)_ </td>
+                        <td colspan="2">
+                        <input name="atmencap" value="LLC" checked id ="subrf32" type="radio"  />
+								<span id="subrf33">_(LLC(default))_	</span>
+						&nbsp;&nbsp;
+							<input name="atmencap" value="VCMUX" id ="subrf34" type="radio" />
+							<span id="subrf35">_(VCMUX)_</span>
+                     </td>
+                      </tr>
+
+                    </table>
+					</div>
+					<p>&nbsp;</p>
+					<p><span id="step4"><strong>3. </strong></span><strong>_(Click Apply to save changes.)_ </strong></p>
+					<p><a class="button1" onclick="javascript:btnEdit();" id="applyBtn"><span>_(Apply)_</span></a></p>
+				</form>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

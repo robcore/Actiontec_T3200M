@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(IP Address)_ - _(Port Bridging)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+ var natstatus = '<%ejGetOther(sysInfo, enblPb)%>';
+function do_load()
+{
+  htmlDecode();
+  var form = document.myform;
+  if( natstatus == "1" )
+  {
+      form.nat[0].checked = true;
+      form.nat[1].checked = false;
+  }
+  else
+  {
+      form.nat[0].checked = false;
+      form.nat[1].checked = true;
+  }
+  side_nav("advancedsetup_pb");
+}
+
+
+function do_apply()
+{
+    var form = document.myform;
+    var i=0;
+    var lochead='port1bridge.cmd?';
+    var loc="";
+
+    if( form.nat[0].checked )
+    {
+       form.enblPb.value = "1";
+    }
+    else
+    {
+        form.enblPb.value = "0";
+    }
+    if((( natstatus == "1") && ( form.nat[0].checked )) || (( natstatus == "0") && ( form.nat[1].checked )))
+    {
+        return ;
+    }
+    DisableUseless(form);
+    for(i=0;i<form.elements.length;i++)
+      {
+          if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+          {
+              if(i!=0)
+                loc+="&";
+              loc+=form.elements[i].name;
+              loc+="=";
+              loc+=form.elements[i].value;
+          }
+      }
+   //   loc=encrypt_query(loc,key);
+      lochead+=loc;
+   //   var code = 'location="' + lochead + '"';
+   //   eval(code);
+   //   postSubmit(lochead);
+    form.submit();
+}
+
+function DisableUseless(form) {
+    form.nat[0].disabled = true;
+    form.nat[1].disabled = true;
+}
+//function dom_load(){ do_load(); }
+//
+</script>
+</head>
+
+<body onload="do_load()">
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="advancedsetup_security_nat">_(Port1 Bridge)_</h1>
+            <form  name="myform" method="POST" action="port1bridge.cmd" onSubmit="return do_apply();">
+                <input type="hidden" name="enblPb" value="<%ejGet(enblPb)%>" />
+                <input type="hidden" name="sessionKey" value="<%ejGetOther(sessionKey)%>" />
+                <input type="hidden" name="needthankyou" value="advancedsetup_pb.html" />
+				<p><strong>1. _(Set the Port1 Bridge state.)_</strong></p>
+				<table width="60%" border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td width="30%">&nbsp;&nbsp;&nbsp;_(Port1 Bridge)_: </td>
+                    <td width="25%"><input name="nat" id="nat_on" type="radio" value="Enable" checked="checked" /> _(Enable)_</td>
+                    <td width="45%"><input name="nat" id="nat_off" type="radio" value="Disable" /> _(Disable)_</td>
+                  </tr>
+                </table>
+				<p>&nbsp;</p>
+				<p><strong>2. _(Click Apply to save changes.)_</strong></p>
+				<p><a class="button1" onclick="do_apply()" id="btn_apply"><span>_(Apply)_</span></a></p>
+			</form>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">//var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

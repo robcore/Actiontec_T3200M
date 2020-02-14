@@ -1,0 +1,408 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(IP Address)_ - _(DHCP Reservation)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="js/util.js"></script>
+<script type="text/javascript" src="js/functions.js"></script>
+<script type="text/javascript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script type="text/javascript">
+
+var dhcpStart = htmlDecodeStr('<%ejGetOther(enblDhcpSrvStatus, Default_StartIP)%>');
+var dhcpEnd = htmlDecodeStr('<%ejGetOther(enblDhcpSrvStatus, Default_EndIP)%>');
+var dhcpEnbl = '<%ejGetOther(enblDhcpSrvStatus, Default_enable)%>';
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+
+var StaticAddress = <%ejGetLogFile(dhcpstaticaddress)%>;
+var hostinfo = '<%ejGetOther(hostinfoAll)%>';
+var item = new Array();
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+if (hostinfo != "")
+   item = hostinfo.split('|');
+
+function ip_address_to_number(x)
+{
+	var v = x.split(".");
+	var m = 0;
+	for (var i = 0; i < v.length; i++)
+	{
+		m *= 256;
+		m += parseInt(v[i]);
+	}
+	return m;
+}
+
+function number_to_ip_address(x)
+{
+	var s = "";
+	for (var i = 0; i < 4; i++)
+	{
+		s = "." + x % 256 + s;
+		x >>>= 8;
+	}
+	return s.substring(1);
+}
+
+function ip_address_to_number_est_subnet(x)
+{
+	var v = x.split(".");
+	var m = 0;
+	for (var i = 0; i < v.length; i++)
+	{
+		m *= 256;
+		if (i != (v.length -1))
+			m += parseInt(v[i]);
+	}
+	return m;
+}
+
+//spec requirement, without much info on subnetting, do rough calc
+var min = ip_address_to_number(dhcpStart); //ip_address_to_number_est_subnet(dhcpStart)+2;
+var max = ip_address_to_number(dhcpEnd); //ip_address_to_number_est_subnet(dhcpStart)+63;
+
+
+function do_load()
+{
+	var form = document.forms[0];
+
+
+	adv_nav("advancedsetup_dhcpreservation");
+	//if (!dhcpEnbl || !autoReserve)
+	if (!dhcpEnbl)
+	{
+		with (document.forms[0])
+		{
+			mac_address.disabled = true;
+			mac_address_manual.disabled = true;
+			ip_address.disabled = true;
+		}
+	}
+
+	for (var i = 0; i < item.length; i++)
+	{
+		var field = item[i].split('/');
+		form.mac_address[i+1] = new Option(htmlDecodeStr(field[2]), htmlDecodeStr(field[2]));
+	}
+
+
+	//highlight the button after user click on it
+	side_nav("advancedsetup_dhcpreservation");
+}
+
+function add_item()
+{
+    var lochead = 'dhcpdstaticlease.cmd?';
+    var loc = '';
+
+    if(dhcpEnbl == '0')
+    {
+		alert("_(The DHCP Server is disabled. Please enable it first.)_");
+		return;
+    }
+
+
+    with (document.forms[0])
+    {
+	var mac;
+
+	var mac_address_input = mac_address_manual.value;
+	if (mac_address_input.length == 12 ) {
+	    // means just Mac charters exclude  ":" and "-"
+	    // add we add the ":" to the mac string
+	    var mac_address_manual_standard;
+
+	    mac_address_manual_standard = mac_address_input.substring(0,2);
+	    for (i = 2; i<12; i=i+2) {
+		mac_address_manual_standard+= ":" +mac_address_input.substring(i,i+2);
+	    }
+	    mac_address_input = mac_address_manual_standard;
+	}
+	// meaning the mac's format is:      xx-xx-xx-xx-xx-xx
+	// and we change the mac's format to xx:xx:xx:xx:xx:xx
+	mac_address_input = mac_address_input.replace(/\-/ig,":");
+
+	if (isValidMacAddress(mac_address.value))
+	{
+	    mac = mac_address.value;
+	}
+	else if (isValidMacAddress(mac_address_input))
+	{
+	    mac = mac_address_input;
+	}
+	else
+	{
+	    alert("_(Invalid MAC address.)_");
+	    return;
+	}
+        loc += 'action=add&mac=' + mac;
+
+        if (ip_address.value != "")
+        {
+            if (!isValidIpAddress(ip_address.value))
+	    {
+                alert("_(Invalid IP address.)_");
+                return;
+            }
+
+	    for (var i = 0; i < StaticAddress.length; i++)
+	    {
+			   StaticAddress[i].MACAddress = htmlDecodeStr(StaticAddress[i].MACAddress);
+			   StaticAddress[i].IPAddress = htmlDecodeStr(StaticAddress[i].IPAddress);
+
+               if (mac == StaticAddress[i].MACAddress)
+                {
+                    alert("_(The MAC address " + mac + " has been used in a rule.)_");
+                    return;
+                }
+	        if (ip_address.value == StaticAddress[i].IPAddress)
+	        {
+                    alert("_(The IP address " + ip_address.value + " has been used in a rule.)_");
+                    return;
+	        }
+	    }
+            loc += '&static_ip=' + ip_address.value;
+        }
+        else {
+            if (!isValidIpAddress(ip_address_manual.value))
+	    {
+                alert("_(Invalid IP address.)_");
+                return;
+            }
+
+            for (var i = 0; i < StaticAddress.length; i++)
+	    {
+			   StaticAddress[i].MACAddress = htmlDecodeStr(StaticAddress[i].MACAddress);
+			   StaticAddress[i].IPAddress = htmlDecodeStr(StaticAddress[i].IPAddress);
+               if (mac == StaticAddress[i].MACAddress)
+                {
+                    alert("_(The MAC address " + mac + " has been used in a rule.)_");
+                    return;
+                }
+	        if (ip_address_manual.value == StaticAddress[i].IPAddress)
+	        {
+                    alert("_(The IP address " + ip_address_manual.value + " has been used in a rule.)_");
+                    return;
+	        }
+	    }
+
+            /* also check against allowed range */
+            var manIP = ip_address_to_number(ip_address_manual.value);
+            if (manIP<min || manIP>max)
+            {
+                alert("_(The IP address " + ip_address_manual.value + " is not in  the allowed range.)_");
+                return;
+            }
+
+            /* check against IP in use */
+            for (var i = 0; i < item.length; i++)
+            {
+                var field = item[i].split('/');
+                if ( field.length > 1 && ip_address_manual.value == htmlDecodeStr(field[1]) &&
+                       field[5] == '1' && mac != htmlDecodeStr(field[2]) )
+                {
+                    alert("_(The IP address " + ip_address_manual.value + " is in use and active. You must select corresponding MAC address("+htmlDecodeStr(field[2])+").)_");
+                    //alert("_(The IP address " + ip_address_manual.value + " is in use. You must select another IP address.)_");
+                    return;
+                }
+            }
+
+            loc += '&static_ip=' + ip_address_manual.value;
+        }
+
+        loc += '&sessionKey=' + sessionKey;
+        loc += '&needthankyou=advancedsetup_dhcpreservation.html';
+        //lochead+=loc;
+        //var code = 'location="' + lochead + '"';
+        //eval(code);
+        loc=encrypt_query(loc,key);
+        lochead+=loc;
+        postSubmit(lochead);
+    }
+}
+
+function remove_item(mac_address)
+{
+    var lochead = 'dhcpdstaticlease.cmd?';
+    var loc = 'action=remove&rmLst=';
+    loc += mac_address;
+    loc += '&sessionKey=' + sessionKey;
+    loc += '&needthankyou=advancedsetup_dhcpreservation.html';
+    //lochead+=loc;
+    //var code = 'location="' + lochead + '"';
+    //eval(code);
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+    postSubmit(lochead);
+}
+
+function select_change()
+{
+	with (document.forms[0])
+	{
+		//mac_address_manual.disabled = (mac_address.value != "Manually Enter MAC");
+		if (mac_address.selectedIndex > 0)
+	{
+		mac_address_manual.disabled = true;
+			document.getElementById("enter_mac").className = "greyed_out";
+	}
+	else
+		{
+		mac_address_manual.disabled = false;
+			document.getElementById("enter_mac").className = "defaultstyle";
+	}
+	}
+}
+
+function select_IP_change()
+{
+	with (document.forms[0])
+	{
+		//mac_address_manual.disabled = (mac_address.value != "Manually Enter MAC");
+		if (ip_address.selectedIndex > 0)
+		{
+			ip_address_manual.disabled = true;
+			document.getElementById("enter_ip").className = "greyed_out";
+		}
+		else
+		{
+			ip_address_manual.disabled = false;
+			document.getElementById("enter_ip").className = "defaultstyle";
+		}
+	}
+}
+
+
+
+function dom_load(){ do_load(); }
+</script>
+</head>
+<body onload="do_load()">
+<div id="wrapper">
+<!-- TOP NAV -->
+<%ejInclude(top_btn_nav5.html)%>
+<!-- END TOP NAV -->
+<!-- SIDE NAV -->
+<%ejInclude(adv_left.html)%>
+<!-- END SIDE NAV -->
+
+<!-- MAIN CONTENT AREA -->
+<div id="content_right">
+<div id="content_right_header"></div>
+<div id="content_right_contentarea">
+<h1 class="advancedsetup_dhcpres">_(DHCP Reservation)_<br></h1>
+<p>_(DHCP reservation leases a permanent DHCP allocated address to a client.)_</p>
+<form>
+
+	<p><strong>1. _(Select MAC Address, or manually enter a MAC address.)_</strong></p>
+	<table border="0" cellpadding="0" cellspacing="0">
+	<tr>
+	<td><label for="mac_address">_(Select MAC Address)_:</label></td>
+	<td><select name="mac_address" id="mac_address" style="width: 180px;" onchange="select_change()">
+	<option value="Manually Enter MAC">_(Manually enter the MAC Address)_      </option>
+	</select>
+	</td>
+	</tr>
+	<tr id="enter_mac">
+	<td><label for="mac_address_manual">_(Manually Add MAC Address)_:</label></td>
+	<td><input name="mac_address_manual" id="mac_address_manual" type="text" maxlength="17" size="35" style="height:18px;"/></td>
+	</tr>
+	</table>
+	<p>&nbsp;</p>
+	<p><strong>2. _(Select an IP address to associate with a MAC address.)_</strong></p>
+	<table border="0" cellpadding="0" cellspacing="0">
+	<tr>
+	<td><label for="ip_address">_(IP Address)_:</label></td>
+	<td>
+	<select name="ip_address" id="ip_address" style="width: 180px;" onchange="select_IP_change()">
+        <option value="">_(Manually enter the IP address)_</option>
+	<script type="text/javascript">
+	if (dhcpEnbl)
+	{
+		for (var i = min; i <= max; i++)
+		{
+			var x = number_to_ip_address(i);
+			var is_reservered_ip = 0;
+			for (var j = 0; j<StaticAddress.length; j++)
+			{
+				if (StaticAddress[j].IPAddress == x)
+				{
+					is_reservered_ip = 1;
+					break;
+				}
+			}
+
+			/* check against IP in use */
+			for (var j = 0; j < item.length; j++)
+			{
+				var field = item[j].split('/');
+				if (field.length > 1 && x == htmlDecodeStr(field[1]))
+				{
+					is_reservered_ip = 1;
+					break;
+				}
+			}
+
+
+			if (is_reservered_ip == 1) // don't show the reservered ip
+				continue;
+
+			document.write("<option value='" + x + "'>" + x + "</option>");
+		}
+	}
+	</script>
+	</select>
+	</td>
+        <tr id="enter_ip">
+	<td><label for="ip_address_manual">_(Manually Add IP Address)_:</label></td>
+	<td><input name="ip_address_manual" id="ip_address_manual" type="text" size="35" style="height:18px;"/></td>
+	</tr>
+	</tr>
+	</table>
+	<p>&nbsp;</p>
+	<p><strong>3. _(Click Apply to save changes.)_</strong></p>
+	<p><a class="button1" onclick="add_item();" id="btn_apply"><span>_(Apply)_</span></a></p>
+	<p>&nbsp;</p>
+	<p align="center"><strong>_(DHCP Reservation List)_</strong></p>
+	<table id="tbList" width="85%" border="0" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin-top:10px;">
+	<tr>
+	<th>_(Device Name)_</th>
+	<th>_(MAC Address)_</th>
+	<th>_(IP Address)_</th>
+	<th width='80'>_(EDIT)_</th>
+	</tr>
+	<script type="text/javascript">
+	if(!dhcpEnbl || (StaticAddress.length == 0))
+        {
+                document.write("<tr><td colspan='4' align='center'>_(No Entries Defined)_</td></tr>");
+        }
+        else
+        {
+		for (var i = 0; i < StaticAddress.length; i++)
+		{
+			document.write("<tr>");
+			document.write("<td>" + StaticAddress[i].DeviceName + "</td>");
+			document.write("<td>" + StaticAddress[i].MACAddress + "</td>");
+			document.write("<td>" + StaticAddress[i].IPAddress + "</td>");
+            var btn_remove = "btn_remove_"+i;
+			document.write("<td><a href=\"javascript:remove_item('" + htmlDecodeStr(StaticAddress[i].MACAddress) + "')\" class=\"button1\" type=\"button\" style='text-decoration:none;' id='"+btn_remove+"'><span>_(Remove)_</span></a></td>");
+			document.write("</tr>");
+		}
+	}
+	</script>
+	</table>
+</form>
+</div>
+<div id="content_right_footer"></div>
+</div>
+<div class="clear_left"></div>
+<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

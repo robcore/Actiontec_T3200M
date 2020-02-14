@@ -1,0 +1,65 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>_(Wireless Setup)_ - _(Advanced Settings)_</title>
+<script language="JavaScript" src="js/nav.js"></script>
+  <link href="css/basic2.css" rel="stylesheet" type="text/css" />
+  <SCRIPT LANGUAGE="JavaScript">
+ var redirect_page = "<%ejGet(currentPage)%>".split('?')[0];
+    function do_load()
+    {
+        if(redirect_page == "wirelesssetup_channelrescan.wl")
+        {
+             setTimeout("do_redirect()", 2000);
+        }
+	else if(redirect_page == "wirelesssetup_channelapply.wl")
+        {
+             setTimeout("do_redirect()", 10000);
+        }
+    }
+
+    function do_redirect()
+    {
+	location.href= "wirelesssetup_advanced.html";
+    }
+
+function dom_load(){ do_load(); }
+var foobar = new domFunction(dom_load);
+  </SCRIPT>
+</head>
+
+<body>
+<div id="wrapper">
+  <!-- TOP NAV -->
+  <%ejInclude(top_btn_nav3.html)%>
+  <!-- END TOP NAV -->
+  <!-- SIDE NAV -->
+  <%ejInclude(wireless_left.html)%>
+  <!-- END SIDE NAV -->
+  <!-- MAIN CONTENT AREA -->
+  <div id="content_right">
+    <div id="content_right_header">
+    </div>
+    <div id="content_right_contentarea">
+    <h1 class="wirelesssetup_basic">_(Advanced Settings)_ </h1>
+      <form name="mainform" action="wirelesssetup_advanced.wl" method="POST">
+        <p>_(The modem supports high-speed wireless devices using the 802.11b/g/n protocol. Enable and tune 802.11b/g/n parameters as appropriate.)_ </p>
+        <table width="85%" border="0" cellpadding="0" cellspacing="0"  style="margin:0 auto;">
+            <tr>
+            <td style="text-align:left;">
+               <font color="#006600"><strong>_(Channel re-scan in progress ...)_</strong></font>
+            </td>
+            </tr>
+          </table>
+      </form>
+    </div>
+    <div id="content_right_footer">
+    </div>
+  </div>
+  <div class="clear_left">
+  </div>
+  <div id="footer">&nbsp;</div>
+</div>
+</body>
+</html>

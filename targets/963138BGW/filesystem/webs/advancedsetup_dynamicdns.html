@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(IP Address)_ - _(Dynamic DNS)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/functions.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var enable = '<%ejGetOther(ddnsInfo, enable)%>';
+var provider = htmlDecodeStr('<%ejGetOther(ddnsInfo, provider)%>');
+var username = htmlDecodeStr('<%ejGetOther(ddnsInfo, username)%>');
+var password = htmlDecodeStr('<%ejGetOther(ddnsInfo, password)%>');
+var hostname = htmlDecodeStr('<%ejGetOther(ddnsInfo, hostname)%>');
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+var currEnable;
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function frmLoad()
+{
+  side_nav("advancedsetup_dynamicdns");
+
+  with ( document.forms[0] ) {
+    if (enable != '1')
+      enable = '0';
+
+    currEnable = parseInt(enable);
+
+    if ( enable == '1' )
+      ddnsPage(1);
+    else
+      ddnsPage(0);
+  }
+}
+
+function ddnsPage(isEnable)
+{
+  with ( document.forms[0] ) {
+    if (isEnable == 1) {
+      ddnsEnable[0].checked = true;
+      showHideSteps('ddns_disabled','ddns_enabled');
+
+      for (var i = 0; i < ddnsProvider.length; i++) {
+        if (provider == ddnsProvider[i].value) {
+          ddnsProvider[i].selected = true;
+        }
+      }
+
+      ddnsUsername.value = username;
+      ddnsPassword.value = password;
+      ddnsHostname.value = hostname;
+    }
+    else {
+      ddnsEnable[1].checked = true;
+      showHideSteps('ddns_enabled','ddns_disabled');
+    }
+  }
+}
+
+function radioEnable()
+{
+  with ( document.forms[0] ) {
+    if (ddnsEnable[0].checked == true && currEnable == 0) {
+      ddnsPage(1);
+      currEnable = 1;
+    }
+    else if (ddnsEnable[1].checked == true && currEnable == 1) {
+      ddnsPage(0);
+      currEnable = 0;
+    }
+  }
+}
+
+function btnApply()
+{
+  var lochead = 'advancedsetup_dynamicdns.cgi?';
+  var loc = '';
+
+  with ( document.forms[0] ) {
+    if (ddnsEnable[0].checked == true)
+      update_enable = 1;
+    else
+      update_enable = 0;
+
+    if ( update_enable ) {
+      update_provider = ddnsProvider[ddnsProvider.selectedIndex].value;
+      update_username = ddnsUsername.value;
+      update_password = ddnsPassword.value;
+      update_hostname = ddnsHostname.value;
+
+      if ( update_username.length == 0 ) {
+        alert("_(Empty username.)_");
+        return;
+      }
+
+      if ( update_username.search("[^A-Za-z0-9\-.@]") != -1 ) {
+        alert("_(The username is invalid. You must enter a valid username.)_");
+        return;
+      }
+
+      if ( update_password.length == 0 ) {
+        alert("_(Empty password.)_");
+        return;
+      }
+
+      if ( update_hostname.length == 0 ) {
+        alert("_(Empty hostname.)_");
+        return;
+      }
+
+      if ( update_hostname.search("[^A-Za-z0-9\-.]") != -1 ) {
+        alert("_(The hostname is invalid. You must enter a valid hostname.)_");
+        return;
+      }
+    }
+    else {
+      update_provider = provider;
+      update_username = username;
+      update_password = password;
+      update_hostname = hostname;
+    }
+
+    loc += 'ddnsEnable=' + update_enable;
+    loc += '&ddnsProvider=' + update_provider;
+    loc += '&ddnsUsername=' + update_username;
+    loc += '&ddnsPassword=' + update_password;
+    loc += '&ddnsHostname=' + update_hostname;
+    loc += '&sessionKey=' + sessionKey;
+  }
+  loc=encrypt_query(loc,key);
+  lochead+=loc;
+  postSubmit(lochead);
+
+}
+
+</script>
+</head>
+
+<body onload="frmLoad()">
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+        <div id="content_right_header"></div>
+        <div id="content_right_contentarea">
+            <h1 class="advancedsetup_dynamicdns">_(Dynamic DNS)_</h1>
+            <form>
+                <p/><span>_(Dynamic DNS associates the WAN IP address of your modem with a host name. Dynamic DNS automatically updates DNS servers upon WAN IP address change.)_ </span></p>
+                <p><strong>1. _(Set the dynamic DNS state.)_ </strong></p>
+                <table width="80%" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td width="160">&nbsp;&nbsp;&nbsp;_(Dynamic DNS State)_:</td>
+                        <td width="100"><input name="ddnsEnable" id="enabled" type="radio" onclick="radioEnable()"/> _(Enable)_</td>
+                        <td width="270"><input name="ddnsEnable" id="disabled" type="radio" checked="checked" onclick="radioEnable()"/> _(Disable)_</td>
+                    </tr>
+                </table>
+                <p>&nbsp;</p>
+                <div id="ddns_enabled" style="display:none">
+                    <p><strong>2. _(Select the dynamic DNS provider.)_ </strong></p>
+                    <table width="80%" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td width="160">&nbsp;&nbsp;&nbsp;_(Dynamic DNS provider)_:</td>
+                            <td>
+                               <select style="width:100px;" name="ddnsProvider" id="ddnsProvider">
+                                   <option value="dyndns" selected="selected">_(dyndns.com)_</option>
+                                   <option value="noip">_(no-ip.com)_</option>
+                               </select>
+                            </td>
+                        </tr>
+                    </table>
+                    <p>&nbsp;</p>
+                    <p><strong>3. _(Enter your username and password.)_ </strong></p>
+                    <table width="80%" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td width="160">&nbsp;&nbsp;&nbsp;_(Username)_:</td>
+                            <td><input name="ddnsUsername" type="text" maxlength="64" style="height:18px;" id="ddnsUsername"/></td>
+                        </tr>
+                        <tr>
+                            <td width="160">&nbsp;&nbsp;&nbsp;_(Password)_:</td>
+                            <td><input id="ddnsPassword" name="ddnsPassword" type="password" style="height:18px;"/></td>
+                        </tr>
+                    </table>
+                    <p>&nbsp;</p>
+                    <p><strong>4. _(Enter the dynamic DNS host name.)_ </strong></p>
+                    <table width="80%" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td width="160" >&nbsp;&nbsp;&nbsp;_(Hostname)_:</td>
+                            <td><input id="ddnsHostname" name="ddnsHostname" type="text" size="30" style="height:18px;"/></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div id="ddns_disabled" class="greyed_out">
+                    <p><strong>2. _(Select the dynamic DNS provider.)_ </strong></p>
+                    <table width="80%" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td width="160">&nbsp;&nbsp;&nbsp;_(Dynamic DNS provider)_:</td>
+                            <td>
+                               <select style="width:100px;" disabled="disabled"></select>
+                            </td>
+                        </tr>
+                    </table>
+                    <p>&nbsp;</p>
+                    <p><strong>3. _(Enter your username and password.)_ </strong></p>
+                    <table width="80%" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td width="160">&nbsp;&nbsp;&nbsp;_(Username)_:</td>
+                            <td><input type="text" maxlength="64" disabled="disabled" class="greyed_out_textfield" style="height:18px;"/></td>
+                        </tr>
+                        <tr>
+                            <td width="160">&nbsp;&nbsp;&nbsp;_(Password)_:</td>
+                            <td><input type="password" disabled="disabled" class="greyed_out_textfield" style="height:18px;"/></td>
+                        </tr>
+                    </table>
+                    <p>&nbsp;</p>
+                    <p><strong>4. _(Enter the dynamic DNS host name.)_ </strong></p>
+                    <table width="80%" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td width="160" >&nbsp;&nbsp;&nbsp;_(Hostname)_:</td>
+                            <td><input type="text" size="30" disabled="disabled" class="greyed_out_textfield" style="height:18px;"/></td>
+                        </tr>
+                    </table>
+                </div>
+                <p>&nbsp;</p>
+                <p><strong>5. _(Click Apply to save changes.)_</strong></p>
+                <p><a class="button1" onclick="btnApply()" id="btn_apply"><span>_(Apply)_</span></a></p>
+            </form>
+        </div>
+        <div id="content_right_footer"></div>
+    </div>
+    <div class="clear_left"></div>
+    <div id="footer">&nbsp;</div>
+</div>
+</body>
+</html>

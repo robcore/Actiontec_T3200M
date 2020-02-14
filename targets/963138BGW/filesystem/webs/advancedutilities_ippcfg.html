@@ -1,0 +1,113 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Print Server)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="Javascript">
+
+var natstatus = '<%ejGetOther(sysInfo, ippEnabled)%>';
+function do_load()
+{
+    var form = document.myform;
+
+    form.ippName.value = htmlDecodeStr("<%ejGetOther(sysInfo, ippName)%>");
+    form.ippMake.value = htmlDecodeStr("<%ejGetOther(sysInfo, ippMake)%>");
+
+    if( natstatus == "1" )
+    {
+        form.nat[0].checked = true;
+        form.nat[1].checked = false;
+    }
+    else
+    {
+        form.nat[0].checked = false;
+        form.nat[1].checked = true;
+    }
+	//highlight the button after user click on it
+	side_nav("advancedutilities_ippcfg");
+}
+
+
+function do_apply()
+{
+    var lochead='ippcfg.cmd?';
+    var loc = 'action=savapply&ippEnabled=';
+    var form = document.myform;
+    if( form.nat[0].checked )
+    {
+        loc += '1';
+		loc += '&ippMake=' + encodeUrl(form.ippMake.value);
+		loc += '&ippName=' + encodeUrl(form.ippName.value);
+    }
+    else
+    {
+        loc += '0';
+    }
+    DisableUseless(form);
+    loc += '&needthankyou=advancedutilities_ippcfg.html';
+    loc += '&sessionKey=<%ejGetOther(sessionKey)%>';
+    lochead+=loc;
+    //var code = 'location="' + lochead + '"';
+    //eval(code);
+    postSubmit(lochead);
+}
+
+function DisableUseless(form)
+{
+    form.nat[0].disabled = true;
+    form.nat[1].disabled = true;
+}
+</script>
+</head>
+
+<body onload="do_load()">
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="advancedsetup_security_nat">_(Print Server)_</h1>
+            <form  name="myform" onSubmit="return false;">
+				<p><strong>1. _(Set the Print Server state.)_</strong></p>
+				<table width="45%" border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td width="50%">&nbsp;&nbsp;&nbsp;_(Print Server)_: </td>
+                    <td width="50%"><input name="nat" id="nat_on" type="radio" value="Enable" checked="checked" /> _(Enable)_&nbsp;&nbsp;<input name="nat" id="nat_off" type="radio" value="Disable" /> _(Disable)_</td>
+                  </tr>
+                </table>
+
+                <table width="45%" border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td width="50%">&nbsp;&nbsp;&nbsp;_(Printer name)_: </td>
+                    <td width="50%"><input type='text' name='ippName' id='ippName'></td>
+                  </tr>
+                  <tr>
+                    <td width="50%">&nbsp;&nbsp;&nbsp;_(Make and model)_: </td>
+                    <td width="50%"><input type='text' name='ippMake' id='ippMake'></td>
+                  </tr>
+                </table>
+
+				<p>&nbsp;</p>
+				<p><strong>2. _(Click Apply to save changes.)_</strong></p>
+				<p><a class="button1" onclick="do_apply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+			</form>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">//var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

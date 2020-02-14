@@ -1,0 +1,61 @@
+#
+# Add the new AEI parameters under existing Objects.
+#
+# See 0000-README.txt for more details
+#
+
+addParamsToObj cms-dm-aei-classification.xml InternetGatewayDevice.QueueManagement.Classification.{i}.
+addParamsToObj cms-dm-aei-deviceconfig.xml InternetGatewayDevice.DeviceConfig.
+addParamsToObj cms-dm-aei-deviceinfo.xml InternetGatewayDevice.DeviceInfo.
+addParamsToObj cms-dm-aei-dhcpservingpool.xml InternetGatewayDevice.LANDevice.{i}.LANHostConfigManagement.DHCPConditionalServingPool.{i}. 
+addParamsToObj cms-dm-aei-diagnostics.xml InternetGatewayDevice.IPPingDiagnostics.
+addParamsToObj cms-dm-aei-forwarding.xml InternetGatewayDevice.Layer3Forwarding.Forwarding.{i}.
+addParamsToObj cms-dm-aei-httpcfg.xml InternetGatewayDevice.X_BROADCOM_COM_AppCfg.HttpdCfg.
+addParamsToObj cms-dm-aei-sskcfg.xml InternetGatewayDevice.X_BROADCOM_COM_AppCfg.SskCfg.
+addParamsToObj cms-dm-aei-tr69cfg.xml InternetGatewayDevice.X_BROADCOM_COM_AppCfg.Tr69cCfg.
+addParamsToObj cms-dm-aei-igd.xml InternetGatewayDevice.
+addParamsToObj cms-dm-aei-ipinterface.xml InternetGatewayDevice.LANDevice.{i}.LANHostConfigManagement.IPInterface.{i}.X_BROADCOM_COM_IpFilterCfg.{i}.
+addParamsToObj cms-dm-aei-laneth.xml InternetGatewayDevice.LANDevice.{i}.LANEthernetInterfaceConfig.{i}.
+addParamsToObj cms-dm-aei-lanhostconfigmanagement.xml InternetGatewayDevice.LANDevice.{i}.LANHostConfigManagement.
+addParamsToObj cms-dm-aei-lanhosts.xml InternetGatewayDevice.LANDevice.{i}.Hosts.Host.{i}.
+addParamsToObj cms-dm-aei-layer3forwarding.xml InternetGatewayDevice.Layer3Forwarding.
+addParamsToObj cms-dm-aei-login.xml InternetGatewayDevice.X_BROADCOM_COM_LoginCfg.
+addParamsToObj cms-dm-aei-managementserver.xml InternetGatewayDevice.ManagementServer.
+addParamsToObj cms-dm-aei-networkconfig.xml InternetGatewayDevice.X_BROADCOM_COM_NetworkConfig.
+addParamsToObj cms-dm-aei-networkserver.xml InternetGatewayDevice.Services.StorageService.{i}.NetworkServer.
+addParamsToObj cms-dm-aei-presharedkey.xml InternetGatewayDevice.LANDevice.{i}.WLANConfiguration.{i}.PreSharedKey.{i}.
+addParamsToObj cms-dm-aei-queuemanagement.xml InternetGatewayDevice.QueueManagement.
+addParamsToObj cms-dm-aei-secdmz.xml InternetGatewayDevice.X_BROADCOM_COM_SecDmzHostCfg.
+addParamsToObj cms-dm-aei-sshcfg.xml InternetGatewayDevice.X_BROADCOM_COM_AppCfg.SshdCfg.
+addParamsToObj cms-dm-aei-syslog.xml InternetGatewayDevice.X_BROADCOM_COM_SyslogCfg.
+addParamsToObj cms-dm-aei-telnetcfg.xml InternetGatewayDevice.X_BROADCOM_COM_AppCfg.TelnetdCfg.
+addParamsToObj cms-dm-aei-time.xml InternetGatewayDevice.Time.
+addParamsToObj cms-dm-aei-upnp.xml InternetGatewayDevice.X_BROADCOM_COM_AppCfg.UpnpCfg.
+addParamsToObj cms-dm-aei-urlfilter.xml InternetGatewayDevice.X_BROADCOM_COM_UrlFilterCfg.
+addParamsToObj cms-dm-aei-urlfilterlist.xml InternetGatewayDevice.X_BROADCOM_COM_UrlFilterCfg.X_BROADCOM_COM_UrlFilterListCfgObj.{i}.
+addParamsToObj cms-dm-aei-userinterface.xml InternetGatewayDevice.UserInterface.
+addParamsToObj cms-dm-aei-wancommoninterfaceconfig.xml InternetGatewayDevice.WANDevice.{i}.WANCommonInterfaceConfig.
+addParamsToObj cms-dm-aei-wandslinterfaceconfig.xml InternetGatewayDevice.WANDevice.{i}.WANDSLInterfaceConfig.
+addParamsToObj cms-dm-aei-wandsllinkcfg.xml InternetGatewayDevice.WANDevice.{i}.WANConnectionDevice.{i}.WANDSLLinkConfig.
+addParamsToObj cms-dm-aei-wanethernetinterfaceconfig.xml InternetGatewayDevice.WANDevice.{i}.WANEthernetInterfaceConfig.
+addParamsToObj cms-dm-aei-wanethernetinterfaceconfig.xml InternetGatewayDevice.WANDevice.{i}.WANEthernetInterfaceConfig.Stats.
+addParamsToObj cms-dm-aei-wanipconn.xml InternetGatewayDevice.WANDevice.{i}.WANConnectionDevice.{i}.WANIPConnection.{i}.
+addParamsToObj cms-dm-aei-wanipstats.xml InternetGatewayDevice.WANDevice.{i}.WANConnectionDevice.{i}.WANIPConnection.{i}.Stats.
+addParamsToObj cms-dm-aei-wanipfirewallexception.xml InternetGatewayDevice.WANDevice.{i}.WANConnectionDevice.{i}.WANIPConnection.{i}.X_BROADCOM_COM_FirewallException.{i}.
+addParamsToObj cms-dm-aei-wanipmacfilter.xml InternetGatewayDevice.WANDevice.{i}.WANConnectionDevice.{i}.WANIPConnection.{i}.X_BROADCOM_COM_MacFilterObj.X_BROADCOM_COM_MacFilterCfg.{i}.
+addParamsToObj cms-dm-aei-wanipportmapping.xml InternetGatewayDevice.WANDevice.{i}.WANConnectionDevice.{i}.WANIPConnection.{i}.PortMapping.{i}.
+addParamsToObj cms-dm-aei-wanpppconn.xml InternetGatewayDevice.WANDevice.{i}.WANConnectionDevice.{i}.WANPPPConnection.{i}.
+addParamsToObj cms-dm-aei-wanpppfirewallexception.xml InternetGatewayDevice.WANDevice.{i}.WANConnectionDevice.{i}.WANPPPConnection.{i}.X_BROADCOM_COM_FirewallException.{i}.
+addParamsToObj cms-dm-aei-wanpppportmapping.xml InternetGatewayDevice.WANDevice.{i}.WANConnectionDevice.{i}.WANPPPConnection.{i}.PortMapping.{i}.
+addParamsToObj cms-dm-aei-wanptmlinkcfg.xml InternetGatewayDevice.WANDevice.{i}.WANConnectionDevice.{i}.WANPTMLinkConfig.
+addParamsToObj cms-dm-aei-wepkey.xml InternetGatewayDevice.LANDevice.{i}.WLANConfiguration.{i}.WEPKey.{i}.
+addParamsToObj cms-dm-aei-wlanvirtintfcfg.xml InternetGatewayDevice.LANDevice.{i}.WLANConfiguration.{i}.X_BROADCOM_COM_WlanAdapter.WlVirtIntfCfg.{i}. 
+addParamsToObj cms-dm-aei-wlanwpscfg.xml InternetGatewayDevice.LANDevice.{i}.WLANConfiguration.{i}.X_BROADCOM_COM_WlanAdapter.WlVirtIntfCfg.{i}.WlWpsCfg.
+addParamsToObj cms-dm-aei-wlanstaticwds.xml InternetGatewayDevice.LANDevice.{i}.WLANConfiguration.{i}.X_BROADCOM_COM_WlanAdapter.WlStaticWdsCfg.{i}.
+addParamsToObj cms-dm-aei-wlanmimocfg.xml InternetGatewayDevice.LANDevice.{i}.WLANConfiguration.{i}.X_BROADCOM_COM_WlanAdapter.WlMimoCfg.
+addParamsToObj cms-dm-aei-wlanconfiguration.xml InternetGatewayDevice.LANDevice.{i}.WLANConfiguration.{i}.
+addParamsToObj cms-dm-aei-wlanbasecfg.xml InternetGatewayDevice.LANDevice.{i}.WLANConfiguration.{i}.X_BROADCOM_COM_WlanAdapter.WlBaseCfg.
+addParamsToObj cms-dm-aei-moca.xml InternetGatewayDevice.LANDevice.{i}.X_BROADCOM_COM_LANMocaInterfaceConfig.{i}.
+addParamsToObj cms-dm-aei-moca-interface.xml InternetGatewayDevice.Device.MoCA.Interface.{i}.
+addParamsToObj cms-dm-aei-moca-associated-device.xml InternetGatewayDevice.Device.MoCA.Interface.{i}.AssociatedDevice.{i}.
+addParamsToObj cms-dm-aei-dlna.xml InternetGatewayDevice.X_BROADCOM_COM_DLNA.DmsCfg.

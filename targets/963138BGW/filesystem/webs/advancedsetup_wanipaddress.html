@@ -1,0 +1,2006 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(IP Address)_ - _(WAN IP Addressing)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript" SRC="js/util.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<SCRIPT LANGUAGE="JavaScript">
+var user_id=htmlDecodeStr('<%ejGet(userID)%>');
+var glbFirstAccess = 1; // flag
+var old_glbWanL2IfName = htmlDecodeStr('<%ejGet(old_wanL2IfName)%>');
+var glbWanL2IfName = htmlDecodeStr('<%ejGet(wanL2IfName)%>');
+var glbAutoconnect="";
+var availInfNames = '<%ejGetOther(availInfNames, all)%>';
+var glbWanInfNames_ptm='<%ejGetOther(wanInterfaces, PTM)%>';
+var glbWanInfNames_atm='<%ejGetOther(wanInterfaces, ATM)%>';
+var glbWanInfNames_ewan='<%ejGetOther(wanInterfaces, ewan0)%>';
+var glbWanInfNames_ewan1='<%ejGetOther(wanInterfaces, ewan1)%>';
+var glbWanInfNames = ((glbWanL2IfName.indexOf("atm") != -1)? glbWanInfNames_atm : ((glbWanL2IfName.indexOf("ptm") != -1)? glbWanInfNames_ptm:(glbWanL2IfName.indexOf("ewan1") != -1)?glbWanInfNames_ewan1:glbWanInfNames_ewan));
+var layer2Info = '<%ejGetOther(layer2Info, all)%>';
+var layer2InfoATM = '<%ejGetOther(layer2Info, ATM)%>';
+var layer2InfoPTM = '<%ejGetOther(layer2Info, PTM)%>';
+var glbTraffictype = htmlDecodeStr('<%ejGetOther(trafficType, 0)%>');
+var l2info=layer2Info.split('|');
+var glbContype="";
+var dns1 = htmlDecodeStr('<%ejGetOther(sysInfo, dns1)%>'); if ( dns1 == '&nbsp' ) dns1 = '';
+var dns2 = htmlDecodeStr('<%ejGetOther(sysInfo, dns2)%>');  if ( dns2 == '&nbsp' || dns2 == '0.0.0.0') dns2 = '';
+var dnsIfc = htmlDecodeStr('<%ejGetOther(sysInfo, dnsIfcs)%>'); if (dnsIfc == '&nbsp') dnsIfc = '';
+var hpnaMode = htmlDecodeStr('<%ejGet("hpnaMode")%>');
+//var glbPremode = "";
+var pre_dnstype = "";
+var pre_encap_type = "";
+var atmencaps = "";
+var enblIgmp = "";
+var encap_type = " ";
+var glbPppusername = "";
+var glbWantype;
+var iptype;
+var glbUsestaticip="0";
+var singlestaticip = "" ;
+var glbDproxyInfo = '<%ejGetOther(dnsProxy)%>';
+var glbDhcpOption60 = htmlDecodeStr('<%ejGetOther(dhcpOption60)%>');
+var glbHostname = "";
+var glbDomainname = "";
+var ipaddr="";
+var subnet="";
+var gateway="";
+var ppp_pwd='';
+var wanInf="";
+var glbInfname="";
+var glbPasslen = 0;
+var glbType = '';
+var sid = '';
+var redirect = 'advancedsetup_wanipaddress.html';
+var gwAddress= htmlDecodeStr('<%ejGetOther(IPInterfaceIPAddress)%>');
+var glbUnnummode = htmlDecodeStr("<%ejGet(enblLan2)%>");
+var glbVipmode = htmlDecodeStr("<%ejGet(vipmode)%>");
+var wconnMode = "VlanMuxMode";
+var vPr='-1';
+var vId='-1';
+var dns_type = "";
+//var mtu="";
+// don't remove loadFlag, this is only for auto-detect.
+var loadFlag=0;
+
+var phy_wan_status = '<%ejGetOther(getPhyWanIntfsStatus)%>';
+var file_exist = '<%ejGetOther(getFileExistStatus)%>';
+var mytimeid;
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+//-----------------------------------------------
+var glbCheckISPType = 0;
+
+var glbCheckPPPUserName="";
+var glbCheckPPPUserPWD="";
+var glbCheckISPNoCheck = 0;
+var glbCheckpppautoconnect = 0;
+
+var glbCheckDomainName = "";
+
+var glbCheckIPAdder="";
+var glbCheckIPNetmask="";
+var glbCheckIPGateway="";
+
+var glbCheckIPType = 0;
+var glbCheckStaticIPAdder = "";
+var glbCheckBlockStaticIPGateway = "";
+var glbCheckBlockStaticIPNetmask = "";
+var glbCheckBlockStaticIPVIPMode = 0;
+
+var glbCheckDNSType  = 0;
+var glbCheckPrimaryDNS = "";
+var glbCheckSecondaryDNS = "";
+
+var glbCheckVarsChange = 0;
+
+function init_vars()
+{
+    var form = document.forms[0];
+    var len = 5;
+    var i;
+
+    glbCheckISPType = glbContype;
+    glbCheckPPPUserName = form.ppp_username.value;
+    if ( glbCheckISPType == "pppoe" ||  glbCheckISPType == "pppoa")
+    {
+        if(form.ppp_password.disabled == false)
+            glbCheckPPPUserPWD = form.ppp_password.value;
+    }
+
+    glbCheckISPNoCheck = form.nouser.checked;
+    glbCheckpppautoconnect = form.pppautoconnect.checked;
+
+    if ( glbCheckISPType == "dhcpc")
+    {
+        if(form.domain_name.disabled == false)
+            glbCheckDomainName = form.domain_name.value;
+    }
+
+    glbCheckIPAdder = form.ipadd.value;
+    glbCheckIPNetmask = form.submask.value;
+    glbCheckIPGateway = form.gateadd.value;
+
+    len = 3;
+    for (i= 0; i<len; i++)
+    {
+        if(form.wanip[i].selected)
+        {
+            glbCheckIPType = i;
+            if( i == 1)
+            {
+                glbCheckStaticIPAdder = form.singlestaticip.value;
+            }
+            else if( i == 2)
+            {
+                glbCheckBlockStaticIPGateway = form.gatewayadd.value;
+                glbCheckBlockStaticIPNetmask  = form.subnetmask.value;
+                glbCheckBlockStaticIPVIPMode = form.vipmode.check;
+            }
+            break;
+        }
+    }
+
+    len = 2;
+    for (i= 0; i<len; i++)
+    {
+        if(form.dnstyp[i].checked)
+        {
+            glbCheckDNSType = i;
+            if( i == 1)
+            {
+                glbCheckPrimaryDNS = form.primarydns.value;
+                glbCheckSecondaryDNS = form.secdns.value;
+            }
+            break;
+        }
+    }
+}
+
+function check_vars_change()
+{
+    var form = document.forms[0];
+    var len = 5;
+    var i;
+
+    if(glbCheckISPType != glbType)
+    {
+        glbCheckVarsChange = 1;
+        return;
+    }
+    if ( glbCheckISPType == "dhcpc")
+    {
+        if(form.domain_name.disabled == false)
+        {
+            if(glbCheckDomainName != form.domain_name.value)
+            {
+                glbCheckVarsChange = 1;
+                return;
+            }
+        }
+        else
+        {
+            if(glbCheckDomainName != "")
+            {
+                glbCheckVarsChange = 1;
+                return;
+            }
+        }
+    }
+
+    if ( glbCheckISPType == "pppoe" ||  glbCheckISPType == "pppoa")
+    {
+        if(form.ppp_password.disabled == false)
+        {
+            if(glbCheckPPPUserPWD != form.ppp_password.value)
+            {
+                glbCheckVarsChange = 1;
+                return;
+            }
+        }
+        else
+        {
+            if(glbCheckPPPUserPWD != "")
+            {
+                glbCheckVarsChange = 1;
+                return;
+            }
+        }
+    }
+
+    if(glbCheckPPPUserName != form.ppp_username.value)
+    {
+        glbCheckVarsChange = 1;
+        return;
+    }
+
+    if(glbCheckISPNoCheck != form.nouser.checked)
+    {
+        glbCheckVarsChange = 1;
+        return;
+    }
+
+    if(glbCheckpppautoconnect != form.pppautoconnect.checked)
+    {
+        glbCheckVarsChange = 1;
+        return;
+    }
+
+    if(glbCheckIPAdder != form.ipadd.value)
+    {
+        glbCheckVarsChange = 1;
+        return;
+    }
+    if(glbCheckIPNetmask != form.submask.value)
+    {
+        glbCheckVarsChange = 1;
+        return;
+    }
+    if(glbCheckIPGateway != form.gateadd.value)
+    {
+        glbCheckVarsChange = 1;
+        return;
+    }
+
+    len = 3;
+    for (i= 0; i<len; i++)
+    {
+        if(form.wanip[i].selected)
+        {
+            if(glbCheckIPType != i)
+            {
+                glbCheckVarsChange = 1;
+                return;
+            }
+            if( i == 1)
+            {
+                if(glbCheckStaticIPAdder != form.singlestaticip.value)
+                {
+                    glbCheckVarsChange = 1;
+                    return;
+                }
+            }
+            else if( i == 2)
+            {
+                if(glbCheckBlockStaticIPGateway != form.gatewayadd.value)
+                {
+                    glbCheckVarsChange = 1;
+                    return;
+                }
+                if(glbCheckBlockStaticIPNetmask  != form.subnetmask.value)
+                {
+                    glbCheckVarsChange = 1;
+                    return;
+                }
+                if(glbCheckBlockStaticIPVIPMode != form.vipmode.check)
+                {
+                    glbCheckVarsChange = 1;
+                    return;
+                }
+            }
+            break;
+        }
+    }
+
+    len = 2;
+    for (i= 0; i<len; i++)
+    {
+        if(form.dnstyp[i].checked)
+        {
+            if(glbCheckDNSType != i)
+            {
+                glbCheckVarsChange = 2;
+                return;
+            }
+            if( i == 1)
+            {
+                if(glbCheckPrimaryDNS != form.primarydns.value)
+                {
+                    glbCheckVarsChange = 2;
+                    return;
+                }
+
+                if(glbCheckSecondaryDNS != form.secdns.value)
+                {
+                    glbCheckVarsChange = 2;
+                    return;
+                }
+            }
+            break;
+        }
+    }
+}
+//-----------------------------------------------
+function hide_step2() {
+    document.getElementById("step2").style.display = "none";
+    document.getElementById("seliptype").style.display = "";
+
+    document.getElementById("subrf8").innerHTML = "<strong>3. _(Select the IP Type.)_</strong>";
+    document.getElementById("step4").innerHTML = "<strong>4. _(Select the DNS type.)_</strong>";
+    document.getElementById("subrf37").innerHTML = "<strong>5. _(Select ATM Encapsulation type.)_</strong>";
+  //document.getElementById("subrf317").innerHTML = "<strong>6. Adjust MTU settings.</strong>";
+    document.getElementById("subrf47").innerHTML = "<strong>5. _(Configure IGMP Proxy.)_</strong>";
+    document.getElementById("step6").innerHTML = '<strong>6. _(Click Apply to save changes.)_</strong>';
+}
+
+function show_step2() {
+    document.getElementById("seliptype").style.display = "none";
+    document.getElementById("step2").style.display = "block";
+    document.getElementById("subrf8").innerHTML = "<strong>4. _(Select the IP Type.)_</strong>";
+    document.getElementById("step4").innerHTML = "<strong>4. _(Select the DNS type.)_</strong>";
+    document.getElementById("subrf37").innerHTML = "<strong>6. _(Select ATM Encapsulation type.)_</strong>";
+//  document.getElementById("subrf317").innerHTML = "<strong>6. Adjust MTU settings.</strong>";
+    document.getElementById("subrf47").innerHTML = "<strong>5. _(Configure IGMP Proxy.)_</strong>";
+    document.getElementById("step6").innerHTML = '<strong>6. _(Click Apply to save changes.)_</strong>';
+}
+
+function changeDisp(){
+    var form = document.forms[0];
+    if (form.ppp_password.value == "********")
+       form.ppp_password.value = "";
+}
+
+function disable_all_input() /* disable inputs & apply button */
+{
+    for (var i = 0; i < document.getElementsByTagName("INPUT").length; i++)
+    {
+        document.getElementsByTagName("INPUT")[i].disabled = true;
+    }
+    document.getElementById("applyBtn").setAttribute("onclick", "");
+    document.getElementById("applyBtn").setAttribute("class", "button2");
+}
+
+function init_dnsproxy()
+{
+    var dproxy = glbDproxyInfo.split('|');
+
+    if(dproxy[1])
+        glbHostname=htmlDecodeStr(dproxy[1]);
+    else
+        glbHostname="";
+
+    if(dproxy[2])
+        glbDomainname=htmlDecodeStr(dproxy[2]);
+    else
+        glbDomainname="";
+}
+
+function extract_info_from_dsl()
+{
+    var form = document.forms[0];
+    var layer2Infoptm = layer2InfoPTM;
+    var l2infoptm=layer2Infoptm.split('|');
+//  form.vlanMuxId.value=l2infoptm[8];
+//  form.vlanMuxPr.vaule=l2infoptm[8];
+
+ // vId=l2infoptm[8];
+  //vPr=l2infoptm[9];
+
+    if(glbWanInfNames !='')
+    {
+        var wanNameTypes  = glbWanInfNames.split('|');
+        var nameType = wanNameTypes[0].split(':');
+        var wanEntryInfo=nameType[4].split('/');
+        glbAutoconnect = htmlDecodeStr(nameType[5]);
+        wanInf = htmlDecodeStr(nameType[1]);
+        glbInfname= htmlDecodeStr(nameType[0]);
+        glbTraffictype = htmlDecodeStr(nameType[2]);
+        glbWantype=htmlDecodeStr(nameType[3]);
+        if(glbWantype == "PPPoE" ||glbWantype == "PPPoA" )
+        {
+            glbPppusername = htmlDecodeStr(wanEntryInfo[0]);
+            glbUsestaticip=htmlDecodeStr(wanEntryInfo[2]);
+            singlestaticip=htmlDecodeStr(wanEntryInfo[3]);
+            ppp_pwd=htmlDecodeStr(wanEntryInfo[1]);
+            atmencaps=htmlDecodeStr(wanEntryInfo[9]);
+
+            if(htmlDecodeStr(wanEntryInfo[1]) == "")
+               glbPasslen=0;
+            else
+               glbPasslen=100;
+
+            enblIgmp=htmlDecodeStr(nameType[8]);
+          //mtu=nameType[9];
+        }
+        else if(glbWantype == "Bridge")
+        {
+            atmencaps=htmlDecodeStr(nameType[4]);
+            enblIgmp="0";
+        }
+        else
+        {
+            iptype=htmlDecodeStr(wanEntryInfo[0]);
+            ipaddr=htmlDecodeStr(wanEntryInfo[1]);
+            subnet=htmlDecodeStr(wanEntryInfo[2]);
+            gateway=htmlDecodeStr(wanEntryInfo[3]);
+            atmencaps=htmlDecodeStr(wanEntryInfo[9]);
+            enblIgmp=htmlDecodeStr(nameType[5]);
+          //mtu=nameType[6];
+        }
+
+        var wanEntryName=glbInfname;
+        var index = wanEntryName.indexOf("(");
+
+        if (index!=-1) {
+            /* dsl wan */
+            var index2 = wanEntryName.indexOf(")");
+            sid = wanEntryName.substring(index+1,index2);
+        }
+        else
+            sid = glbInfname;
+    }
+    else
+    {
+        var names = availInfNames.split('|');
+        var regexp = /^ptm/ ;
+
+        if ( glbTraffictype == 'PTM' )
+        {
+            regexp = /^ptm/ ;
+            layer2Info = layer2InfoPTM;
+        }
+        else if ( glbTraffictype == 'ATM' )
+        {
+            regexp = /^atm|^pppoa|^ipoa/ ;
+            layer2Info = layer2InfoATM;
+        }
+        else {
+            //inactive so check glbWanL2IfName
+            if (glbWanL2IfName.substring(0, 3) == 'atm')
+            {
+                glbTraffictype="ATM";
+                layer2Info = layer2InfoATM;
+                regexp = /^atm|^pppoa|^ipoa/ ;
+            }
+            else
+            {
+                glbTraffictype="PTM";
+                layer2Info = layer2InfoPTM;
+                regexp = /^ptm/ ;
+            }
+        }
+
+        l2info=layer2Info.split('|');
+
+        for ( var i = 0; i < names.length; i++ ) {
+            names[i] = htmlDecodeStr(names[i]);
+            if (names[i].search(regexp) != -1) {
+                glbInfname = names[i];
+                break;
+            }
+        }
+        glbType = "pppoe"; //default dsl connection
+        glbAutoconnect = '1';
+        glbPppusername ='';
+        glbUsestaticip='0';
+        singlestaticip='';
+        ppp_pwd='';
+      //mtu="1492";
+    }
+}
+
+function extract_info_from_eth(inf)
+{
+    var wanInfNamestmp= "";
+
+    if(inf == 'ewan0')
+        wanInfNamestmp=glbWanInfNames_ewan;
+    else if(inf == 'ewan1')
+        wanInfNamestmp=glbWanInfNames_ewan1;
+    else if( inf == 'eth5')
+        wanInfNamestmp='<%ejGetOther(wanInterfaces, eth5)%>';
+    else if( inf == 'eth6')
+        wanInfNamestmp='<%ejGetOther(wanInterfaces, eth6)%>';
+    else if( inf == 'eth7')
+        wanInfNamestmp='<%ejGetOther(wanInterfaces, eth7)%>';
+    else if( inf == 'eth8')
+        wanInfNamestmp='<%ejGetOther(wanInterfaces, eth8)%>';
+
+    /* set glbFirstAccess to 1, to show value from cgi */
+    if (glbWanL2IfName.substring(0, 3) == 'eth' && inf.substring(0,3) == 'eth')
+        glbFirstAccess = 1;
+
+    if(glbInfname == "ewan0")
+        glbTraffictype="WANETH";
+    else if(glbInfname == "ewan1")
+        glbTraffictype="SFP";
+    else
+        glbTraffictype="HPNA";
+
+    if(wanInfNamestmp !='')
+    {
+        var wanNameTypes  = wanInfNamestmp.split('|');
+        var nameType = wanNameTypes[0].split(':');
+
+        wanInf = htmlDecodeStr(nameType[1]);
+        glbInfname= inf;
+        glbWantype=htmlDecodeStr(nameType[0]);
+
+        if(glbWantype == "PPPoE" )
+        {
+            glbAutoconnect = htmlDecodeStr(nameType[13]);
+            glbPppusername = htmlDecodeStr(nameType[2]);
+            glbUsestaticip=htmlDecodeStr(nameType[4]);
+            singlestaticip=htmlDecodeStr(nameType[5]);
+            ppp_pwd=htmlDecodeStr(nameType[3]);
+
+            if(ppp_pwd == "")
+               glbPasslen=0;
+            else
+               glbPasslen=100;
+
+            enblIgmp=htmlDecodeStr(nameType[14]);
+          //mtu=nameType[15];
+
+        }
+        else if(glbWantype == "Bridge")
+        {
+            ;
+        }
+        else
+        {
+            iptype=htmlDecodeStr(nameType[2]);
+            ipaddr=htmlDecodeStr(nameType[3]);
+            subnet=htmlDecodeStr(nameType[4]);
+            gateway=htmlDecodeStr(nameType[5]);
+            enblIgmp=htmlDecodeStr(nameType[11]);
+          //mtu=nameType[12];
+        }
+
+        sid = glbInfname;
+    }
+    else
+    {
+        var gi = old_glbWanL2IfName.substring(0, 3);
+        var ci = inf.substring(0, 3);
+
+        if(gi== 'eth' && ci == 'eth') {
+            wanInf = '';
+        }
+
+        glbInfname = inf;
+        glbType='dhcpc'; //default non dsl connection
+        glbWantype='dhcpc';
+        iptype='0';
+        ipaddr='';
+        subnet='';
+        gateway='';
+      //mtu=1500;
+    }
+}
+
+function set_element_orig()
+{
+    var form = document.forms[0];
+
+    if(enblIgmp == "1") {
+        form.igmpproxy[0].checked = true;
+        form.igmpproxy[1].checked = false;
+    }
+    else {
+        form.igmpproxy[0].checked = false;
+        form.igmpproxy[1].checked = true;
+    }
+
+    if(glbTraffictype == "ATM")
+    {
+        form.atmencap[0].disabled = false;
+        form.atmencap[1].disabled = false;
+
+        if(atmencaps== "VCMUX")
+            form.atmencap[1].checked = true;
+        else
+            form.atmencap[0].checked = true;
+
+        wconnMode=htmlDecodeStr(l2info[12]);
+
+        if(htmlDecodeStr(l2info[10]) == "PPPoA"){
+            glbContype="asis";
+            if (glbWanInfNames =='')
+            {
+                //mtu=1500;
+            }
+        }
+        else
+        {
+            if (glbWanInfNames =='')
+                glbContype="pppoe";
+            else if(glbWantype == "Bridge")
+                glbContype="bridge";
+            else if(glbWantype == "PPPoE")
+                glbContype="pppoe";
+            else if(iptype == "0")
+                glbContype="dhcpc";
+            else
+                glbContype="static";
+        }
+    }
+    else if(glbTraffictype == "PTM")
+    {
+        wconnMode=htmlDecodeStr(l2info[6]);
+        form.atmencap[0].disabled = true;
+        form.atmencap[1].disabled = true;
+        form.conn[1].disabled = true;
+
+        if (glbWanInfNames =='')
+            glbContype="pppoe";
+        else if(glbWantype == "Bridge")
+            glbContype="bridge";
+        else if(glbWantype == "PPPoE")
+            glbContype="pppoe";
+        else if(iptype == "0")
+            glbContype="dhcpc";
+        else
+            glbContype="static";
+    }
+    else
+    { /* ewan0 or hpna */
+        form.conn[1].disabled = true;
+        form.atmencap[0].disabled = true;
+        form.atmencap[1].disabled = true;
+
+        if(glbWantype == "Bridge")
+            glbContype="bridge";
+        else if(glbWantype == "PPPoE")
+            glbContype="pppoe";
+        else if(iptype == "0")
+            glbContype="dhcpc";
+        else
+            glbContype="static";
+    }
+
+    if (dnsIfc != ''|| (dnsIfc == '' && dns1 == ''))
+    {
+        dns_type="dynamic";
+    }
+    else
+        dns_type="static";
+
+    Set_Mode(glbContype);
+    // DNS
+    Click_DNS(dns_type);
+    pre_encap_type = encap_type;
+    pre_dnstype = dns_type;
+}
+
+function Set_Mode(mode) {
+    /*
+    glbFirstAccess==1: load value from cgi;
+    glbFirstAccess==0: load default value.
+    */
+    var changecontype=0;
+
+    if(glbContype != mode)
+        changecontype=1;
+
+    var form = document.forms[0];
+    //if( glbPremode == mode) return;
+    //glbPremode = mode;
+
+    if (glbFirstAccess == 1) {
+        ;
+    }
+    else {
+        form.dnstyp[0].checked = true;
+    }
+
+    Set_ATM_Text(1);
+
+    switch(mode)
+    {
+        case "bridge":
+            glbType="bridge";
+            form.conn[2].checked = true;
+            show_step2();
+            enableDnsSel(0);
+            UserPass_Ctl(1);
+            Hide_Static_IP();
+            WAN_IP_Sel(0);
+            selectIpType(0);
+            PPP_Auto_Sel(0);
+            if (glbFirstAccess == 1) {
+            }
+            else {
+                form.atmencap[0].checked = true;
+            }
+        //  form.mtu.disabled=true;
+            form.igmpproxy[0].disabled=true;
+            form.igmpproxy[1].disabled=true;
+            break;
+        case "pppoe":
+            glbType="pppoe";
+            show_step2();
+            form.conn[0].checked = true;
+            enableDnsSel(1);
+            UserPass_Ctl(2);
+            Hide_Static_IP();
+            selectIpType(1);
+        //  form.mtu.disabled=false;
+            form.igmpproxy[0].disabled=false;
+            form.igmpproxy[1].disabled=false;
+            if (glbFirstAccess == 1 || changecontype==0) {
+                PPP_Load("pppoe");
+                loadUnnumCtl("pppoe");
+        //      form.mtu.value=mtu;
+            }
+            else {
+                WAN_IP_Sel(1);
+                selectIpType(1);
+                PPP_Auto_Sel(1);
+        //      form.mtu.value=1492;
+            //  form.atmencap[0].checked = true;
+            }
+            break;
+        case "asis":
+            glbType="pppoa";
+            show_step2();
+            form.conn[1].checked = true;
+            enableDnsSel(1);
+            Hide_Static_IP();
+            UserPass_Ctl(2);
+            Set_ATM_Text(0);
+            selectIpType(1);
+        //  form.mtu.disabled=false;
+            form.igmpproxy[0].disabled=false;
+            form.igmpproxy[1].disabled=false;
+            if (glbFirstAccess == 1 || changecontype==0) {
+                PPP_Load("pppoa");
+                loadUnnumCtl("pppoa");
+        //      form.mtu.value=mtu;
+            }
+            else {
+                WAN_IP_Sel(1);
+                selectIpType(1);
+                PPP_Auto_Sel(1);
+        //      form.mtu.value=1500;
+              //form.atmencap[1].checked = true;
+            }
+            break;
+        case "dhcpc":
+            glbType="dhcpc";
+            show_step2();
+            form.conn[3].checked = true;
+            form.dnstyp[0].disabled = false;
+            UserPass_Ctl(3);
+            Hide_Static_IP();
+            PPP_Auto_Sel(0);
+            selectIpType(1);
+            form.ppp_username.value = htmlDecodeStr(glbHostname);
+            form.domain_name.value = glbDomainname;
+            form.option60.value = htmlDecodeStr(glbDhcpOption60);
+            Click_DNS('dynamic');
+            enableDnsSel(1);
+        //  form.mtu.disabled=false;
+            form.igmpproxy[0].disabled=false;
+            form.igmpproxy[1].disabled=false;
+            if (glbFirstAccess == 1 || changecontype==0) {
+                loadUnnumCtl("dhcpc");
+        //      form.mtu.value=mtu;
+            }
+            else {
+                form.atmencap[0].checked = true;
+        //      form.mtu.value=1500;
+            }
+            break;
+        case "static":
+            glbType="static";
+            hide_step2();
+            form.conn[4].checked = true;
+            UserPass_Ctl(1);
+            PPP_Auto_Sel(0);
+            selectIpType(0);
+            enableDnsSel(1);
+            form.dnstyp[0].disabled = true;
+            Click_DNS('static');
+            Enable_Static_IP();
+        //  form.mtu.disabled=false;
+            form.igmpproxy[0].disabled=false;
+            form.igmpproxy[1].disabled=false;
+            if (glbFirstAccess == 1 || changecontype==0) {
+                loadUnnumCtl("static");
+                form.ipadd.value=ipaddr;
+                form.submask.value=subnet;
+                form.gateadd.value=gateway;
+         //     form.mtu.value=mtu;
+            }
+            else {
+                form.atmencap[0].checked = true;
+        //      form.mtu.value=1500;
+            }
+            break;
+    }
+
+    glbFirstAccess = 0;
+}
+
+function selectWanport() {
+    var form = document.forms[0];
+    var len = form.wanport.length;
+    var i;
+
+    document.getElementById("step_6").style.display = "none";
+    form.wanport.options[0].selected = true;
+    for (i=1; i<len; i++) {
+      //if (form.wanport.options[i].value == old_glbWanL2IfName) {
+        if ( old_glbWanL2IfName.indexOf(form.wanport.options[i].value)!=-1) {
+            form.wanport.options[i].selected = true;
+            break;
+        }
+    }
+
+    if (glbWanL2IfName!=old_glbWanL2IfName){
+        glbFirstAccess = 1;
+        form.wanport.options[0].selected = true;
+
+        for ( i=1; i<len; i++) {
+            if (glbWanL2IfName.indexOf(form.wanport.options[i].value)!=-1) {
+                form.wanport.options[i].selected = true;
+                break;
+            }
+        }
+    }
+
+    onSelectWanport();
+}
+
+function onSelectWanport() {
+    var form = document.forms[0];
+    var index = form.wanport.selectedIndex;
+
+    switch(index)
+    {
+        case 1: //WAN ethernet
+            extract_info_from_eth('ewan0');
+            Conn_Ctl("ewan");
+            document.getElementById("intf_name").innerHTML = "<strong>_(WAN Ethernet)_</strong>";
+            break;
+        case 2: //WAN HPNA
+            extract_info_from_eth('eth5');
+            Conn_Ctl("hpna");
+             document.getElementById("intf_name").innerHTML = "<strong>_(WAN HPNA)_</strong>";
+            break;
+        case 3: //WAN HPNA
+            extract_info_from_eth('eth6');
+            Conn_Ctl("hpna");
+            break;
+        case 4: //WAN HPNA
+            extract_info_from_eth('eth7');
+            Conn_Ctl("hpna");
+            break;
+        case 5: //WAN HPNA
+            extract_info_from_eth('eth8');
+            Conn_Ctl("hpna");
+            break;
+        case 6: //SFP
+            extract_info_from_eth('ewan1');
+            Conn_Ctl("ewan1");
+            document.getElementById("intf_name").innerHTML = "<strong>_(SFP)_</strong>";
+            break;
+        case 0: //WAN DSL
+            extract_info_from_dsl();
+            Conn_Ctl("dsl");
+            document.getElementById("intf_name").innerHTML = "<strong>DSL</strong>";
+    }
+
+    set_element_orig();
+}
+
+function Conn_Ctl(iftype)
+{
+    var form = document.forms[0];
+    form.conn[0].disabled = false;
+    form.conn[1].disabled = false;
+    form.conn[2].disabled = false;
+    form.conn[3].disabled = false;
+    form.conn[4].disabled = false;
+
+    if (iftype == "dsl") {
+    }
+    else if (iftype == "ewan") {
+        form.conn[1].disabled = true;
+    }
+    else if (iftype == "hpna") {
+        form.conn[0].disabled = true;
+        form.conn[1].disabled = true;
+        form.conn[2].disabled = true;
+      //form.conn[3].selected = true;
+    }
+}
+
+function isValidDNSaddr(addr)
+{
+    if (' ' == addr) // this is impossible, if it's true, then returns true too.
+    {
+        return true;
+    }
+
+    if ('127.0.0.1' == addr)
+    {
+        return false;
+    }
+
+    if (gwAddress == addr)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+
+function do_load()
+{
+    auto_check_wan_connect_status();
+    init_dnsproxy();
+    selectWanport();
+
+    document.getElementById("id_PPPoE").style.display = "";
+    if (user_id == 3){
+        document.getElementById("id_rfc_1483_transparent_bridging").style.display = "";
+    }
+    else{
+        document.getElementById("id_rfc_1483_transparent_bridging").style.display = "none";
+    }
+
+    if ((phy_wan_status != "Up") || (parseInt(file_exist) == 1))
+    {
+        disable_all_input();
+    }
+    else
+    {
+        clearTimeout(mytimeid);
+    }
+
+    //highlight the button after user click on it
+    init_vars();
+    side_nav("advancedsetup_wanipaddress");
+}
+
+function SelectDHCP(flag) //for function UserPass_Ctl() only
+{
+    var cell_height = 21;
+    var table = document.getElementById("tb_step2");
+
+    while ( table.getElementsByTagName("tr").length > 3)
+        table.deleteRow(2);
+
+    var newTR = table.insertRow(2);
+    var newTD = new Array();
+    newTD[0] = newTR.insertCell(-1);
+    newTD[1] = newTR.insertCell(-1);
+
+    if (flag==1) { // DHCP
+        if (user_id == 3){
+            document.getElementById("tb_option").style.display = "";
+            document.getElementById("step6").innerHTML = '<strong>7. _(Click Apply to save changes.)_</strong>';
+        }
+        else
+        {
+            document.getElementById("tb_option").style.display = "none";
+        }
+
+        newTD[0].innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;<span id="subrf4" >_(Domain Name)_</span>';
+        newTD[1].innerHTML = '<input class="textInput" type="text" style="height:18px;" name="domain_name" maxsize=128 value=" "  id="domain_name" >';
+    }
+    else {
+        document.getElementById("tb_option").style.display = "none";
+        document.getElementById("step6").innerHTML = '<strong>6. _(Click Apply to save changes.)_</strong>';
+        newTD[0].innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;<span id="subrf4" >_(PPP Password)_:</span>';
+        newTD[1].innerHTML = '<input type="password" name="ppp_password"  id="ppp_password" style="margin:auto auto auto auto; height:18px;" onFocus="changeDisp();" />';
+    }
+}
+
+function loadUnnumCtl(mode) {
+    var form = document.forms[0];
+
+    if( glbUnnummode == "1" ) { // unmunber mode
+        form.wanip[2].checked = true;
+
+        if(glbVipmode == "1")
+            form.vipmode.checked = true;
+        else
+            form.vipmode.checked = false;
+    }
+    else {
+        if( (mode == "pppoe") || (mode == "pppoa")) {
+            if( glbUsestaticip == "1" ) {
+                form.wanip[1].checked = true;  // The value already load in the form
+            }
+            else {
+                form.wanip[0].checked = true;
+            }
+        }
+        else {
+            form.wanip[0].checked = true;
+        }
+    }
+
+    Check_IPType();
+}
+
+
+/* this function should be called after UserPass_Ctl() */
+function PPP_Load(mode) { // mode:pppoe|pppoa
+    var form = document.forms[0];
+    form.ppp_username.value = htmlDecodeStr(glbPppusername);
+
+    if  (glbPppusername=="")
+    {
+        UserPass_Ctl(0);
+    }
+    else
+    {
+        if (glbPasslen > 0)
+            form.ppp_password.value ="********";
+        else
+            form.ppp_password.value = "";
+    }
+
+    if(glbAutoconnect == "1") {
+        form.pppautoconnect.checked = true;
+    }
+    else {
+        form.pppautoconnect.checked = false;
+    }
+
+    if( glbUnnummode == "1" ) {  //unmunber mode
+        form.wanip[2].checked = true;
+        if(glbVipmode == "1")
+            form.vipmode.checked = true;
+        else
+            form.vipmode.checked = false;
+
+        Single_IP_Ctl(2);
+    }
+    else
+    {
+        if( glbUsestaticip == "1" ) {
+            form.wanip[1].checked = true;  // The value already load in the form
+            Single_IP_Ctl(1);
+        }
+        else {
+            form.wanip[0].checked = true;
+            Single_IP_Ctl(0);
+        }
+    }
+
+}
+
+function Click_DNS(dns_mode) {
+    var form = document.forms[0];
+    pre_dnstype = dns_mode;
+
+    if(dns_mode == "dynamic") {
+        form.dnstyp[0].checked = true;
+        disableStaticDns(form);
+    }
+    else {
+        form.dnstyp[1].checked = true;
+        enableStaticDns(form);
+    }
+}
+
+function removeBlockSelect(){
+    var form = document.forms[0];
+    form.wanip[2].checked = false;
+    form.vipmode.checked = false;
+    form.vipmode.disabled = true;
+}
+
+function Click_IPType() {
+    var form = document.forms[0];
+
+    if(form.wanip[2].checked == true) { // unnumbered mode
+        form.singlestaticip.disabled = true;
+        form.gatewayadd.disabled = false;
+        form.subnetmask.disabled = false;
+        form.vipmode.disabled = false;
+        form.vipmode.checked = true;
+    }
+    else {
+        form.vipmode.disabled = true;
+// advanced start
+        if(form.vipmode.checked) {
+            if( form.wanip[2].checked == false) {
+                alert("_(You cannot disable this button while VIP is enabled.)_");
+            }
+            form.wanip[2].checked = true;
+            form.vipmode.disabled = false;
+        }
+// Advanced end
+    }
+    if(form.wanip[0].checked == true) { // dynamic ip
+        form.singlestaticip.disabled = true;
+        form.gatewayadd.disabled = true;
+        form.subnetmask.disabled = true;
+    }
+    else if(form.wanip[1].checked == true) { //static ip
+        form.singlestaticip.disabled = false;
+        form.gatewayadd.disabled = true;
+        form.subnetmask.disabled = true;
+    }
+}
+
+function Check_IPType() {
+    var form = document.forms[0];
+
+    if(form.wanip[2].checked == true) {
+        form.singlestaticip.disabled = true;
+        form.gatewayadd.disabled = false;
+        form.subnetmask.disabled = false;
+        form.vipmode.disabled = false;
+    }
+    else {
+        form.vipmode.disabled = true;
+// advanced start
+        if(form.vipmode.checked) {
+            if( form.wanip[2].checked == false) {
+                alert("_(You cannot disable this button while VIP is enabled.)_");
+            }
+            form.wanip[2].checked = true;
+            form.vipmode.disabled = false;
+        }
+// Advanced end
+    }
+    if(form.wanip[0].checked == true) {
+        form.singlestaticip.disabled = true;
+        form.gatewayadd.disabled = true;
+        form.subnetmask.disabled = true;
+    }
+    else if(form.wanip[1].checked == true) {
+        form.singlestaticip.disabled = false;
+        form.gatewayadd.disabled = true;
+        form.subnetmask.disabled = true;
+    }
+}
+
+function UserPass_Ctl(ctl) { // 0:disabled | 1:disable (user/pass->Not Applicable) 2:enabled (PPPoE/PPPoA) | 3: enabled (DHCP)
+    var form = document.forms[0];
+
+    if(ctl == 0) {
+        SelectDHCP(0);
+        ISP_Userpass_CTL(2);
+        document.getElementById('subrf1').innerHTML="<strong>3. _(Enter your PPP username and password.)_ </strong>";
+        form.ppp_username.disabled = true;
+        form.ppp_password.disabled = true;
+        document.getElementById('subrf2').innerHTML="_(PPP Username)_:";
+      //document.getElementById('subrf4').innerHTML="PPP Password:";
+    }
+    else if(ctl == 1) {
+        SelectDHCP(0);
+        ISP_Userpass_CTL(0);
+        document.getElementById('subrf1').innerHTML="<strong>3. _(Enter your PPP username and password.)_</strong>";
+        form.ppp_username.disabled = true;
+        form.ppp_password.disabled = true;
+        document.getElementById('subrf2').innerHTML="_(PPP Username)_:";
+      //document.getElementById('subrf4').innerHTML="PPP Password:";
+        form.ppp_username.value = "_(Not Applicable)_";
+        form.ppp_password.value = "_(Not Applicable)_";
+    }
+    else if( ctl == 2 ) {
+        SelectDHCP(0);
+        ISP_Userpass_CTL(1);
+        document.getElementById('subrf1').innerHTML="<strong>3. _(Enter your PPP username and password.)_ </strong>";
+        form.ppp_username.disabled = false;
+        form.ppp_password.disabled = false;
+        document.getElementById('subrf2').innerHTML="_(PPP Username)_:";
+      //document.getElementById('subrf4').innerHTML="PPP Password:";
+        form.ppp_username.value = htmlDecodeStr(glbPppusername);
+        if (glbPppusername!="")
+        {
+            if (glbPasslen > 0)
+                form.ppp_password.value ="********";
+            else
+                form.ppp_password.value = "";
+        }
+        else
+            form.ppp_password.value = "";
+    }
+    else if (ctl == 3)  {
+        SelectDHCP(1);
+        ISP_Userpass_CTL(0);
+        document.getElementById('subrf1').innerHTML="<strong>3. _(If your ISP Provider requires Host Name/Domain Name, enter it here.)_</strong>";
+        form.ppp_username.disabled = false;
+        form.domain_name.disabled = false;
+        document.getElementById('subrf2').innerHTML="_(Host Name)_";
+      //document.getElementById('subrf4').innerHTML="Domain Name";
+        form.ppp_username.value = "";
+        form.domain_name.value = "";
+    }
+}
+
+function ISP_Userpass_CTL(ctl) {
+    var form = document.forms[0];
+
+    if(ctl == 0)
+    {
+        form.nouser.checked = false;
+        form.nouser.disabled = true;
+    }
+    else if (ctl == 1)
+    {
+        form.nouser.checked = false;
+        form.nouser.disabled = false;
+    }
+    else if (ctl == 2)
+    {
+        form.nouser.checked = true;
+        form.nouser.disabled = false;
+    }
+    else
+    {
+        form.nouser.disabled = false;
+    }
+}
+
+function Click_Nouser(form) {
+    if( form.nouser.checked )
+        UserPass_Ctl(0);
+    else
+        UserPass_Ctl(2);
+}
+
+function Hide_Static_IP() {
+    document.getElementById('subrf36').style.display="none";
+}
+
+function Enable_Static_IP() {
+    document.getElementById('subrf36').style.display="block";
+}
+
+function enableDnsSel(sel) {
+    var form = document.forms[0];
+
+    if(sel == 1) {
+        form.dnstyp[0].disabled = false;
+        form.dnstyp[1].disabled = false;
+        if(form.dnstyp[0].checked )
+            disableStaticDns(form);
+        else
+            enableStaticDns(form);
+    }
+    else {
+        form.dnstyp[0].disabled = true;
+        form.dnstyp[1].disabled = true;
+        disableStaticDns(form);
+    }
+}
+
+function disableStaticDns(form) {
+    form.primarydns.disabled = true;
+    form.secdns.disabled = true;
+    form.primarydns.value = "_(Not Applicable)_";
+    form.secdns.value = "_(Not Applicable)_";
+}
+
+function enableStaticDns(form) {
+    form.primarydns.disabled = false;
+    form.secdns.disabled = false;
+    form.primarydns.value = dns1;
+    form.secdns.value = dns2;
+
+    if( form.primarydns.value == "_(Not Applicable)_") {
+        form.primarydns.value = "";
+        form.secdns.value = "";
+    }
+}
+
+function Unnum_IP_Ctl(ctl) {     // 1: enable; 0: Disable
+    var form = document.forms[0];
+
+    if(ctl == 1) {
+        form.gatewayadd.disabled = false;
+        form.subnetmask.disabled = false;
+        document.getElementById('subrf17').disabled=false;
+        document.getElementById('subrf19').disabled=false;
+    }
+    else {
+        form.gatewayadd.disabled = true;
+        form.subnetmask.disabled = true;
+        document.getElementById('subrf17').disabled=true;
+        document.getElementById('subrf19').disabled=true;
+    }
+}
+
+function Single_IP_Ctl(ctl) {     // 1: enable; 0: Disable
+    var form = document.forms[0];
+
+    if(ctl == 1) {
+        form.singlestaticip.disabled = false;
+        form.singlestaticip.value = singlestaticip;
+    }
+    else if(ctl==2) {
+        if(form.conn[1].checked||form.conn[0].checked)
+        {
+          //document.getElementById('subtb123').style.display="block";
+            form.singlestaticip.disabled = true;
+            form.gatewayadd.disabled = false;
+            form.subnetmask.disabled = false;
+            document.getElementById('subrf30').disabled=false;  // Advanced only
+            form.gatewayadd.value = htmlDecodeStr("<%ejGet(lan2IpAddress)%>");
+            form.subnetmask.value = htmlDecodeStr("<%ejGet(lan2SubnetMask)%>");
+            form.singlestaticip.value = "_(Not Applicable)_";
+        }
+    }
+    else {
+        form.singlestaticip.disabled = true;
+    }
+}
+
+function WAN_IP_Sel(ctl) {// 1:enable, 0: disable
+    var form = document.forms[0];
+
+    if(ctl == 1) {
+        form.wanip[0].disabled = false;
+        form.wanip[1].disabled = false;
+        if( form.wanip[0].checked ) {
+            Single_IP_Ctl(0);
+        }
+        else {
+            Single_IP_Ctl(1);
+        }
+    }
+    else {
+        Single_IP_Ctl(0);
+        form.wanip[0].disabled = true;
+        form.wanip[1].disabled = true;
+    }
+}
+function selectIpType(ctl) {
+    var form = document.forms[0];
+    form.wanip[0].checked = true;
+    form.vipmode.disabled = true;
+
+    switch (ctl) {
+        case 0: //all disabled
+            form.wanip[0].disabled = true;
+            form.wanip[1].disabled = true;
+            form.wanip[2].disabled = true;
+            form.singlestaticip.disabled = true;
+            form.gatewayadd.disabled = true;
+            form.subnetmask.disabled = true;
+            form.singlestaticip.value = "_(Not Applicable)_";
+            form.gatewayadd.value = "_(Not Applicable)_";
+            form.subnetmask.value = "_(Not Applicable)_";
+            break;
+        case 1: //dhcp only
+            form.wanip[0].disabled = false;
+            form.wanip[1].disabled = true;
+            form.wanip[2].disabled = true;
+            form.singlestaticip.disabled = true;
+            form.gatewayadd.disabled = true;
+            form.subnetmask.disabled = true;
+            form.singlestaticip.value = "_(Not Applicable)_";
+            form.gatewayadd.value = "_(Not Applicable)_";
+            form.subnetmask.value = "_(Not Applicable)_";
+            break;
+        case 2: //dhcp or static
+            form.wanip[0].disabled = true;
+            form.wanip[1].disabled = true;
+            form.wanip[2].disabled = false;
+            form.singlestaticip.disabled = true;
+            form.gatewayadd.disabled = true;
+            form.subnetmask.disabled = true;
+            form.singlestaticip.value = "_(Not Applicable)_";
+
+            if(form.gatewayadd.value == "_(Not Applicable)_") {
+                form.gatewayadd.value = "";
+                form.subnetmask.value = "";
+            }
+            break;
+        case 3: // all enabled
+            form.wanip[0].disabled = false;
+            form.wanip[1].disabled = false;
+            form.wanip[2].disabled = false;
+            form.singlestaticip.disabled = true;
+            form.gatewayadd.disabled = true;
+            form.subnetmask.disabled = true;
+            form.singlestaticip.value = "";
+            form.gatewayadd.value = "";
+            form.subnetmask.value = "";
+            break;
+    }
+}
+
+function Set_ATM_Text(title)    // 0 - VC-Mux(Default)/LLC/SNAP   1 - LLC Bridged/LLC Routed
+{
+    if(title == 1)
+    {
+        document.getElementById('subrf33').innerHTML = "_(LLC (Default))_";
+        document.getElementById('subrf35').innerHTML = "VC-Mux";
+    }
+    else
+    {
+        document.getElementById('subrf33').innerHTML = "LLC";
+        document.getElementById('subrf35').innerHTML = "_(VC-Mux(Default))_";
+    }
+}
+
+function PPP_Auto_Sel(sel) {
+    var form = document.forms[0];
+
+    if(sel == 1 ) {
+        form.pppautoconnect.disabled = false;
+        form.pppautoconnect.checked = true;
+    }
+    else {
+        form.pppautoconnect.disabled = true;
+        form.pppautoconnect.checked = false;
+    }
+}
+
+function On_Apply() {
+    var key = '<%ejGetOther(encrypt_key, 0)%>';
+    var lochead='wansetup.cmd';
+    var loc="";
+    var msg = '';
+
+    with ( document.forms[0] ) {
+    /*
+         if(wanport[1].selected == true) //WAN ethernet
+         {
+             wconnMode = "DefaultMode";
+         }
+
+         else
+    */
+        if (wanport[2].selected == true) //WAN HPNA
+        {
+            wconnMode = "DefaultMode";
+        }
+
+        if(wanport[0].selected != true && wanport[1].selected != true && wanport[6].selected != true) //WAN HPNA
+        {
+            if(hpnaMode != 'LANWAN')
+            {
+                alert("_(There is a problem with HPNA WAN mode. You must enable it first.)_");
+                return;
+            }
+        }
+
+        if (wanInf=='')
+            loc += '?serviceId=0';
+        else /* editing */
+            loc += '?serviceId=1&wanInf=' + wanInf;
+
+        loc += '&wanL2IfName=' + glbInfname;
+
+        if (wconnMode == "VlanMuxMode") {
+            loc += '&enVlanMux=1&vlanMuxId='+vlanMuxId.value;
+            loc += '&vlanMuxPr='+vlanMuxPr.value;
+        }
+
+        if ( glbType == "pppoe" ||  glbType == "pppoa") {
+            /* ppp */
+            var len = ppp_username.value.length;
+            if (len == 0)
+            {
+                msg = "_(PPP Username can not be blank.)_";
+                alert(msg);
+                return;
+            }
+
+            if ( len > 256 ) {
+                msg = "_(The length of username (" + len + ") is too long. It must be less than 256 characters in length.)_";
+                alert(msg);
+                return;
+            }
+            else
+                loc += '&pppUserName=' + encodeUrl(ppp_username.value);
+
+            len =ppp_password.value.length;
+            if (len == 0)
+            {
+                msg = "_(PPP Password can not be blank.)_";
+                alert(msg);
+                return;
+            }
+            if ( len > 32 ) {
+                msg = "_(The password (" + len + ") is too long. It must be less than 32 characters in length.)_";
+                alert(msg);
+                return;
+            }
+            else
+            {
+                if(ppp_password.value == "********")
+                    loc += '&pppPassword=' + encodeUrl(htmlDecodeStr(ppp_pwd));
+                else
+                    loc += '&pppPassword=' + encodeUrl(ppp_password.value);
+            }
+
+            loc += '&pppIpExtension=0&enblFirewall=1&enblNat=1';
+            if ( wanip[1].checked == true ) {
+                loc += '&useStaticIpAddress=1';
+                if ( isValidIpAddress(singlestaticip.value) == false ) {
+                    alert("_(The Single Static IP Address is invalid.)_");
+                    return;
+                }
+                loc += '&pppLocalIpAddress=' + singlestaticip.value;
+                loc +='&enblLan2=0';
+                loc += '&vipmode=0';
+
+            } else if ( wanip[0].checked == true ) {
+                loc += '&useStaticIpAddress=0';
+                loc += '&pppLocalIpAddress=0.0.0.0';
+                loc +='&enblLan2=0';
+                loc += '&vipmode=0';
+            }
+            else
+            {
+                loc += '&enblLan2=1';
+                if ( isValidIpAddress(gatewayadd.value) == false ) {
+                    alert("_(The Gateway Address is invalid.)_");
+                    return;
+                }
+
+                loc += '&lan2IpAddress=' + gatewayadd.value;
+                if ( isValidIpAddress(subnetmask.value) == false ) {
+                    alert("_(The Subnet Mask is invalid.)_");
+                    return;
+                }
+
+                loc += '&lan2SubnetMask=' + subnetmask.value;
+                if(vipmode.checked)
+                    loc += '&vipmode=1';
+                else
+                    loc += '&vipmode=0';
+            }
+
+            if (pppautoconnect.checked == true)
+                loc += '&PPPAutoConnect=1';
+            else
+                loc += '&PPPAutoConnect=0';
+
+            loc += '&enblOnDemand=1';
+            loc += '&pppToBridge=0';
+            loc += '&enblEnetWan=0';
+            if(glbType == "pppoe"){
+        /*  if(mtu.value<=0 || mtu.value>1492){
+                msg = 'The length of MTU (' + mtu.value + ') is invalid [1-1492].';
+                alert(msg);
+                return;
+            }
+        */
+                loc+='&ntwkPrtcl=0';
+            }else{
+        /*      if(mtu.value<=0 || mtu.value>1500){
+                   msg = 'The length of MTU (' + mtu.value + ') is invalid [1-1500].';
+                   alert(msg);
+                   return;
+                }
+        */
+                loc+='&ntwkPrtcl=1';
+          }
+        //  loc+='&udmtu='+mtu.value;
+        }
+        else if ( glbType == "dhcpc" ||  glbType == "static") {
+            if ( glbType == "dhcpc" )
+            {
+                loc += '&enblDhcpClnt=1';
+                loc += '&enblDproxy=1';
+                if (ppp_username.value.search("[^A-Za-z0-9\-]") != -1)
+                {
+                    alert("_(The hostname is invalid. You must enter a valid hostname.)_");
+                    return;
+                }
+                else if (domain_name.value.search("[^A-Za-z0-9\-.]") != -1)
+                {
+                    alert("_(The domainname is invalid. You must enter a valid domainname.)_");
+                    return;
+                }
+
+                loc += '&hostname=' +encodeUrl(ppp_username.value);
+                loc += '&domainname=' + encodeUrl(domain_name.value) ;
+                if(user_id == 3)              /*only root can commit this value*/
+                {
+                     if(option60.value.length > 0)
+                     loc += '&option60='+ option60.value;
+                }
+            }
+            else {
+                loc += '&enblDhcpClnt=0';   // static WAN address
+                if ( isValidIpAddress(ipadd.value) == false ) {
+                    alert("_(The Single Static IP Address is invalid.)_");
+                    return;
+                }
+
+                loc += '&wanIpAddress=' + ipadd.value;
+                if ( isValidIpAddress(submask.value) == false ) {
+                    alert("_(The Modem Subnet Mask is invalid.)_");
+                    return;
+                }
+
+                loc += '&wanSubnetMask=' + submask.value;
+                if (glbType != "ipoa") {
+                    if ( isValidIpAddress(gateadd.value) == false ) {
+                        alert("_(The Gateway Address is invalid.)_");
+                        return;
+                    }
+                    loc += '&wanIntfGateway=' + gateadd.value;
+                }
+            }
+
+            loc += '&enblEnetWan=0';
+            loc += '&enblNat=1';
+            loc += '&enblFirewall=1';
+            loc += '&enableAdvancedDmz=0';
+            loc += '&enblEnetWan=0&ntwkPrtcl=2';
+            loc +='&enblLan2=0';
+            loc += '&vipmode=0';
+    //      loc+='&udmtu='+mtu.value;
+        }
+        else {
+            if ( user_id != 3){
+                alert("_(You are an invalid user.)_");
+                return;
+            }
+            loc += '&enblNat=0';
+            loc += '&enblFirewall=0';
+            loc += '&enableAdvancedDmz=0';
+            loc += '&enblEnetWan=0&ntwkPrtcl=3';
+            loc +='&enblLan2=0';
+            loc += '&vipmode=0';
+    //      loc+='&udmtu=1500';
+        }
+
+        /* dns actually not wan port specific, so don't put here */
+        if(igmpproxy[0].checked== true)
+            loc += '&enblIgmp=1';
+        else
+            loc += '&enblIgmp=0';
+
+
+        loc += '&action=add';
+        loc += '&redirect=' + redirect;
+
+        if(glbType == "pppoe" ||  glbType == "pppoa" ||glbType == "dhcpc" ||  glbType == "static")
+        {
+            if (dnstyp[0].checked) {
+                loc += '&dnsIfc=' + '';
+                loc +=  '&dnsPrimary=' + '0.0.0.0';
+                loc +=  '&dnsSecondary=' + '0.0.0.0';
+            }
+            else {
+                if ( isValidIpAddress(primarydns.value) == false ) {
+                    alert("_(DNS server IP address 1 and/or 2 is invalid. You must enter a valid DNS Server IP Address.)_");
+                    return;
+                }
+
+                if (!isValidDNSaddr(primarydns.value))
+                {
+                    alert("_(DNS server IP address 1 and/or 2 is invalid. You must enter a valid DNS Server IP Address.)_");
+                    return;
+                }
+
+                loc += '&dnsPrimary=' + primarydns.value;
+                if (secdns.value != '') {
+                    if ( isValidIpAddress(secdns.value) == false ) {
+                        alert("_(DNS server IP address 1 and/or 2 is invalid. You must enter a valid DNS Server IP Address.)_");
+                        return;
+                    }
+
+                    if (!isValidDNSaddr(secdns.value))
+                    {
+                        alert("_(DNS server IP address 1 and/or 2 is invalid. You must enter a valid DNS Server IP Address.)_");
+                        return;
+                    }
+
+                    loc += '&dnsSecondary=' + secdns.value;
+                }
+                else
+                    loc +=  '&dnsSecondary=' + '0.0.0.0';
+
+                loc += '&dnsIfc=' + '';
+            }
+        }
+
+        if(glbTraffictype == "ATM")
+        {
+            if(atmencap[0].checked== true)
+                loc +='&atmencaps=LLC';
+            else
+                loc +='&atmencaps=VCMUX';
+        }
+    }
+
+	loc += '&sessionKey=' + sessionKey;
+
+    //for wizard
+    if(parent !=null && parent.realpage !=null && parent.parent.realpage.autoFlag==1)
+    {
+    }
+    else
+        loc +='&needthankyou=advancedsetup_wanipaddress.html';
+
+    document.getElementById('applyBtn').disabled=true;
+    check_vars_change();
+    if(glbCheckVarsChange == 2)
+        loc += '&noneeddel=1';
+    else
+        loc += '&noneeddel=0';
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+ // var code = 'location="' + lochead + '"';
+ // eval(code);
+    postSubmit(lochead);
+}
+
+function auto_check_wan_connect_status()
+{
+    mytimeid = window.setTimeout("do_reload()", 10*1000);
+}
+
+function do_reload()
+{
+    window.location.reload(true);
+}
+
+function dom_load(){ do_load(); }
+
+</SCRIPT>
+</head>
+
+<body onload="loadFlag=1">
+    <div id="wrapper">
+            <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+
+    <div id="content_right">
+    <div id="content_right_header"></div>
+    <div id="content_right_contentarea">
+        <h1 class="advancedsetup_ipaddressing_wanip">_(WAN IP Address)_ </h1>
+        <form onSubmit="return false;">
+            <p>_(WAN IP Addressing sets the protocol used by your ISP for Internet access.)_</p>
+              <table width="85%" border="0" cellpadding="0" cellspacing="0">
+                <tr style="display:none">
+                <td colspan="3"><strong>1.WAN interface:</strong></td>
+                <td><select name="wanport" id="wanport" onchange="onSelectWanport()">
+                  <option value="dsl">_(DSL)_&nbsp;&nbsp;</option>
+                  <option value="ewan0">_(WAN Ethernet)_</option>
+                  <option value="eth5">_(WAN HPNA(eth5))_</option>
+                  <option value="eth6">_(WAN HPNA(eth6))_</option>
+                  <option value="eth7">_(WAN HPNA(eth7))_</option>
+                  <option value="eth8">_(WAN HPNA(eth8))_</option>
+                  <option value="ewan1">_(SFP)_</option>
+                </select></td>
+                </tr>
+                <tr>
+                <input name="vlanMuxId" type="hidden" id="vlanMuxId" value="-1" /></div>
+                <input type='hidden' size='4' name='vlanMuxPr' id='VlanMuxPr' value="-1"></div>
+                <input type='hidden' size='4' name='Option60' id='Option60' value=""></div>
+                <td colspan="3"><strong>1. _(Current WAN interface is)_ <span id="intf_name"></span>.</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="3"><strong>2. _(Select the ISP protocol below.)_</strong></td>
+                </tr>
+                <tr id="id_PPPoE" style="display:none;">
+                    <td colspan="3">&nbsp;&nbsp;
+                    <input name="conn" id="PPPoE" type="radio" value="PPPoE" ONCLICK="Set_Mode('pppoe')" />
+                    PPPoE   </td>
+                </tr>
+                <tr style="display:none">
+                    <td colspan="3">&nbsp;&nbsp;
+                    <input name="conn" id="PPPoA" type="radio" value="PPPoA" checked="checked" ONCLICK="Set_Mode('asis')" />
+                    PPPoA   </td>
+                </tr>
+                <tr id="id_rfc_1483_transparent_bridging" style="display:none;">
+                    <td colspan="3">&nbsp;&nbsp;
+                    <input name="conn" id="rfc_1483_transparent_bridging" type="radio" value="rfc_1483_transparent_bridging" ONCLICK="Set_Mode('bridge')" />
+                    _(RFC 1483 Transparent Bridging)_   </td>
+                </tr>
+                <tr>
+                    <td colspan="3">&nbsp;&nbsp;
+                    <input name="conn" id="rfc_1483_dhcp" type="radio" value="rfc_1483_dhcp" ONCLICK="Set_Mode('dhcpc')" />
+                    _(RFC 1483 via DHCP)_   </td>
+                </tr>
+                <tr>
+                    <td colspan="3">&nbsp;&nbsp;
+                    <input name="conn" id="rfc_1483_static_ip" type="radio" value="rfc_1483_static_ip" ONCLICK="Set_Mode('static')" />
+                    _(RFC 1483 via Static IP)_    </td>
+                </tr>
+                <tr>
+                    <td colspan="3">&nbsp;&nbsp;
+                    <div  style="display:none">
+                    <input name="pppautoconnect" id="g6" type="checkbox" value="ppp_auto_connect" checked="checked"  /><span class="reg_text_b" id="g7">
+                    _(PPP Auto Connect)_</span></div></td>
+                </tr>
+                <!--<tr>
+                    <td>Encapsulation: </td>
+                    <td>
+                        <input name="encap" value="bridged" id="g4" type="radio" checked="checked" ONCLICK="Change_Txt_Mode();"  />
+                        <span class="reg_text_b" id="g2">RFC 1483 Bridged</span>
+                    </td>
+                    <td>
+                        <input name="encap" value="routed" id="g5" type="radio"  ONCLICK="Change_Txt_Mode();"/>
+                        <span class="reg_text_b" id = "g3">RFC 1483 Routed </span>
+                    </td>
+                </tr>
+                <tr><td>Configure 802.1Q VLAN Settings</td></tr>
+                <tr>
+                    <td>Enter 802.1Q VLAN ID [0-4094]:</td>
+                    <td><input type='text' size='4' name='vlanMuxId' id='VlanMuxId'></td>
+                </tr>
+                <tr>
+                    <td>Enter 802.1P Priority [0-7]:</td>
+                    <td><input type='text' size='4' name='vlanMuxPr' id='VlanMuxPr'></td>
+                </tr> -->
+              </table>
+
+                <div id="step2" name="step2">
+                  <table width="85%" border="0" cellpadding="0" cellspacing="0" id="tb_step2">
+                    <tr>
+                        <td colspan="2"><span id="subrf1"><strong>3. _(Enter your PPP username and password.)_ </strong></span></td>
+                    </tr>
+                    <tr>
+                        <td width="30%">&nbsp;&nbsp;&nbsp;&nbsp;<span id="subrf2">_(PPP Username)_:</span> </td>
+                        <td><input type="text" name="ppp_username"  id="subrf3" style="margin:auto auto auto auto; height:18px;"/></td>
+                    </tr>
+                    <tr>
+                        <td width="30%">&nbsp;&nbsp;&nbsp;&nbsp;<span id="subrf4" >_(PPP Password)_:</span> </td>
+                        <td id = "td_passwd"><input type="password" name="ppp_password" id="ppp_password" style="margin:auto auto auto auto; height:18px;" onFocus="changeDisp();" /></td>
+                        </tr>
+                    <!--tr>
+                      <td width="30%">&nbsp;&nbsp;&nbsp;&nbsp;
+                          <span id="subrf4_2" >Domain Name</span></td>
+                      <td ><input class="textInput" type="text" name="domain_name" maxsize=128 value=" " size="30" id="subrf5_2" ></td>
+                    </tr-->
+                    <tr style="display:none">
+                        <td colspan="2">&nbsp;
+                        <input type="checkbox" name="nouser" VALUE="nouser"  id="subrf6" onClick="Click_Nouser(document.forms[0])" />
+                        <span class="reg_text" id="subrf7"> My ISP does not require a username and password.</span></td>
+                    </tr>
+                  </table>
+                </div>
+
+                <table width="85%" border="0" cellpadding="0" cellspacing="0" id="subrf36">
+                    <tr id="seliptype" style="display:none">
+                        <td colspan="2"><span id="subrf8"><strong>4. _(Select the IP Type.)_ </strong></span></td>
+                    </tr>
+                    <tr>
+                      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_(IP)_</td>
+                      <td ><input type="text" class="textinput" name="ipadd" id="ipadd" value="" size=17 style="height:18px;"></td>
+                    </tr>
+                    <tr>
+                      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_(Subnet Mask)_</td>
+                      <td ><input type="text" class="textinput" name="submask" id="submask" value="" size=17 style="height:18px;"></td>
+                    </tr>
+                    <tr>
+                      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_(Default Gateway Address)_</td>
+                      <td ><input type="text" class="textinput" name="gateadd" id="gateadd" value="" size=17 style="height:18px;"></td>
+                    </tr>
+                    <tr style="display:none">
+                        <td colspan="2">&nbsp;&nbsp;
+                        <input name="wanip" value="dynamicip" id="subrf9" checked onClick="Click_IPType()" type="radio" />
+                        <span id="subrf10">_(Dynamic IP-DHCP(Default))_ </span></td>
+                    </tr>
+                    <tr style="display:none">
+                        <td colspan="2">&nbsp;&nbsp;
+                        <input name="wanip" value="singlestaticipadd" ONCLICK="Click_IPType()" id="subrf11"type="radio" />
+                        <span id="subrf12">_(Single Static IP Address)_</span></td>
+                    </tr>
+                    <tr style="display:none">
+                        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <span id="subrf15">_(Single Static IP)_</span></td>
+                        <td><input type="text" name="singlestaticip" maxsize=128 value="" size=17 id="subrf16"  style="height:18px;"/></td>
+                    </tr>
+                    <tr style="display:none">
+                        <td colspan="2">&nbsp;&nbsp;
+                        <input name="wanip" value="blockstaticipadd" ONCLICK="Click_IPType()" id="subrf13" type="radio"  />
+                        <span id="subrf14">_(Block of Static IP Addresses (Unnumbered Mode))_</span></td>
+                    </tr>
+                    <tr style="display:none">
+                        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <span id="subrf17" >_(Gateway Address (Unnumbered Mode))_</span></td>
+                        <td><input type="text" name="gatewayadd" maxsize=128 value="" size=17 id="subrf18" style="height:18px;"/></td>
+                    </tr>
+                    <tr style="display:none">
+                        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <span id="subrf19" >_(Subnet Mask (Unnumbered Mode))_  </span>      </td>
+                        <td><input type="text" name="subnetmask" maxsize=128 value="" size=17 id="subrf20" style="height:18px;"/></td>
+                    </tr>
+                    <tr style="display:none">
+                        <td colspan="2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <input name="vipmode" value="vipmode" id="subrf30" type="checkbox" /><span id="subrf31">
+                        _(VIP Mode)_ </span></td>
+                    </tr>
+                </table>
+                <table width="85%" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td colspan="2"><span id="step4"><strong>5. Select the DNS type.</strong></span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">&nbsp;&nbsp;
+                        <input name="dnstyp" value="dyndns" ONCLICK="Click_DNS('dynamic')" checked id="subrf22" type="radio" />
+                        <span id="subrf23"> _(Dynamic DNS Addresses (Default))_ </span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">&nbsp;&nbsp;
+                        <input name="dnstyp" value="staticdns" ONCLICK="Click_DNS('static')" id="subrf24" type="radio" />
+                        <span id="subrf25"> _(Static DNS Addresses)_</span></td>
+                    </tr>
+                    <tr>
+                        <td width="31%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="subrf26">_(Primary DNS)_: </span></td>
+                        <td width="69%"><input type="text" name="primarydns" maxsize=128 value=" " id="subrf27" style="height:18px;"/></td>
+                    </tr>
+                    <tr>
+                        <td width="31%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="subrf28">_(Secondary DNS)_: </span></td>
+                        <td width="69%"><input type="text" name="secdns" maxsize=128 value=" " id="subrf29" style="height:18px;"/></td>
+                    </tr>
+                </table>
+                <div id="step_6">
+                    <table width="85%" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td><span id="subrf37"><strong>6. _(Select Encapsulation type.)_</strong></span></td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;&nbsp;
+                            <input name="atmencap" value="LLC" checked id ="subrf32" type="radio"  />
+                            <span id="subrf33">_(LLC(default))_ </span>                         </td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;&nbsp;
+                            <input name="atmencap" value="VCMUX" id ="subrf34" type="radio" />
+                            <span id="subrf35">_(VCMUX)_</span> </td>
+                        </tr>
+                    </table>
+                </div>
+<!--            <table width="85%" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td><span id="subrf317"><strong>6. Adjust MTU settings.</strong></span></td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;&nbsp;MTU:&nbsp;&nbsp;
+                            <input type="text" class="textInput" name="mtu" value="" size=10>
+                        </td>
+                    </tr>
+                </table>
+-->
+                <table width="85%" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td><span id="subrf47"><strong>6. _(Configure IGMP Proxy.)_</strong></span></td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;&nbsp;
+                            <input name="igmpproxy" value="1" checked id ="subrf42" type="radio"  />
+                            <span id="subrf43">_(Enable)_</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;&nbsp;
+                            <input name="igmpproxy" value="0" id ="subrf44" type="radio" />
+                            <span id="subrf45">_(Disable)_</span>
+                        </td>
+                    </tr>
+                </table>
+                <table width="85%" border="0" cellpadding="0" cellspacing="0" id="tb_option" style="display:none">
+                    <tr>
+                        <td colspan="2"><span id="subrf49"><strong>6. _(Configure DHCP Options.)_</strong></span></td>
+                    </tr>
+                    <tr>
+                        <td width="30%">&nbsp;&nbsp;&nbsp;&nbsp;_(Option 60)_</td>
+                        <td ><input class="textInput" type="text" name="option60" maxsize=128 value=" " size="30" id="option60" ></td>
+                    </tr>
+                </table>
+
+            <p><span id="step6"><strong>7. _(Click Apply to save changes.)_</strong></span></p>
+            <p><a class="button1" onclick="On_Apply()" id="applyBtn"><span>_(Apply)_</span></a></p>
+            </p>
+        </form>
+        </div>
+            <div id="content_right_footer"></div>
+        </div>
+    <div class="clear_left"></div>
+    <div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Status)_ - _(Internet Services)_ - _(Firewall Status)_</title>
+<link href="css/basic3.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+var user_id=htmlDecodeStr('<%ejGet(userID)%>');
+function do_load()
+{
+    get_appliation();
+    if(user_id != 1)
+       get_tr69_Portforward();
+    get_adv_portforward();
+    get_fw_dmzhost();
+    get_fw_settings();
+    get_nat_status();
+    get_upnp_rules();
+
+	//highlight the button after user click on it
+	side_nav("firewallstatus");
+}
+
+function get_appliation()
+{
+    var list_rule_applied_all = new Array();
+    var list_rule_applied_all_ip = new Array ();
+    var table = document.getElementById("fw_rulelist_tbl");
+    var applied_rules="<%ejGetOther(currVrtSrv)%>".split('|');
+    //var applied_rules="Half Life/192.168.0.2|".split('|');
+    var content = new Array();
+
+    if (applied_rules != "")
+    {
+        for(i=0; i<applied_rules.length-1; i++){
+            var details=applied_rules[i].split('/');
+
+            details[0] = htmlDecodeStr(details[0]);
+            details[1] = htmlDecodeStr(details[1]);
+
+            list_rule_applied_all_ip[i]=details[1];
+            list_rule_applied_all[i]=details[0];
+
+            //content[0] = '<img src="images/icon_firewall_applications.png" width="45" height="45" />';
+            content[0] = "&nbsp;";
+            content[1] = "_(Applications)_";
+            content[2] = list_rule_applied_all_ip[i];
+            content[3] = list_rule_applied_all[i] + ' _(inbound forwarded)_';
+            //content[3] = 'Forward Inbound ' + list_rule_applied_all[i] + ' Traffic';
+            appendTableRow(table, "center", content);
+        }
+    }
+    else
+    {
+        //content[0] = '<img src="images/icon_firewall_applications.png" width="45" height="45" />';
+        content[0] = "&nbsp;";
+        content[1] = "_(Applications)_";
+        content[2] = "_(N/A)_";
+        content[3] = "_(Default Feature Setting)_";
+        appendTableRow(table, "center", content);
+    }
+}
+
+function get_tr69_Portforward()
+{
+    var table = document.getElementById("fw_rulelist_tbl");
+    var applied_rules="<%ejGetOther(currVrtSrv_tr69)%>".split('|');
+    //var applied_rules="Half Life/192.168.0.2|".split('|');
+    var content = new Array();
+
+    if (applied_rules != "")
+    {
+        for(i=0; i<applied_rules.length-1; i++){
+            var details=applied_rules[i].split('/');
+
+         //    content[0] = '<img src="images/icon_firewall_applications.png" width="45" height="45" />';
+        content[0] = "&nbsp;";
+            //content[1] = 'TR69 Rule';
+            content[1] = htmlDecodeStr(details[0]);
+            content[2] = htmlDecodeStr(details[2]);
+            content[3] = "_(Forwarded Inbound)_ " + htmlDecodeStr(details[1]);
+            //content[3] = 'Forward Inbound ' + list_rule_applied_all[i] + ' Traffic';
+            appendTableRow(table, "center", content);
+        }
+    }
+}
+
+function get_adv_portforward()
+{
+    var table = document.getElementById("fw_rulelist_tbl");
+    var rule_list_all = new Array();
+    var content = new Array();
+    var len;
+    rule_list_all = "<%ejGetOther(PortForwarding)%>".split("|");
+    len = rule_list_all.length - 1;
+
+    if (rule_list_all != "")
+    {
+        for (var i=0; i<len; i++)
+        {
+            var details = rule_list_all[i].split(',');
+
+            details[1] = htmlDecodeStr(details[1]);
+            details[2] = htmlDecodeStr(details[2]);
+
+            var port = details[0].split('/');
+            var remote_port = details[3].split('/');
+            //content[0] = '<img src="images/icon_firewall_advancedportforwarding.png" width="45" height="45" />';
+		content[0] = "&nbsp;";
+            content[1] = "_(Port Forwarding)_";
+            content[2] = details[2];
+            if (details[1] == "UDP")
+            {
+                if( port[0] == port[1])
+                    content[3] = "_(Forwarded Inbound UDP Port)_" + port[0];
+                else
+                    content[3] = "_(Forwarded Inbound UDP Port)_ " + port[0] + " _(to)_ " + port[1];
+            }
+            else if (details[1] == "TCP")
+            {
+                if( port[0] == port[1])
+                    content[3] = "_(Forwarded Inbound TCP Port)_ " + port[0];
+                else
+                    content[3] = "_(Forwarded Inbound TCP Port)_ " + port[0] + " _(to)_ " + port[1];
+            }
+            else if (details[1] == "GRE")
+            {
+                if( port[0] == port[1])
+                    content[3] = "_(Forwarded Inbound GRE Port)_ " + port[0];
+                else
+                    content[3] = "_(Forwarded Inbound GRE Port)_ " + port[0] + " _(to)_ " + port[1];
+            }
+            else
+            {
+                if( port[0] == port[1])
+                    content[3] = "_(Forwarded Inbound TCP or UDP Port)_ " + port[0];
+                else
+                    content[3] = "_(Forwarded Inbound TCP or UDP Port)_ " + port[0] + " to " + port[1];
+            }
+            appendTableRow(table, "center", content);
+
+/*
+            content[0] = '<img src="images/icon_firewall_advancedportforwarding.png" width="45" height="45" />';
+            content[1] = 'Port Forwarding';
+            content[2] = details[4];
+            if (details[1] == "UDP")
+            {
+                if( remote_port[0] == remote_port[1])
+                    content[3] = "Forwarded Inbound UDP Port " + remote_port[0];
+                else
+                    content[3] = "Forwarded Inbound UDP Port " + remote_port[0] + " to " + remote_port[1];
+            }
+            else if (details[1] == "TCP")
+            {
+                if( remote_port[0] == remote_port[1])
+                    content[3] = "Forwarded Inbound TCP Port " + remote_port[0];
+                else
+                    content[3] = "Forwarded Inbound TCP Port " + remote_port[0] + " to " + remote_port[1];
+            }
+            else if (details[1] == "GRE")
+            {
+                if( remote_port[0] == remote_port[1])
+                    content[3] = "Forwarded Inbound GRE Port " + remote_port[0];
+                else
+                    content[3] = "Forwarded Inbound GRE Port " + remote_port[0] + " to " + remote_port[1];
+            }
+            else
+            {
+                if( remote_port[0] == remote_port[1])
+                    content[3] = "Forwarded Inbound TCP or UDP Port " + remote_port[0];
+                else
+                    content[3] = "Forwarded Inbound TCP or UDP Port " + remote_port[0] + " to " + remote_port[1];
+            }
+            appendTableRow(table, "center", content);
+*/
+        }
+    }
+    else
+    {
+        //content[0] = '<img src="images/icon_firewall_advancedportforwarding.png" width="45" height="45" />';
+	content[0] = "&nbsp;";
+        content[1] = "_(Port Forwarding)_";
+        content[2] = '_(N/A)_';
+        content[3] = "_(Default Feature Setting)_";
+        appendTableRow(table, "center", content);
+    }
+}
+
+function get_fw_dmzhost()
+{
+    var table = document.getElementById("fw_rulelist_tbl");
+    var content = new Array();
+    var ip_addr = '<%ejGetOther(dmzHost)%>';
+    if (ip_addr != "")
+    {
+        content[2] = ip_addr;
+        content[3] = "_(Device Placed Outside the Onboard Firewall and NAT)_";
+    }
+    else
+    {
+        content[2] = "_(N/A)_";
+        content[3] = "_(Default Feature Setting)_";
+    }
+    //content[0] = '<img src="images/icon_firewall_dmzhosting.png" width="45" height="45" />';
+	content[0] = "&nbsp;";
+    content[1] = "_(DMZ Hosting)_";
+    appendTableRow(table, "center", content);
+}
+
+function get_fw_settings()
+{
+    var table = document.getElementById("fw_rulelist_tbl");
+    var fwLevel = htmlDecodeStr("<%ejGet(fwLevel)%>");
+    var fwip = htmlDecodeStr("<%ejGet(fwip)%>");
+    var unnummode = htmlDecodeStr("<%ejGet(enblLan2)%>");
+    var ipList = "<%ejGetUnumIpList()%>";
+    var content = new Array();
+
+    if (unnummode == "1")
+    {
+        if (fwip == "0.0.0.0")
+        {
+            var ipAddr = ipList.split('|');
+
+            for (var i = 0; i < ipAddr.length-1; i++)
+            {
+                //content[0] = '<img src="images/icon_firewall_dynamicip.png" width="45" height="45" />';
+		content[0] = "&nbsp;";
+                content[1] = "_(Firewall Settings Static IP)_";
+                content[2] = htmlDecodeStr(ipAddr[i]);
+                content[3] = getFwStatus(fwLevel);
+                appendTableRow(table, "center", content);
+            }
+        }
+        else if (fwip == "1.1.1.1")
+        {
+            //content[0] = '<img src="images/icon_firewall_dynamicip.png" width="45" height="45" />';
+		content[0] = "&nbsp;";
+            content[1] = "_(Firewall Settings Dynamic IP)_";
+            content[2] = "All";
+            content[3] = getFwStatus(fwLevel);
+            appendTableRow(table, "center", content);
+        }
+        else
+        {
+            //content[0] = '<img src="images/icon_firewall_dynamicip.png" width="45" height="45" />';
+	content[0] = "&nbsp;";
+            content[1] = "_(Firewall Settings Static IP)_";
+            content[2] = fwip;
+            content[3] = getFwStatus(fwLevel);
+            appendTableRow(table, "center", content);
+        }
+    }
+    else // if (unnummode == "0")
+    {
+        //content[0] = '<img src="images/icon_firewall_dynamicip.png" width="45" height="45" />';
+	content[0] = "&nbsp;";
+        content[1] = "_(Firewall Settings)_";
+        content[2] = "_(N/A)_";
+	content[3] = getFwStatus(fwLevel);
+        appendTableRow(table, "center", content);
+    }
+}
+
+function getFwStatus(fwLevel)
+{
+    var fwInVal = htmlDecodeStr("<%ejGet(fwInVal)%>").toUpperCase() ;
+    var fwOutVal = htmlDecodeStr("<%ejGet(fwOutVal)%>").toUpperCase() ;
+    var fwContent;
+
+    if (fwLevel == "Low")
+    {
+        //if ((fwInVal == "3CFFFFFFFFFFFF")  && (fwOutVal == "3FFFFFFFFFFFFF"))
+        if ((fwInVal == "79FFFFFFFFFFFF")  && (fwOutVal == "7FFFFFFFFFFFFF"))
+            fwContent = "_(Firewall Set to Low)_";
+        else
+            fwContent = "_(Firewall Set to Low with Table Change)_";
+    }
+    else if (fwLevel == "Medium")
+    {
+        //if ((fwInVal == "0000000001E0FC")  && (fwOutVal == "3FFFFFFFFFFFFF"))
+        if ((fwInVal == "0000000001E0FC")  && (fwOutVal == "7FFFFFFFFFFFFF"))
+            fwContent = "_(Firewall Set to Medium)_";
+        else
+            fwContent = "_(Firewall Set to Medium with Table Change)_";
+    }
+    else if (fwLevel == "High")
+    {
+        //if ((fwInVal == "0000000001E0DC")  && (fwOutVal == "3FFFFFFFFFFFDF"))
+        if ((fwInVal == "0000000001E0FC")  && (fwOutVal == "7FFFFFFFFFFFFF"))
+            fwContent = "_(Firewall Set to High)_";
+        else
+            fwContent = "_(Firewall Set to High with Table Change)_";
+    }
+    else
+    {
+        fwContent = "_(Default Feature Setting)_";
+    }
+
+    return fwContent;
+}
+
+function get_nat_status()
+{
+    var natstatus = '<%ejGetOther(sysInfo, enblNat)%>';
+    var table = document.getElementById("fw_rulelist_tbl");
+    var content = new Array();;
+    if (natstatus == "1")
+        content[3] = "_(Enabled)_";
+    else
+        content[3] = "_(Disabled)_";
+
+    content[2] = '_(N/A)_';
+    //content[0] = '<img src="images/icon_firewall_nat.png" width="45" height="45" />';
+	content[0] = "&nbsp;";
+    content[1] = 'NAT';
+    appendTableRow(table, "center", content);
+
+}
+
+function get_upnp_rules()
+{
+    var upnp_enable = htmlDecodeStr("<%ejGet(enblUpnp)%>");
+    var table = document.getElementById("fw_rulelist_tbl");
+    var content = new Array();
+    var upnp_rules = "<%ejGetOther(currUpnpRule)%>".split('|');
+    //var upnp_rules = "192.168.0.150/6657-6657/tcp|192.168.0.150/6647-6647/udp".split('|');
+    var i;
+
+    if( upnp_enable=="yes" || upnp_enable=="1" )
+    {
+        if (upnp_rules[0] != "")
+        {
+            for(i=0; i<upnp_rules.length; i++)
+            {
+		if (upnp_rules[i] != "") {
+	                var details = upnp_rules[i].split('/');
+	                var port = details[1].split('-');
+					var protocol = htmlDecodeStr(details[2]).toUpperCase();
+	                //content[0] = '<img src="images/icon_firewall_upnp.png" width="45" height="45" />';
+					content[0] = "&nbsp;";
+	                content[1] = "UPnP";
+	                content[2] = htmlDecodeStr(details[0]);
+	                if( port[0] == port[1])
+	                    content[3] = "_(UPnP Forwarded Inbound)_ " + protocol + " Port " + port[0];
+	                else
+	                    content[3] = "_(UPnP Forwarded Inbound)_ " + protocol + " Port " + port[0] + " _(to)_ " + port[1];
+	                appendTableRow(table, "center", content);
+		}
+            }
+        }
+        else
+        {
+            //content[0] = '<img src="images/icon_firewall_upnp.png" width="45" height="45" />';
+		content[0] = "&nbsp;";
+            content[1] = "_(UPnP)_";
+            content[2] = "_(N/A)_";
+            //content[3] = "No UPnP NAT-T Rules Defined";
+            content[3] = "_(No UPnP Rules Defined)_";
+            appendTableRow(table, "center", content);
+        }
+    }
+    else
+    {
+        //content[0] = '<img src="images/icon_firewall_upnp.png" width="45" height="45" />';
+	content[0] = "&nbsp;";
+        content[1] = "_(UPnP)_";
+        content[2] = "_(N/A)_";
+        content[3] = "_(UPnP NAT Transversal Not Supported)_";
+        appendTableRow(table, "center", content);
+    }
+}
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="modemstatus_firewallstatus">_(Firewall Status)_  </h1>
+				<p>_(The list below displays all firewall settings modified from the factory default settings.)_</p>
+                <table width="460" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;" name="fw_rulelist_tbl" id="fw_rulelist_tbl">
+<tr align="left">
+						<th width="5">&nbsp;</th>
+						<th width="94" style="text-transform:none;" align="left">_(Firewall Feature)_  </th>
+						<th width="87" style="text-transform:none;" align="left">_(LAN IP)_ </th>
+						<th width="178" style="text-transform:none;" align="left">_(Applied Rule)_ </th>
+					</tr>
+                    <!--
+					<tr align="center">
+						<td><img src="images/icon_firewall_advancedportforwarding.png" width="45" height="45" /></td>
+						<td>Port Forwarding </td>
+						<td>N/A</td>
+						<td>N/A</td>
+					</tr>
+					<tr align="center">
+						<td><img src="images/icon_firewall_dmzhosting.png" width="45" height="45" /></td>
+						<td>DMZ Hosting </td>
+						<td>N/A</td>
+						<td>N/A</td>
+                    </tr>
+                    -->
+				</table>
+			  <p></p>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

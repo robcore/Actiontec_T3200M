@@ -1,0 +1,1414 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Home)_</title>
+<link href="css/basic2.css" rel="stylesheet" type="text/css" />
+<link href="css/basic3.css" rel="stylesheet" type="text/css" />
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<link href="css/hurl.css" rel="stylesheet" type="text/css" />
+<link href="css/actiontec2.css" rel="stylesheet" type="text/css" />
+<script LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script type="text/javascript" src="js/util.js"></script>
+<script type="text/javascript" src="js/htmldecode.js"></script>
+<script type="text/javascript" src="js/ipv6_util.js"></script>
+<script language="JavaScript" src="js/BigInt.js"></script>
+<script language="JavaScript" src="js/Barrett.js"></script>
+<script language="JavaScript" src="js/RSA_Stripped.js"></script>
+<script language="Javascript">
+// when GUI is upgraded from sdk3, the js is the cached code of sdk3, so we need reload the page to get the sdk12 code.
+var ifLoadJs = true;
+try{
+   if(ifLoadSuccess()){
+       ifLoadJs = true;
+   }
+}catch(e){
+   ifLoadJs = false;
+}
+var  found,i,x,y,ARRcookies=document.cookie.split(";");
+found = 0;
+for (i=0;i<ARRcookies.length;i++)
+{
+   x=ARRcookies[i].substr(0,ARRcookies[i].indexOf("="));
+   y=ARRcookies[i].substr(ARRcookies[i].indexOf("=")+1);
+   x=x.replace(/^\s+|\s+$/g,"");
+   if (x=="css_js_update")
+   {
+       var yun = unescape(y);
+       if (yun == "20160406_telus")
+           found = 1;
+   }
+}
+if (found == 0 || (!ifLoadJs))
+{
+   document.cookie="css_js_update=20160406_telus";
+   if (navigator.cookieEnabled)
+       self.location.reload(true);
+}
+// DSL interface status
+var wanInfNamesPtm = '<%ejGetOther(wanInterfaces, PTM)%>';
+var wanInfNamesAtm = '<%ejGetOther(wanInterfaces, ATM)%>';
+
+var wanInfNames = '<%ejGetOther(wanInterfaces, all)%>';
+var dsltime = '<%ejGetOther(dsltimeget)%>' ;
+
+//WAN Ethernet status
+var   wanEthStatus_LinkStatus     = htmlDecodeStr('<%ejGet(wanEthStatus_LinkStatus)%>');
+var   wanEthStatus_ISPStatus      = htmlDecodeStr('<%ejGet(wanEthStatus_ISPStatus)%>');
+var   wanEthStatus_MACAddress     = htmlDecodeStr('<%ejGet(wanEthStatus_MACAddress)%>');
+var   wanEthStatus_IPAddress      = htmlDecodeStr('<%ejGet(wanEthStatus_IPAddress)%>');
+var   wanEthStatus_SubnetMask     = htmlDecodeStr('<%ejGet(wanEthStatus_SubnetMask)%>');
+var   wanEthStatus_DefaultGateway = htmlDecodeStr('<%ejGet(wanEthStatus_DefaultGateway)%>');
+var   wanEthStatus_LeaseTimeRemaining = htmlDecodeStr('<%ejGet(wanEthStatus_LeaseTimeRemaining)%>');
+var   wanEthStatus_DNSServer      = htmlDecodeStr('<%ejGet(wanEthStatus_DNSServer)%>');
+var   wanEthStatus_Portocol       = htmlDecodeStr('<%ejGet(wanEthStatus_Protocol)%>');
+var   wanEthStatus_AddressingType = htmlDecodeStr('<%ejGet(wanEthStatus_AddressingType)%>');
+
+var loginUserName=htmlDecodeStr('<%ejGet(loginUserName)%>');
+var inputUserName=htmlDecodeStr('<%ejGet(inputUserName)%>');
+var rootGuiLocked=htmlDecodeStr('<%ejGet(rootGuiLocked)%>');
+var maxGuiFailedAttempts=htmlDecodeStr('<%ejGet(maxGuiFailedAttempts)%>');
+var remainRootGuiLockTime=htmlDecodeStr('<%ejGet(remainRootGuiLockTime)%>');
+
+// Current WAN interface
+var glbWanL2IfName = htmlDecodeStr('<%ejGet(wanL2IfName)%>');
+
+//LAN status.
+var hostinfo = '<%ejGetOther(hostinfoAll)%>';
+var stbinfo = htmlDecodeStr("<%ejGetOther(stbinfo)%>").toUpperCase();
+var wpinfo = "<%ejGetOther(wpinfo)%>".toUpperCase();
+//wpinfo format: mac/state/port|  e.g. '00:18:01:00:61:b8/2/4'
+//state: AEI_WP_INIT=0,AEI_WP_SYNCING=1,AEI_WP_SUCCESSFUL=2,AEI_WP_FAIL=3
+var wpclientinfo = htmlDecodeStr("<%ejGetOther(wpclientinfo)%>").toUpperCase();
+//wpclientinfo format: mac/port|  e.g. '00:14:d1:19:9e:62/4'
+
+//DSL DNS info
+var dsl_dns1=htmlDecodeStr('<%ejGetOther(sysInfo, dns1)%>');
+var dsl_dns2=htmlDecodeStr('<%ejGetOther(sysInfo, dns2)%>');
+
+//upnp info
+var upnp_enable = htmlDecodeStr("<%ejGet(enblUpnp)%>");
+
+// Wireless settings
+var gv_wl_done=htmlDecodeStr("<%ejGetOther(wlBootDone)%>");
+var gv_radioEnabled=htmlDecodeStr("<%ejGetWl(wlRadio_wl0)%>");
+var gv_ssid = htmlDecodeStr("<%ejGetWl(wlSsid_wl0v0)%>");
+var gv_wlAuthMode=htmlDecodeStr("<%ejGetWl(wlAuthMode_wl0v0)%>");
+var gv_wlWep=htmlDecodeStr("<%ejGetWl(wlWep_wl0v0)%>");
+var encrypt=htmlDecodeStr("<%ejGetWl(wlWpa_wl0v0)%>");
+var gv_keybit=htmlDecodeStr("<%ejGetWl(wlKeyBit_wl0v0)%>");
+var gv_radioEnabled_5=htmlDecodeStr("<%ejGetWl(wlRadio_wl1)%>");
+var gv_ssid_5 = htmlDecodeStr("<%ejGetWl(wlSsid_wl1v0)%>");
+var gv_wlAuthMode_5=htmlDecodeStr("<%ejGetWl(wlAuthMode_wl1v0)%>");
+var gv_wlWep_5=htmlDecodeStr("<%ejGetWl(wlWep_wl1v0)%>");
+var encrypt_5=htmlDecodeStr("<%ejGetWl(wlWpa_wl1v0)%>");
+var gv_keybit_5=htmlDecodeStr("<%ejGetWl(wlKeyBit_wl1v0)%>");
+
+var bandSteeringState = htmlDecodeStr("<%ejGetWl(wlAbsEnable)%>");
+var wlChipOk = htmlDecodeStr("<%ejGetWl(wlChipOk_wl0)%>");
+
+
+// Firewall settings
+var fwLevel = htmlDecodeStr("<%ejGet(fwLevel)%>");
+
+// device info
+var devinfo='<%ejGetOther(sysInfo,DevInfo)%>';
+
+// Block states
+var sch_rules = '<%ejGetOther(scheduleAccessList)%>';
+var url_rules = "<%ejGetOther(urlFilterList)%>";
+var srv_rules= "<%ejGetOther(srvAllBlk)%>";
+
+
+var phy_status='DISCONNECTED';
+var isp_status='DISCONNECTED';
+var etherinfo=get_net_info(hostinfo).split('|');
+
+var conn_str="<span style=\"color:#6c3;font-weight:bold;font:12px;\">_(Connected)_</span>";
+var disconn_str="<span style=\"color:#FF0000;font-weight:bold;font:12px;\">_(Disconnected)_</span>";
+var enable_str="<span style=\"color:#6c3;font-weight:bold;font:12px;\">_(Enabled)_</span>";
+var disable_str="<span style=\"color:#FF0000;font-weight:bold;font:12px;\">_(Disabled)_</span>";
+var initializing_str="<span style=\"color:#FFA500;font-weight:bold;font:12px;\">_(Initializing)_</span>";
+var off_str="<span style=\"color:#FF0000;font-weight:bold;font:12px;\">_(Off)_</span>";
+
+var mytimeid;
+
+/*To mark current wan connection mode.*/
+var wan_mode_dsl = false;
+var wan_mode_atm;
+var wan_mode_ptm;
+
+wan_mode_atm = glbWanL2IfName.indexOf("atm");
+wan_mode_ptm = glbWanL2IfName.indexOf("ptm");
+
+var wl_client=0;
+var lang_old=htmlDecodeStr("<%ejGet(langState)%>");
+var key;
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+
+/*
+ * Define the Waninfo Object
+ */
+function wanStatusObj()
+{
+    this.phy_stat   = 'DISCONNECTED';
+    this.isp_stat   = 'DISCONNECTED';
+    this.if_name    = '_(N/A)_';
+    this.mac        = '_(N/A)_';
+    this.isp_protocol = '_(N/A)_';
+    this.ip           = '_(N/A)_';
+    this.dns1         = '_(N/A)_';
+    this.dns2         = '_(N/A)_';
+    this.gateway	  = '_(N/A)_';
+    this.netmask	  = '_(N/A)_';
+    this.getWanDslInfo  = getWanDslInfo;
+    this.getWanEthInfo  = getWanEthInfo;
+    this.setWANValueToGUI =setWANValueToGUI;
+
+}
+
+function setWANValueToGUI()
+{
+    if (this.isp_stat=="CONNECTED")
+        document.getElementById("id_isp").innerHTML=conn_str;
+    else
+        document.getElementById("id_isp").innerHTML=disconn_str;
+
+    if (wan_mode_dsl)
+        document.getElementById("id_wan_type").innerHTML="_(DSL)_";
+    else
+    {
+        if (glbWanL2IfName == "ewan1")
+            document.getElementById("id_wan_type").innerHTML="_(SFP)_";
+        else
+            document.getElementById("id_wan_type").innerHTML="_(Ethernet)_";
+    }
+
+    if (this.isp_protocol.indexOf("Static")!=-1)
+        document.getElementById("id_protocol").innerHTML="_(Static)_";
+    else
+        document.getElementById("id_protocol").innerHTML="_(Dynamic)_";
+    var time_str = "";
+
+
+    if (this.isp_protocol == "1483 via DHCP" && this.isp_stat=="CONNECTED")
+    {
+        if (this.leaseTimeRemaining<0)
+            time_str ="_(N/A)_";
+        else
+        {
+            var time_num = parseInt(this.leaseTimeRemaining);
+            if(parseInt(time_num/86400))//days
+                time_str = time_str + parseInt(time_num/86400) + "D ";
+            time_num = parseInt(time_num%86400);
+            if(parseInt(time_num/3600))//hours
+                time_str = time_str + parseInt(time_num/3600) + "H ";
+            time_num = parseInt(time_num%3600);
+            if(parseInt(time_num/60))//mins
+                time_str = time_str + parseInt(time_num/60) + "M ";
+            time_num = parseInt(time_num%60);//secs
+            time_str = time_str + time_num + "S";
+        }
+
+    }
+    else
+        time_str ="_(N/A)_";
+
+    document.getElementById("id_wanip").innerHTML=this.ip;
+    document.getElementById("id_netmask").innerHTML=this.netmask;
+    document.getElementById("id_gateway").innerHTML=this.gateway;
+    // if (wanEthStatus_AddressingType == "DHCP")
+    document.getElementById("id_leaseTimeRemaining").innerHTML=time_str;
+    document.getElementById("id_dns_1").innerHTML=this.dns1;
+    document.getElementById("id_dns_2").innerHTML=this.dns2;
+}
+
+function get_net_info(in_str)
+{
+    if (in_str=="")
+        return "";
+
+    var e_list=in_str.split('|');
+
+    var out_list=e_list[0];
+    var ip_array=new Array();
+
+    var first_ip=(e_list[0].split('/'))[1];
+
+    if (isValidIpAddress(htmlDecodeStr(first_ip)))
+        ip_array[0]=first_ip;
+    else
+        return out_list;
+
+    var i,j;
+
+    for (i=1;i<e_list.length;i++)
+    {
+        var details=e_list[i].split('/');
+        var dup=false;
+        /*  If pc-1 has been disconnected but not release ip address, Then pc-2 connect and get the same ip address, GUI will display the pc-1 rather than pc-2.*/
+        /*		for (j=0;j<i;j++)
+        {
+            if (details[1]==ip_array[j])
+            {
+                dup=true;
+                break;
+            }
+        }*/
+
+        if (!dup)
+        {
+            ip_array[i]=details[1];
+            out_list+="|"+e_list[i];
+        }
+    }
+
+    return out_list;
+}
+
+function alert_t(obj)
+{
+    alert("if_name="+obj.if_name+", linkStatus="+obj.phy_stat+", isp_stat="+obj.isp_stat+", mac="+obj.mac+", dns1="+obj.dns1 + ", proto="+obj.isp_protocol);
+}
+
+function getWanDslInfo()
+{
+    var ip_addr='';
+    var gw='';
+    var dns1='';
+    var dns2='';
+    var netmask="_(N/A)_";
+    var mac_addr="_(N/A)_";
+
+    if (wanInfNames!="")
+    {
+        var wanNameTypes  = wanInfNames.split('|');
+        var nameType = wanNameTypes[0].split(':');
+        var wanEntryInfo=nameType[4].split('/');
+        var status='';
+        var dns='';
+
+        var mac_addrtmp='';
+        dnsIfc=htmlDecodeStr(nameType[1]);
+        ISP_proto=htmlDecodeStr(nameType[3]);
+        if(ISP_proto == "PPPoE" || ISP_proto == "PPPoA")
+        {
+            usrname=htmlDecodeStr(wanEntryInfo[0]);
+            status=htmlDecodeStr(wanEntryInfo[7]);
+            mac_addrtmp=htmlDecodeStr(wanEntryInfo[8]);
+            if(mac_addrtmp != "") {
+                var mac_array=mac_addrtmp.split('-');
+                mac_addr=mac_array[0]+':'+mac_array[1]+':'+mac_array[2]+':'+mac_array[3]+':'+mac_array[4]+':'+mac_array[5];
+            }
+            encaps=htmlDecodeStr(wanEntryInfo[9]);
+            if(status == "Connected")
+            {
+                netmask="255.255.255.255";
+                ip_addr=htmlDecodeStr(wanEntryInfo[10]);
+                if (!isValidIpAddress(ip_addr) )
+                {
+                    netmask="_(N/A)_";
+                    status = "Connecting";
+                }
+            }
+            gw=htmlDecodeStr(wanEntryInfo[11]);
+            dns1=dsl_dns1;
+            dns2=dsl_dns2;
+
+        }
+        else if(ISP_proto == "Bridge")
+        {
+            ISP_proto = "Transparent Bridging";
+            status=htmlDecodeStr(nameType[7]);
+        }
+        else
+        {
+            var dhcptype=htmlDecodeStr(wanEntryInfo[0]);
+            status=htmlDecodeStr(wanEntryInfo[7]);
+            mac_addrtmp=htmlDecodeStr(wanEntryInfo[8]);
+            if(mac_addrtmp != "") {
+                var mac_array=mac_addrtmp.split('-');
+                mac_addr=mac_array[0]+':'+mac_array[1]+':'+mac_array[2]+':'+mac_array[3]+':'+mac_array[4]+':'+mac_array[5];
+            }
+            encaps=htmlDecodeStr(wanEntryInfo[9]);
+            if(status == "Connected")
+            {
+                ip_addr=htmlDecodeStr(wanEntryInfo[1]);
+                if (!isValidIpAddress(ip_addr) )
+                {
+                    status = "Connecting";
+                }
+            }
+            gw=htmlDecodeStr(wanEntryInfo[3]);
+            netmask=htmlDecodeStr(wanEntryInfo[2]);
+
+            wanEthStatus_LeaseTimeRemaining = htmlDecodeStr(wanEntryInfo[14]);
+            dns1=dsl_dns1;
+            dns2=dsl_dns2;
+
+            if(dhcptype == "0")
+                ISP_proto="1483 via DHCP";
+            else
+                ISP_proto="1483 via Static IP";
+        }
+        if(status=="Connecting")
+            ISP_status="CONNECTING";
+        else if(status=="Connected")
+            ISP_status="CONNECTED";
+        else
+        {
+            ISP_status="DISCONNECTED";
+            netmask="_(N/A)_";
+            gw="_(N/A)_";
+        }
+        if(phy_status == "")
+            phy_status="_(N/A)_";
+
+        if(ip_addr == "" || ip_addr=="0.0.0.0")
+            ip_addr="_(N/A)_";
+
+        if(gw == "" || gw=="0.0.0.0")
+            gw="_(N/A)_";
+        if(dns1 == "&nbsp" || dns1=="" || dns1=="0.0.0.0")
+            dns1="_(N/A)_";
+        if(dns2 == "&nbsp" || dns2=="" || dns2== "0.0.0.0")
+            dns2="_(N/A)_";
+
+        this.phy_stat   = phy_status;
+        this.isp_stat   = ISP_status;
+        this.if_name    = dnsIfc;
+        this.gateway    = gw;
+        this.leaseTimeRemaining    = wanEthStatus_LeaseTimeRemaining ;
+        this.netmask    = netmask;
+        this.mac        = mac_addr;
+        wanEthStatus_MACAddress = mac_addr;
+        this.isp_protocol = ISP_proto;
+        this.ip           = ip_addr;
+
+        if (status == "Connected")
+        {
+            this.dns1     = dns1;
+            this.dns2     = dns2;
+        }
+    }
+}
+
+function getWanEthInfo()
+{
+    var netmask="_(N/A)_";
+
+    if(dsl_dns1 == "&nbsp" || dsl_dns1=="" || dsl_dns1=="0.0.0.0")
+        dsl_dns1="_(N/A)_";
+    if(dsl_dns2 == "&nbsp" || dsl_dns2=="" || dsl_dns2=="0.0.0.0")
+        dsl_dns2="_(N/A)_";
+
+    if (wanEthStatus_Portocol == "Bridge")
+    {
+        dsl_dns1="_(N/A)_";
+        dsl_dns2="_(N/A)_";
+    }
+
+    if (wanEthStatus_LinkStatus=="Up"){
+        this.phy_stat = "CONNECTED";
+    }
+    else{
+        this.phy_stat = "DISCONNECTED";
+    }
+
+    // ISP Status
+    if (this.phy_stat != "CONNECTED"){
+        this.isp_stat = "DISCONNECTED";
+    }
+    else if (wanEthStatus_ISPStatus=="Connected"){
+        this.isp_stat = "CONNECTED";
+    }
+    else if (wanEthStatus_Portocol == "Bridge" &&
+             wanEthStatus_LinkStatus == "Up") {
+        // When in wan Bridge mode, if the wan l2 is up, the ISP should be CONNECTED
+        this.isp_stat = "CONNECTED";
+    }
+    else if (wanEthStatus_Portocol == "IPoW" &&
+                wanEthStatus_IPAddress != null &&
+                isValidIpAddress(wanEthStatus_IPAddress) == true &&
+                wanEthStatus_ISPStatus == "Connected" &&
+                wanEthStatus_LinkStatus == "Up"){
+        // When in wan dhcp mode, plug out eth link, and plug in eth link back,
+        // the wan l2 shows Up, and the wan l3 shows disabled. And the l3 is Up
+        // actully.
+        this.isp_stat = "CONNECTED";
+    }
+    else if (wanEthStatus_ISPStatus == "Connecting"){
+        this.isp_stat = "CONNECTING";
+    }
+    else{
+        this.isp_stat = "DISCONNECTED";
+    }
+
+    var eth_wanInfNamestmp='<%ejGetOther(wanInterfaces, ewan0)%>';
+    var eth_info='';
+    if (wanEthStatus_LinkStatus == "Disabled" && glbWanL2IfName == "ewan0")
+    {
+        eth_info=eth_wanInfNamestmp.split(':');
+        if(htmlDecodeStr(eth_info[0]) == "IPoE")
+        {
+            if ( htmlDecodeStr(eth_info[2]) == 0 )
+                this.isp_protocol = "1483 via DHCP";
+            else
+                this.isp_protocol = "1483 via Static IP";
+        }
+    }
+    else if (wanEthStatus_Portocol == "IPoW")
+    {
+        if (wanEthStatus_AddressingType == "DHCP")
+            this.isp_protocol = "1483 via DHCP";
+        else
+            this.isp_protocol = "1483 via Static IP";
+        netmask=wanEthStatus_SubnetMask;
+    }
+    else if (wanEthStatus_Portocol == "PPPoE")
+    {
+        this.isp_protocol = wanEthStatus_Portocol;
+        eth_info=eth_wanInfNamestmp.split('|')[0].split(':');
+        this.ppp_user=htmlDecodeStr(eth_info[2]);
+        if (this.isp_stat == "CONNECTED")
+            netmask="255.255.255.255";
+        else
+            netmask="_(N/A)_";
+    }
+    else {
+        this.isp_protocol = wanEthStatus_Portocol;
+    }
+
+    if (this.isp_stat =="CONNECTED")
+    {
+        this.dns1 = dsl_dns1;
+        this.dns2 = dsl_dns2;
+        this.if_name = 'ewan0';
+        this.mac = wanEthStatus_MACAddress;
+
+        if(wanEthStatus_IPAddress == "0.0.0.0")
+        {
+            this.ip = "_(N/A)_";
+        }
+        else
+        {
+            this.ip = wanEthStatus_IPAddress;
+        }
+        if(wanEthStatus_DefaultGateway == "0.0.0.0")
+        {
+            this.gateway= "_(N/A)_";
+        }
+        else
+        {
+            this.gateway = wanEthStatus_DefaultGateway ;
+        }
+        this.leaseTimeRemaining = wanEthStatus_LeaseTimeRemaining ;
+        this.netmask = netmask;
+    }
+}
+
+function init_wan()
+{
+    var wanObj= new wanStatusObj();
+
+    if (wan_mode_atm!=-1 || wan_mode_ptm!=-1)
+        wan_mode_dsl = true;
+
+    if (wan_mode_dsl)
+     wanObj.getWanDslInfo();
+    else
+        wanObj.getWanEthInfo();
+
+    wanObj.setWANValueToGUI();
+}
+
+
+function init_wireless()
+{
+    var tmp_encrypt;
+    var tmp_radioEnabled;
+    var tmp_ssid;
+    var tmp_wlAuthMode;
+    var tmp_keybit;
+    var id_ssid;
+    var id_security;
+    var id_security_type;
+
+    for (var n=0; n<2; n++)
+    {
+        if (n == 0) // 2G
+        {
+            tmp_encrypt = encrypt.toUpperCase();
+            tmp_radioEnabled = gv_radioEnabled;
+            tmp_ssid = gv_ssid;
+            tmp_wlAuthMode = gv_wlAuthMode;
+            tmp_wlWep = gv_wlWep;
+            tmp_keybit = gv_keybit;
+            id_ssid = "id_ssid";
+            id_security = "id_security";
+            id_security_type = "id_security_type";
+        }
+        else
+        {
+            tmp_encrypt = encrypt_5.toUpperCase();
+            tmp_radioEnabled = gv_radioEnabled_5;
+            tmp_ssid = gv_ssid_5;
+            tmp_wlAuthMode = gv_wlAuthMode_5;
+            tmp_wlWep = gv_wlWep_5;
+            tmp_keybit = gv_keybit_5;
+            id_ssid = "id_ssid_5";
+            id_security = "id_security_5";
+            id_security_type = "id_security_type_5";
+        }
+
+        if(tmp_radioEnabled == "1" && gv_wl_done == "1")
+        {
+            document.getElementById("id_wireless").innerHTML=enable_str+"<br><span style=\"color:#6c3;font-weight:bold;font:12px;\">"+wl_client+" _(Client Connected)_</span>";
+
+            document.getElementById(id_ssid).innerHTML=tmp_ssid;
+
+            if ((tmp_wlAuthMode == "open" || tmp_wlAuthMode == "shared" || tmp_wlAuthMode == "None")
+                 && (tmp_wlWep == "disabled"))
+            {
+                document.getElementById(id_security).innerHTML = off_str;
+                document.getElementById(id_security_type).innerHTML = "_(N/A)_";
+            }
+            else
+            {
+                document.getElementById(id_security).innerHTML = "_(Enabled)_";
+                switch (tmp_wlAuthMode)
+                {
+                    case "open":
+                    case "shared":
+                        if (tmp_keybit == 1) { //64-BIT
+                            document.getElementById(id_security_type).innerHTML = "64-bit WEP Key";
+                        } else { //128-BIT
+                            document.getElementById(id_security_type).innerHTML = "128-bit WEP Key";
+                        }
+                        break;
+                    case "radius":
+                        document.getElementById(id_security_type).innerHTML = "WEP + 802.1x";
+                        break;
+                    case "wpa":
+                        document.getElementById(id_security_type).innerHTML = "WPA-"+tmp_encrypt;
+                        break;
+                    case "psk":
+                        document.getElementById(id_security_type).innerHTML = "WPA-"+tmp_encrypt;
+                        break;
+                    case "wpa2":
+                        document.getElementById(id_security_type).innerHTML = "WPA2-"+tmp_encrypt;
+                        break;
+                    case "psk2":
+                        document.getElementById(id_security_type).innerHTML = "WPA2-"+tmp_encrypt;
+                        break;
+                    case "wpa wpa2":
+                        document.getElementById(id_security_type).innerHTML = "WPA/WPA2-"+tmp_encrypt;
+                        break;
+                    case "psk psk2":
+                        document.getElementById(id_security_type).innerHTML = "WPA/WPA2-"+tmp_encrypt;
+                        break;
+                }
+
+                var security_type_str = document.getElementById(id_security_type).innerHTML;
+                var securityType_array=["64-bit WEP Key", "128-bit WEP Key", "WEP + 802.1x", "WPA-TKIP+AES", "WPA2-TKIP+AES", "WPA/WPA2-TKIP+AES", "WPA-TKIP" ,"WPA2-TKIP", "WPA/WPA2-TKIP", "WPA-AES", "WPA2-AES", "WPA/WPA2-AES"];
+                var securityType_showArray=["_(64-bit WEP Key)_", "_(128-bit WEP Key)_", "_(WEP + 802.1x)_", "_(WPA-TKIP+AES)_", "_(WPA2-TKIP+AES)_", "_(WPA/WPA2-TKIP+AES)_", "_(WPA-TKIP)_" ,"_(WPA2-TKIP)_", "_(WPA/WPA2-TKIP)_", "_(WPA-AES)_", "_(WPA2-AES)_", "_(WPA/WPA2-AES)_"];
+
+                for(var i=0; i<securityType_array.length; i++)
+                {
+                    if(security_type_str == securityType_array[i])
+                    {
+                        security_type_str = securityType_showArray[i];
+                        break;
+                    }
+                }
+
+                document.getElementById(id_security_type).innerHTML = security_type_str;
+            }
+
+            if(n == 0 && wlChipOk == "0")
+            {
+                document.getElementById(id_ssid).innerHTML="_(N/A)_";
+                document.getElementById(id_security).innerHTML="_(N/A)_";
+                document.getElementById(id_security_type).innerHTML="_(N/A)_";
+            }
+        }
+        else
+        {
+             document.getElementById(id_ssid).innerHTML="_(N/A)_";
+             document.getElementById(id_security).innerHTML="_(N/A)_";
+             document.getElementById(id_security_type).innerHTML="_(N/A)_";
+        }
+    }
+
+    if(bandSteeringState == "1")
+    {
+        document.getElementById("id_bandSteering").innerHTML="_(Enabled)_";
+        document.getElementById("title_wifi").innerHTML = "_(SSID 2.4G + 5G)_";
+        document.getElementById("tbl_wifi_2").style.display = "";
+        document.getElementById("tbl_wifi_5").style.display = "none";
+
+        if(gv_radioEnabled == "0" && gv_radioEnabled_5 == "1")
+        {
+                document.getElementById("id_ssid").innerHTML = document.getElementById("id_ssid_5").innerHTML;
+                document.getElementById("id_security").innerHTML = document.getElementById("id_security_5").innerHTML;
+                document.getElementById("id_security_type").innerHTML = document.getElementById("id_security_type_5").innerHTML;
+        }
+    }
+    else
+    {
+        document.getElementById("id_bandSteering").innerHTML="_(Disabled)_";
+        document.getElementById("title_wifi").innerHTML = "_(SSID 2.4G)_";
+        document.getElementById("tbl_wifi_2").style.display = "";
+        document.getElementById("tbl_wifi_5").style.display = "";
+    }
+
+    if (gv_wl_done == "1")
+    {
+        if (gv_radioEnabled == "0" && gv_radioEnabled_5 == "0")
+            document.getElementById("id_wireless").innerHTML=disable_str;
+    }
+    else
+    {
+        document.getElementById("id_wireless").innerHTML=initializing_str;
+    }
+}
+
+function init_firewall()
+{
+
+    if( upnp_enable=="yes" || upnp_enable=="1" )
+        document.getElementById("id_upnp").innerHTML="_(Enabled)_";
+    else
+        document.getElementById("id_upnp").innerHTML="_(Disabled)_";
+
+    if (fwLevel == "Basic")
+    {
+        document.getElementById("id_firewall").innerHTML="_(NAT Only)_";
+    }
+    else
+    {
+        document.getElementById("id_firewall").innerHTML=fwLevel;
+    }
+    if (srv_rules=="" && url_rules=="" && sch_rules=="")
+    {
+        document.getElementById("id_block").innerHTML="_(Disabled)_";
+    }
+    else
+    {
+        document.getElementById("id_block").innerHTML="_(Enabled)_";
+    }
+}
+
+function init_dev()
+{
+    if(devinfo !='')
+    {
+        var devinfo_array  = devinfo.split('|');
+        document.getElementById("id_model").innerHTML=devinfo_array[0];
+        document.getElementById("id_serial").innerHTML=devinfo_array[1];
+        document.getElementById("id_fw_ver").innerHTML=devinfo_array[2];
+        document.getElementById("id_sys_up_time").innerHTML=time_to_str(devinfo_array[3]);
+        /*
+        var t_str = wanEthStatus_MACAddress.toUpperCase();
+        t_str = t_str.split(':');
+        t_str = t_str.join('');
+        t_str = "0x" + t_str;
+        var t_val=parseInt(t_str)-1;
+        var m_str=t_val.toString(16).toUpperCase();
+        while (m_str.length < 12) {
+        m_str = '0' + m_str;
+        }
+        var mac_str = m_str.substring(0,2)+ ":"  + m_str.substring(2,4)+":" + m_str.substring(4,6)+":" + m_str.substring(6,8)+":" +m_str.substring(8,10)+ ":" + m_str.substring(10,12);
+        */
+
+        document.getElementById("id_mac").innerHTML= wanEthStatus_MACAddress.toUpperCase();
+
+    }
+
+    if( dsltime>0 )
+    {
+        document.getElementById("id_dsl_up_time").innerHTML=time_to_str(dsltime)  ;
+    }
+    else
+        document.getElementById("id_dsl_up_time").innerHTML="_(N/A)_";
+
+    var date = '<%ejGetOther(currentLocalTime)%>'.split(',');
+    var date_latest;
+    var detail_day=date[1].split(' ');
+    var mon = detail_day[1];
+    var day=detail_day[2];
+    var detail_time=date[2].split(' ');
+    var time = detail_time[3];
+    var phase = detail_time[4];
+
+    var year = detail_time[1];
+
+
+    if (phase == 'PM')
+        phase = "P.M.";
+    else
+        phase = "A.M.";
+
+    if(year == '1970')
+        document.getElementById("id_current_time").innerHTML = "_(N/A)_";
+    else
+        document.getElementById("id_current_time").innerHTML = mon + " " + day + " "+year+" " + time + " " + phase;
+}
+
+function time_to_str(time)
+{
+    var days=0,hours=0,minutes=0,seconds=0;
+    var time_str ;
+    while(time > 86400 )
+    {
+        days++;
+        time = time - 86400 ;
+    }
+    while(time > 3600 )
+    {
+        hours++;
+        time = time - 3600 ;
+    }
+    while(time > 60 )
+    {
+        minutes++;
+        time = time - 60 ;
+    }
+    seconds = time ;
+    if(langState == 2)
+        time_str = days+"j, " +hours+"h, " + minutes + "m";
+    else
+        time_str = days+"d, " +hours+"h, " + minutes + "m";
+    //time_str = hours+"H:" + minutes + "M:" + seconds +"S" ;
+    return time_str;
+}
+
+//LAN
+function get_table_string(in_str,len)
+{
+    var out=in_str;
+    if(out == "Unknown")
+        out = "_(Unknown)_";
+    if (out.length>len)
+        out=out.substring(0,len)+"...";
+    return out;
+}
+
+function appendClientTableRow(table,content)
+{
+    var tr = table.insertRow(-1);
+    var td;
+    td = tr.insertCell(-1);
+    td.className="left_cell";
+    td.innerHTML =content[0];
+
+    td = tr.insertCell(-1);
+    td.className="mid_cell";
+    td.innerHTML =content[1];
+
+    td = tr.insertCell(-1);
+    td.className="rght_cell";
+    td.innerHTML =content[2];
+}
+function checkSTB(mac_addr)
+{
+    if (stbinfo.indexOf(mac_addr.toUpperCase())==-1)
+    {
+        return  false;
+    }
+    return true;
+}
+
+function isWP(mac_addr)
+{
+    if(wpinfo.indexOf(mac_addr.toUpperCase()) == -1)
+    {
+        return false;
+    }
+    return true;
+}
+
+function getWPState(mac_addr)
+{
+    var wpinfolist = wpinfo.split('|');
+    var m;
+    for( m=0; m < wpinfolist.length; m++)
+    {
+        if(wpinfolist[m].indexOf(mac_addr.toUpperCase()) == -1 ) {
+            continue;
+        }
+        var details = wpinfolist[m].split('/');
+        return details[1];
+    } 
+    return 0;
+}
+
+function isWPClient(mac_addr)
+{
+    if(wpclientinfo.indexOf(mac_addr.toUpperCase()) == -1)
+    {
+        return false;
+    }
+    return true;
+}
+
+function draw_device_list()
+{
+    var table = document.getElementById("tbl_clients");
+    var col = new Array();
+    var n;
+
+    if( etherinfo!= '' && hostinfo != "")
+    {
+        for( n=0 ; n < etherinfo.length  ; n++)
+        {
+            var details = etherinfo[n].split('/');
+
+            details[0] = htmlDecodeStr(details[0]);
+            details[1] = htmlDecodeStr(details[1]);
+            details[2] = htmlDecodeStr(details[2]);
+            details[3] = htmlDecodeStr(details[3]);
+            details[4] = htmlDecodeStr(details[4]);
+
+            if (details.length>5)
+            {
+                //Add id
+                var id_img="hn_img_"+n;
+                var id_name="hn_name_"+n;
+                var id_status="hn_status_"+n;
+                var id_ip="hn_ip_"+n;
+                var id_ip_wp="hn_ip_wp_"+n;
+                var id_data="hn_id_data_"+n;
+                if (details[5]==1)
+                {
+                    // active user
+                    if (details[3] == "802.11")
+                    {
+                        /* when its hostname include DIRECTV-HR, it is displayed as STB icon */
+                        if(checkSTB(details[2]) || (details[0].indexOf("DIRECTV-HR") != -1))
+                        {
+                            //Wireless STB
+                            col[0]="<img src=\"images/wstb_icon_on.png\" id='"+id_img+"'>";
+                        }
+                        else
+                        {
+                            //wireless client
+                            col[0]="<img src=\"images/wrls_icon_on.png\" id='"+id_img+"'>";
+                        }
+                        wl_client++;
+                    }
+                    else
+                    {
+                        if(checkSTB(details[2]) || (details[0].indexOf("DIRECTV-HR") != -1))
+                            // STB client
+                            col[0]="<img src=\"images/stb_icon_on.png\" id='"+id_img+"'>";
+                        else if(isWP(details[2]))
+                            // WP Host
+                            col[0]="<img src=\"images/wphost_icon_on.png\" id='"+id_img+"'>";
+                        else if(isWPClient(details[2]))
+                            // WP client
+                            col[0]="<img src=\"images/wpclient_icon_on.png\" id='"+id_img+"'>";
+                        else 
+                            // ethernet client
+                            col[0]="<img src=\"images/pc_icon_on.png\" id='"+id_img+"'>";
+                    }
+
+                    // device name
+                    if (isWP(details[2]))
+                    {
+                        col[1]="<a href='http://"+details[1]+"' id=\"\"><span style=\"font-weight:bold; color:#000;\" id='"+id_name+"'>"+get_table_string(details[0],15)+"</span></a>";
+                    }
+                    else
+                    {
+                        col[1]="<span style=\"font-weight:bold; color:#000;\" id='"+id_name+"'>"+get_table_string(details[0],15)+"</span>";
+                    }
+
+                    var tbl_txt="";
+                    tbl_txt+="<p class=\"client_status_on\" id='"+id_status+"'>_(Connected)_</p>";
+
+                    // ip address
+                    tbl_txt+="<p class=\"client_ip\" id='"+id_ip+"'>"+details[1]+"</p>";
+
+                    // WP State: AEI_WP_INIT=0,AEI_WP_SYNCING=1,AEI_WP_SUCCESSFUL=2,AEI_WP_FAIL=3
+                    if(isWP(details[2]))
+                    {
+                        switch (getWPState(details[2]))
+                        {
+                            case "0":
+                                tbl_txt+="<p class=\"client_ip\" id='"+id_ip_wp+"'>WP_INIT</p>";
+                                break;
+                            case "1":
+                                tbl_txt+="<p class=\"client_ip\" id='"+id_ip_wp+"'>WP_SYNCING</p>";
+                                break;
+                            case "2":
+                                tbl_txt+="<p class=\"client_ip\" id='"+id_ip_wp+"'>WP_SUCCESS</p>";
+                                break;
+                            case "3":
+                                tbl_txt+="<p class=\"client_ip\" id='"+id_ip_wp+"'>WP_FAIL</p>";
+                                break;
+                        }
+                    }
+
+                    if (details[3] == "Ethernet" && details[6] != 0)
+                    {
+                        // Add ethernet connection speed
+                        tbl_txt+="<p class=\"client_data\" id='"+id_data+"'>";
+                        switch (details[6]-0)
+                        {
+                            case 1:
+                                tbl_txt+="100Mbps";
+                                break;
+                            case 2:
+                                tbl_txt+="10Mbps";
+                                break;
+                            case 3:
+                                tbl_txt+="1000Mbps";
+                                break;
+                        }
+                        tbl_txt+=" _(Full-Duplex)_</p>";
+                    }
+                    col[2]= tbl_txt;
+                }
+                else
+                {
+                    // inactive user
+                    if (details[3] == "802.11")
+                    {
+                        if(checkSTB(details[2]) || (details[0].indexOf("DIRECTV-HR") != -1))
+                        {
+                            //Wireless STB
+                            col[0]="<img src=\"images/wstb_icon_off.png\" id='"+id_img+"'>";
+                        }
+                        else
+                        {
+                            //wireless client
+                            col[0]="<img src=\"images/wrls_icon_off.png\" id='"+id_img+"'>";
+                        }
+                    }
+                    else
+                    {
+                        if(checkSTB(details[2]) || (details[0].indexOf("DIRECTV-HR") != -1))
+                            // STB client
+                            col[0]="<img src=\"images/stb_icon_off.png\">";
+                        else if(isWP(details[2]))
+                            // WP Host
+                            col[0]="<img src=\"images/wphost_icon_off.png\" id='"+id_img+"'>";
+                        else if(isWPClient(details[2]))
+                            // WP client
+                            col[0]="<img src=\"images/wpclient_icon_off.png\" id='"+id_img+"'>";
+                        else
+                            // ethernet client
+                            col[0]="<img src=\"images/pc_icon_off.png\" id='"+id_img+"'>";
+                    }
+
+                    // device name
+                    col[1]="<span style=\"font-weight:bold; color:#919191;\" id='"+id_name+"'>"+get_table_string(details[0],15)+"</span>";
+
+                    col[2]="<td class=\"rght_cell\" id=\"client_disconnected\" id='"+id_status+"'>_(Inactive)_</td>";
+                }
+
+                appendClientTableRow(table, col);
+
+            }
+
+        }
+    }
+}
+
+function doApply()
+{
+    with ( document.forms[0] )
+    {
+        var new_username = admin_user_name.value;
+        var new_password = admin_password.value;
+
+        //All of the return values must return false or true
+        if ( new_username.length < 1 ) {
+            alert("_(The username cannot be left blank.)_");
+            return false;
+        }
+        if ( new_username.length > 15 ) {
+            alert("_(Username cannot be longer than 15 characters.)_");
+            return false;
+        }
+        if (new_username.search("[^A-Za-z0-9\-.]") != -1)
+        {
+            alert("_(The username is invalid. Please enter a valid one.)_");
+            return false;
+        }
+        if (isValidName(new_username) == false)
+            return false;
+    }
+
+    if ( new_password.length < 1 ) {
+        alert("_(Password should not be left blank.)_");
+        return false;
+    }
+    if ( new_password.length > 15 ) {
+        alert("_(The password should cannot be longer than 15 characters.)_");
+        return false;
+    }
+    if ( new_password.indexOf(' ') != -1 ) {
+        alert("_(The password cannot contain a space.)_");
+        return false;
+    }
+    var ciphertext=encryptedString(key,new_password,RSAAPP.PKCS1Padding,RSAAPP.RawEncoding);
+    var submitext = base64_btoa(ciphertext);
+    document.getElementById("admin_password").value = submitext;
+    document.forms[0].submit();
+
+}
+
+function check_auto()
+{
+//    mytimeid = window.setTimeout("do_reload()", 60*1000);
+}
+
+function do_reload()
+{
+    window.location.reload();
+}
+
+function on_load()
+{
+  setMaxDigits(262);key=new RSAKeyPair("10001","10001","EDA017EBA532CD23754813203F4026C78EB9089FB7DA16ABBC5220C87BEC3B3C9684E8181AE8AE56CBAEE40BA5B2778A9BA4B59FF6C4FFFEB086E4BC288CC00E970C4CE0BEFAD7ED23FFD6D86F5B2B400ED11F20CCFF67D9DF6DA8620EE5CA20741265A5AF51AE2EF0B1D3834F3E90D5545D12CA67B629332F349020C9A5789B01BA147870108FC436CEEB401DD0BEADA4E2F0DB6AB6D506E7D0AD1C947FCEF38346E82F6D6048D2683494DE8E515243FD1C750C6E6195436BB6FA1F0E4BF86471AB30B34C2FCEEB1DAE8937C0B8DB265AC1067FF6EC46402AA2853B8D69C157C3B08F165C1976E799801F29FBD18516AAAC3B94901284202DF1E941EB9FB86F",2048);
+    document.forms[0].sessionKey.value = sessionKey;
+    if(glbWanL2IfName.indexOf("ptm") != -1) wanInfNames = wanInfNamesPtm;
+    if(glbWanL2IfName.indexOf("atm") != -1) wanInfNames = wanInfNamesAtm;
+
+    init_wan();
+    init_firewall();
+    init_dev();
+    draw_device_list();
+    init_wireless();
+
+    if (loginUserName !='')
+    {
+        document.getElementById("login_form").style.display = "none";
+        document.getElementById("login_info").style.display = "block";
+        document.getElementById("loggeduser_name").innerHTML = loginUserName;
+    }
+    else
+    {
+        document.getElementById("login_form").style.display = "block";
+        document.getElementById("login_info").style.display = "none";
+        value=location.href.split("msg=");
+
+        //document.getElementById("id_login_lock").innerHTML="_(Root is forbidden in)_ " + remainRootGuiLockTime + " _(seconds due to)_ " + maxGuiFailedAttempts + " _( times failed login attempt.)_";
+        if (value[1]==null)
+        {
+            document.getElementById("id_login_err").style.display = "none";		
+            //document.getElementById("id_login_lock").style.display = "none";
+        }
+        /*else if (1==rootGuiLocked && inputUserName =="root")
+        {
+            document.getElementById("id_login_err").style.display = "none";		
+            document.getElementById("id_login_lock").style.display = "block";	
+        }*/
+
+    }
+    intLanguage();
+}
+
+function logout()
+{
+    //window.location.href="logout.cgi";
+    var loc = 'logout.cgi?sessionKey=' + sessionKey;
+    postSubmit(loc);
+}
+
+function intLanguage()
+{
+    document.getElementById("langState").value = lang_old;
+}
+
+function setLanguage()
+{
+    var lang_new = document.getElementById("langState").value;
+    if(lang_new == lang_old)
+        return;
+    var loc = "index_langChange.cgi?langState="+lang_new+"&indexChangeLang=1";
+    loc += '&sessionKey=' + sessionKey;
+
+    postSubmit(loc);
+}
+
+function pass_reset()
+{
+    var loc = 'passreset.cgi?inputUserName=none&nothankyou=1';
+    loc += '&sessionKey=' + sessionKey;
+    postSubmit(loc);
+}
+function dom_load(){ on_load(); }
+
+function keyDown(e)
+{
+    if(navigator.appName == "Microsoft Internet Explorer")
+    {
+        var keycode = event.keyCode;
+    }
+    else
+    {
+        var keycode = e.which;
+    }
+    switch (keycode)
+    {
+        case 13:
+        doApply();
+        return true;
+        default:
+        return true;
+    }
+}
+document.onkeydown = keyDown;
+
+</script>
+
+</head>
+<noscript>
+    <frameset cols="100%,*" frameborder=0 framespacing=0>
+        <frame src="checkJs.html" name="hidepage" marginwidth=1 marginheight=1 noresize></frame>
+    </frameset>
+</noscript>
+<body>
+
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav_index.html)%>
+    <!-- END TOP NAV -->
+    <div id="main_column_homepage">
+        <div id="main_column_header_homepage"></div>
+        <div id="main_column_wrapper_homepage">
+            <!-- SUMMARY -->
+            <div id="sum_container">
+                <div class="mp_r1_hdr_title">_(Summary)_</div>
+                <table cellpadding=0 cellspacing=0 border=0 class="tbl_one" style="width:280px">
+                    <tr>
+                        <td class="left_cells" >_(Internet Service Provider)_:</td>
+                        <td class="rght_cells" id="id_isp" >_(Connected)_</span></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells" >_(Wireless)_:</td>
+                        <td class="rght_cells" id="id_wireless" >_(Connected)_</td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells">_(System Up Time)_:</td>
+                        <td class="rght_cells" style= "font-weight:bold;" id="id_sys_up_time"></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells">_(DSL Link Up Time)_:</td>
+                        <td class="rght_cells" style= "font-weight:bold;" id="id_dsl_up_time"></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells">_(Current Time)_:</td>
+                        <td class="rght_cells" style= "font-weight:bold;" id="id_current_time"></td>
+                    </tr>
+                </table>
+            </div>
+            <!-- PRODUCT INFO -->
+            <div id="prod_container">
+                <div class="mp_r1_hdr_title">_(Product Info)_</div>
+                <table cellpadding=0 cellspacing=0 border=0 class="tbl_one" style="width:280px">
+                    <tr>
+                        <td class="left_cells">_(Model)_#:</td>
+                        <td class="rght_cells" style= "font-weight:bold;" id="id_model"></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells">_(Serial)_#:</td>
+                        <td class="rght_cells" style= "font-weight:bold;" id="id_serial"></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells">_(MAC Address)_:</td>
+                        <td class="rght_cells" style= "font-weight:bold;" id="id_mac"></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells">_(Firmware Version)_:</td>
+                        <td class="rght_cells" style= "font-weight:bold;" id="id_fw_ver"></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells" valign="top">_(Language)_:</td>
+                        <td class="rght_cells">
+                            <select id="langState" name="langState" style=" margin:5px 5px 5px 0px; width:110px; color:#000000;font-weight:bold;" onchange="setLanguage()">
+                                <option value="0" style="color:#000000;font-weight:bold;">_(Auto-detect)_</option>
+                                <option value="1" style="color:#000000;font-weight:bold;">English</option>
+                                <option value="2" style="color:#000000;font-weight:bold;">Français</option>
+                            </select>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!-- LOGIN INFO -->
+            <!--The style value must to set Null,or In the 'ie' browser, press 'enter' key does not work. and in <form> the property of method must to be set 'post',and must have a button or input which property of type is 'submit'.-->
+            <div id="login_container" style="">
+
+                <div id="login_form">
+                    <div class="mp_r1_hdr_title">_(Log in to make changes to<br> the modem's settings.)_</div>
+                    <!--Use the post method form id="logn_frm" name="logn_frm" method="post" action="" onsubmit="return doApply();"-->
+                    <form id="logn_frm" name="logn_frm" action="login.cgi" method="post" onsubmit="return false;">
+                        <input type="hidden" name="sessionKey" value='' >
+                        <span id="id_login_err" style=" color:#FF0000">_(Invalid username and password)_</span>
+                        <span id="id_login_lock" style=" color:#FF0000;display:none">_(Root is forbidden for a while due to frequent login failure)_</span>
+                        <table cellpadding=0 cellspacing=0 border=0>
+                            <tr>
+                                <td class="login_form_cell">_(Username)_:</td><td><input type="text" id="admin_user_name" name="inputUserName"/></td>
+                            </tr>
+                            <tr>
+                                <td class="login_form_cell">_(Password)_:</td><td><input type="password" id="admin_password" name="inputPassword"/></td>
+                            </tr>
+                            <input type="hidden" id="nothankyou" name="nothankyou" value="1"/>
+                            <tr>
+                                <td><a onclick="pass_reset();" href="#" id="a_forgetPass">_(Forgot Password?)_</a></td>
+                                <td align="right" style="padding-right:5px;">
+                                    <table cellpadding="0" cellspacing="0" border="0">
+                                        <tr>
+                                            <td><a class="button1" onclick="doApply();" id="btn_login"><span>_(Login)_</span></a></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                </div>
+
+                <div id="login_info">
+                    <div class="mp_r1_hdr_title">_(Login Status)_</div>
+                    <div id="loggeduser">_(You are currently logged in as)_: <span id="loggeduser_name">_(admin)_</span></div>
+                    <!--<img onclick="logout();" src="images/logoff_btn.png" style="border-style: none;padding-top:20px;background-color:efeeef;float:left;">-->
+                    <br/>
+                    <a class="button1" onclick="logout();" id="btn_logout"><span>_(Log Out)_</span></a>
+                </div>
+            </div>
+        </div>
+        <div id="main_column_footer_homepage"></div>
+    </div>
+    <div class="clear_left"></div>
+    <div class="clmn_L_wrap">
+        <div class="clmn_top"></div>
+        <div class="clmn_mid">
+            <div id="wan_container">
+                <div class="mp_r2_hdr_title">_(WAN Connection Status)_</div>
+                <table cellpadding=0 cellspacing=0 border=0 class="tbl_two">
+                    <tr>
+                        <td class="left_cells">_(WAN Type)_:</td><td class="rght_cells" style= "font-weight:bold;" id="id_wan_type"></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells">_(Dynamic/Static)_:</td><td class="rght_cells" style= "font-weight:bold;" id="id_protocol"></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells">_(Modem IP Address)_:</td><td class="rght_cells" style= "font-weight:bold;" id="id_wanip"></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells">_(Subnet Mask)_:</td><td class="rght_cells" style= "font-weight:bold;" id="id_netmask"></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells">_(Default Gateway)_:</td><td class="rght_cells" style= "font-weight:bold;" id="id_gateway"></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells">_(Lease Time Remaining)_:</td><td class="rght_cells" style= "font-weight:bold;" id="id_leaseTimeRemaining"></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells">_(DNS Address)_ #1:</td><td class="rght_cells" style= "font-weight:bold;" id="id_dns_1"></td>
+                    </tr>
+                    <tr>
+                        <td class="left_cells">_(DNS Address)_ #2:</td><td class="rght_cells"style= "font-weight:bold;"  id="id_dns_2"></td>
+                    </tr>
+                </table>
+            </div>
+            <div id="wrls_container">
+                <div class="mp_r2_hdr_title">_(Wireless)_</div>
+                    <table cellpadding=0 cellspacing=0 border=0 class="tbl_two">
+                        <tr>
+                            <td class="left_cells">_(SmartSteering&#8482)_:</td>
+                            <td class="rght_cells" style= "font-weight:bold;" id="id_bandSteering"></td>
+                        </tr>
+                    </table>
+                    <table cellpadding=0 cellspacing=0 border=0 class="tbl_two" id="tbl_wifi_2">
+                        <tr><td id="title_wifi" coslspan="2" class="wifi_title">_(SSID 2.4G)_</td></tr>
+                        <tr>
+                            <td class="left_cells">_(SSID)_:</td><td class="rght_cells"><div style='word-break:break-all;word-wrap:break-word;font-weight:bold; color:black' id="id_ssid"></div></td>
+                        </tr>
+                        <tr>
+                            <td class="left_cells">_(Security)_:</td><td class="rght_cells" style= "font-weight:bold;"  id="id_security"></td>
+                        </tr>
+                        <tr>
+                            <td class="left_cells">_(Security Type)_:</td><td class="rght_cells" style= "font-weight:bold;"  id="id_security_type"></td>
+                        </tr>
+                    </table>
+                    <table cellpadding=0 cellspacing=0 border=0 class="tbl_two" id="tbl_wifi_5">
+                        <tr><td coslspan="2" class="wifi_title">_(SSID 5G)_</td></tr>
+                        <tr>
+                            <td class="left_cells">_(SSID)_:</td><td class="rght_cells"><div style='word-break:break-all;word-wrap:break-word;font-weight:bold; color:black' id="id_ssid_5"></div></td>
+                        </tr>
+                        <tr>
+                            <td class="left_cells">_(Security)_:</td><td class="rght_cells" style= "font-weight:bold;"  id="id_security_5"></td>
+                        </tr>
+                        <tr>
+                            <td class="left_cells">_(Security Type)_:</td><td class="rght_cells" style= "font-weight:bold;"  id="id_security_type_5"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="clmn_btm"></div>
+        </div>
+        <div class="clmn_C_wrap">
+            <div class="clmn_top"></div>
+            <div class="clmn_mid">
+                <div id="homenet_container">
+                    <div class="mp_r2_hdr_title">_(Home Network)_</div>
+                    <div style="overflow-y:auto; height:350px">
+                        <table cellpadding=0 cellspacing=0 border=0 id="tbl_clients">
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="clmn_btm"></div>
+        </div>
+        <div class="clmn_R_wrap">
+            <div class="clmn_top"></div>
+            <div class="clmn_mid">
+                <div id="fire_container">
+                    <div class="mp_r2_hdr_title">_(Firewall)_</div>
+                    <table cellpadding=0 cellspacing=0 border=0 class="tbl_two">
+                        <tr>
+                            <td class="left_cells">_(UPnP Setting)_:</td><td class="rght_cells" style= "font-weight:bold;" id="id_upnp"></td>
+                        </tr>
+                        <tr>
+                            <td class="left_cells">_(Firewall)_:</td><td class="rght_cells" style= "font-weight:bold;"  id="id_firewall"></td>
+                        </tr>
+                        <tr>
+                            <td class="left_cells">_(Blocking/Filtering)_:</td><td class="rght_cells" style= "font-weight:bold;" id="id_block"></td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="diag_container">
+                    <div class="mp_r2_hdr_title">_(Diagnostics - Login Required)_</div>
+                    <ul class="diaglist">
+                        <li class="diag"><a href="advancedutilities_ipping.html">_(Ping)_</a></li>
+                        <li class="diag"><a href="advancedutilities_traceroute.html">_(Traceroute)_</a></li>
+                        <li class="diag"><a href="utilities_restoredefaultsettings.html">_(Wireless Reset)_</a></li>
+                        <li class="diag"><a href="utilities_reboot.html">_(Device Reboot)_</a></li>
+                        <li class="diag"><a href="utilities_restoredefaultsettings.html">_(Factory Reset)_</a></li>
+                        <li class="diag"><a href="modemstatus_home.html">_(DHCP Release/Renew)_</a></li>
+                        <li class="diag"><a href="http://www.actiontec.com/products/manuals/T3200M_UserManual.pdf">_(User's Manual)_</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="clmn_btm"></div>
+        </div>
+        <div class="clear_left"></div>
+        <div id="footer_homepage">
+        &nbsp;
+        </div>
+    </div>
+</div>
+<div style="display:none">
+   <img src="images/nav_list.gif" width=1 height=1 />
+<div>
+<SCRIPT LANGUAGE="JavaScript">
+    var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

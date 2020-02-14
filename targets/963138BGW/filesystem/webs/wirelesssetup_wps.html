@@ -1,0 +1,796 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>_(Wireless Setup)_ - _(WPS)_</title>
+  <link href="css/basic.css" rel="stylesheet" type="text/css" />
+  <SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+  <script language="JavaScript" src="js/nav.js"></script>
+  <script language="JavaScript" src="js/htmldecode.js"></script>
+  <script language="JavaScript" src="js/util.js"></script>
+  <script language="Javascript">
+
+  // Globle vars definition
+  var wlIndex = '<%ejGetOther(wlBandFrequency)%>';// initial default selection of band frequency.
+  var gv_cssid = "0";
+  var has_QTN = htmlDecodeStr("<%ejGet(qtnExist)%>");
+  var wlChipOk = htmlDecodeStr("<%ejGetWl(wlChipOk_wl0)%>");
+
+  var gv_old_enable;
+  var gv_ap_status;
+  var gv_enable;
+  var appin_old_enable;
+  var gv_enable;
+  var gv_WPSPin;
+  var gv_pcb_or_pin;
+
+  var sessionKey='<%ejGetOther(sessionKey)%>';
+
+  function init_orig_vars()
+  {
+      var i = wlIndex;
+      if(i == "0")
+      {
+          gv_ap_status  = htmlDecodeStr("<%ejGetWl(wlEnbl_wl0v0)%>");
+      }
+      else
+      {
+          gv_ap_status  = htmlDecodeStr("<%ejGetWl(wlEnbl_wl1v0)%>");
+      }
+
+      gv_enable = document.getElementById("uiPostEnable_"+i).value;
+      gv_old_enable = gv_enable;
+      appin_enable = document.getElementById("uiPostAppinEnable_"+i).value;
+      appin_old_enable = appin_enable;
+      gv_pcb_or_pin = 0;
+  }
+
+  function uiset_section_wlIndex()
+  {
+      if (wlIndex == "0" || has_QTN == "0") // swith to 2.4G
+      {
+          document.getElementById("id_wl_5").checked = false;
+          if (has_QTN == "0")
+              document.getElementById("id_wl_5").disabled = true;
+          document.getElementById("id_wl_2").checked = true;
+          document.getElementById("id_wpsSsid").style.display = "none";
+      }
+      else
+      {
+          document.getElementById("id_wl_5").checked = true;
+          document.getElementById("id_wl_2").checked = false;
+          document.getElementById("id_wpsSsid").style.display = "";
+      }
+
+      if(wlChipOk == "0")
+          document.getElementById("id_wl_2").disabled = true;
+  }
+
+  function uiset_section_ssid()
+  {
+     document.getElementById("id_ssid").value = gv_cssid;
+     if(gv_cssid == "3")
+     {
+          document.getElementById("id_section_iptv").style.display = "";
+          document.getElementById("id_section_primary").style.display = "none";
+          document.getElementById("uiPostWpsSetup_1").disabled = true;
+          document.getElementById("uiPostWpsSetup_3").disabled = false;
+     }
+     else
+     {
+          document.getElementById("id_section_iptv").style.display = "none";
+          document.getElementById("id_section_primary").style.display = "";
+          document.getElementById("uiPostWpsSetup_3").disabled = true;
+          document.getElementById("uiPostWpsSetup_1").disabled = false;
+     }
+  }
+
+  //
+  function uiset_section_wps_state()
+  {
+      if (gv_enable == "enabled")
+      {
+          document.getElementById("id_state_enable").checked = true;
+          document.getElementById("id_state_disable").checked = false;
+      }
+      else
+      {
+          document.getElementById("id_state_enable").checked = false;
+          document.getElementById("id_state_disable").checked = true;
+      }
+  }
+
+  function uiset_section_ap_pin_state()
+  {
+      if (appin_enable == "enabled")
+      {
+          document.getElementById("id_appinstate_enable").checked = true;
+          document.getElementById("id_appinstate_disable").checked = false;
+      }
+      else
+      {
+          document.getElementById("id_appinstate_enable").checked = false;
+          document.getElementById("id_appinstate_disable").checked = true;
+      }
+  }
+
+  function uiset_section_connect_ap_pin()
+  {
+      if (gv_enable == "disabled" || gv_old_enable == "disabled")
+      {
+          document.getElementById("id_section_wps_pins").style.display = "none";
+          document.getElementById("id_ap_pin").style.display = "none";
+      }
+      else
+      {
+          document.getElementById("id_section_wps_pins").style.display = "block";
+          if(wlIndex == "1")
+          {
+              document.getElementById("id_ap_pin").style.display = "block";
+              document.getElementById("id_ap_pin_value").innerHTML="<strong><%ejGetWl(wlquantenna_ap_pin_wl1)%></strong>";
+          }
+          else
+          {
+              document.getElementById("id_ap_pin").style.display = "block";
+              document.getElementById("id_ap_pin_value").innerHTML="<strong><%ejGetWl(wlWscDevPin)%></strong>";
+          }
+      }
+  }
+
+  function uiset_section_connect_other_pin()
+  {
+      //values
+      if (gv_pcb_or_pin == 0)
+      {
+          document.getElementById("id_pbc_radio").checked = true;
+          document.getElementById("id_input_pin").checked = false;
+      }
+      else
+      {
+          document.getElementById("id_pbc_radio").checked = false;
+          document.getElementById("id_input_pin").checked = true;
+      }
+      //enable & disable
+      if (gv_enable == "disabled" || gv_old_enable == "disabled")
+      {
+          document.getElementById("id_pbc_radio").disabled = true;
+          document.getElementById("id_pin_radio").disabled = true;
+          document.getElementById("id_input_pin").disabled = true;
+      }
+      else
+      {
+          document.getElementById("id_pbc_radio").disabled = false;
+          document.getElementById("id_pin_radio").disabled = false;
+          if (gv_pcb_or_pin == 0)
+              document.getElementById("id_input_pin").disabled = true;
+          else
+              document.getElementById("id_input_pin").disabled = false;
+      }
+  }
+
+  //
+  function uiset_section_all()
+  {
+      uiset_section_wlIndex();
+      uiset_section_ssid();
+      uiset_section_wps_state();
+      uiset_section_ap_pin_state();
+      uiset_section_connect_ap_pin();
+      uiset_section_connect_other_pin();
+  }
+
+  function do_load()
+  {
+      htmlDecode();
+      if (has_QTN == "0")
+      {
+          wlIndex = "0";
+      }
+      init_orig_vars();
+      uiset_section_all();
+      //highlight the button after user click on it
+      side_nav("wps_page");
+  }
+
+  function onSelectWlIndex()
+  {
+      if (document.getElementById("id_wl_2").checked)
+      {
+          wlIndex = "0";
+      }
+      else if (document.getElementById("id_wl_5").checked)
+      {
+          wlIndex = "1";
+      }
+      gv_cssid = "0";
+      init_orig_vars();
+      uiset_section_all();
+  }
+
+  function onSelectSSID()
+  {
+     gv_cssid = document.getElementById("id_ssid").value;
+     uiset_section_all();
+  }
+
+  //On's
+  function onClickWpsState()
+  {
+      if (document.getElementById("id_state_enable").checked)
+      {
+          gv_enable = "enabled";
+      }
+      else if (document.getElementById("id_state_disable").checked)
+      {
+          gv_enable = "disabled";
+      }
+      uiset_section_all();
+  }
+
+//AP PIN enable or disable
+  function onClickAppinState()
+  {
+      if (document.getElementById("id_appinstate_enable").checked)
+      {
+          appin_enable = "enabled";
+      }
+      else if (document.getElementById("id_appinstate_disable").checked)
+      {
+          appin_enable = "disabled";
+      }
+      uiset_section_all();
+  }
+
+  //
+  function onClickGenAPPin()
+  {
+      var i = wlIndex;
+      var form = document.forms[0];
+      document.getElementById("uiPostEnable_"+i).disabled  = true;
+      document.getElementById("uiPostPIN_"+i).disabled     = true;
+      document.getElementById("uiPostRestart_"+i).disabled = false;
+      document.getElementById("uiPostRestart_"+i).value    = "y";
+      document.getElementById("uiPostAction_"+i).disabled = false;
+      if(i == "0")
+      {
+          document.getElementById("uiPostAction_"+i).value    = "atec_new_pin";
+      }
+      else
+      {
+          document.getElementById("uiPostAction_"+i).value    = "qtn_new_pin";
+      }
+
+      disable_input_all();
+      do_submit();
+  }
+
+  //
+  function onClickDefaultAPPin()
+  {
+      var i = wlIndex;
+      var form = document.forms[0];
+      document.getElementById("uiPostEnable_"+i).disabled = true;
+      document.getElementById("uiPostPIN_"+i).disabled = true;
+      document.getElementById("uiPostAction_"+i).disabled = false;
+      if(i == "0")
+      {
+          document.getElementById("uiPostAction_"+i).value    = "atec_def_pin";
+      }
+      else
+      {
+          document.getElementById("uiPostAction_"+i).value    = "qtn_def_pin";
+      }
+
+      disable_input_all();
+      do_submit();
+  }
+
+  //
+  function onClickPcbOrPin()
+  {
+      if (document.getElementById("id_pbc_radio").checked == true)
+      {
+          gv_pcb_or_pin = 0;
+      }
+      else if (document.getElementById("id_pin_radio").checked == true)
+      {
+          gv_pcb_or_pin = 1;
+      }
+      uiset_section_all();
+  }
+
+  //
+  function onClickConnect()
+  {
+      var i = wlIndex;
+      var form = document.forms[0];
+      if (gv_pcb_or_pin == 0)
+      { //PCB
+          document.getElementById("uiPostEnable_"+i).disabled = true;
+          document.getElementById("uiPostPIN_"+i).disabled = true;
+          document.getElementById("uiPostConnect_"+i).disabled = false;
+          document.getElementById("uiPostMethod_"+i).disabled = false;
+          document.getElementById("uiPostMethod_"+i).value = "2";
+          document.getElementById("uiPostCommand_"+i).disabled = false;
+          document.getElementById("uiPostEvent_"+i).disabled = false;
+          document.getElementById("uiPostRestart_"+i).disabled = false;
+          document.getElementById("uiPostWscConfig_"+i).disabled = false;
+          document.getElementById("uiPostWscConfig_"+i).value = "client-pbc";
+          disable_input_all();
+          do_submit();
+      }
+      else
+      {
+          document.getElementById("uiPostConnect_"+i).disabled = false;
+          document.getElementById("uiPostMethod_"+i).disabled = false;
+          document.getElementById("uiPostMethod_"+i).value = "1";
+          document.getElementById("uiPostCommand_"+i).disabled = false;
+          document.getElementById("uiPostRestart_"+i).disabled = false;
+          document.getElementById("uiPostWscConfig_"+i).disabled = false;
+          document.getElementById("uiPostWscConfig_"+i).value = "client-pin";
+          if(do_connect() == false)
+              return false;
+      }
+  }
+
+  function onClickIptvConnect()
+  {
+      var i = 3;
+      document.getElementById("uiPostEnable_"+i).disabled = true;
+      document.getElementById("uiPostPIN_"+i).disabled = true;
+      document.getElementById("uiPostConnect_"+i).disabled = false;
+      document.getElementById("uiPostMethod_"+i).disabled = false;
+      document.getElementById("uiPostMethod_"+i).value = "2";
+      document.getElementById("uiPostCommand_"+i).disabled = false;
+      document.getElementById("uiPostEvent_"+i).disabled = false;
+      document.getElementById("uiPostRestart_"+i).disabled = false;
+      document.getElementById("uiPostWscConfig_"+i).disabled = false;
+      document.getElementById("uiPostWscConfig_"+i).value = "client-pbc";
+      disable_input_all();
+      do_submit();
+  }
+
+  function disable_input_all()
+  {
+      document.getElementById("id_wl_5").disabled = true;
+      document.getElementById("id_wl_2").disabled = true;
+      document.getElementById("id_ssid").disabled = true;
+
+      document.getElementById("id_state_enable").disabled = true;
+      document.getElementById("id_state_disable").disabled = true;
+
+      document.getElementById("id_appinstate_enable").disabled = true;
+      document.getElementById("id_appinstate_disable").disabled = true;
+
+      document.getElementById("id_input_pin").disabled = true;
+      document.getElementById("id_pbc_radio").disabled = true;
+      document.getElementById("id_pin_radio").disabled = true;
+  }
+
+  // Removes leading whitespaces
+  function LTrim( value )
+  {
+      var re = /\s*((\S+\s*)*)/;
+      return value.replace(re, "$1");
+  }
+  // Removes ending whitespaces
+  function RTrim( value )
+  {
+      var re = /((\s*\S+)*)\s*/;
+      return value.replace(re, "$1");
+  }
+  // Removes leading and ending whitespaces
+  function trim( value )
+  {
+      return LTrim(RTrim(value));
+  }
+
+function do_add_elements()
+{
+    var form = document.forms[0];
+    var i=0;
+    var loc="";
+    var radio_beg;
+    var radio_end;
+
+    for(i=0;i<form.elements.length;i++)
+    {
+        if(form.elements[i].value == "radio_beg_"+wlIndex)
+        {
+            radio_beg = i;
+        }
+        else if(form.elements[i].value == "radio_end_"+wlIndex)
+        {
+            radio_end = i;
+            break;
+        }
+    }
+
+    for(i=radio_beg+1;i<radio_end;i++)
+    {
+        if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+        {
+            loc+="&";
+            loc+=form.elements[i].name;
+            loc+="=";
+            loc+=form.elements[i].value;
+        }
+    }
+    return loc;
+}
+
+  function do_submit()
+  {
+      var lochead='wirelesssetup_wps.wl?';
+      var loc="";
+      var key = '<%ejGetOther(encrypt_key, 0)%>';
+
+      loc += 'wlSetBandMode='+wlIndex;
+      loc += do_add_elements();
+	  loc += '&sessionKey=' + sessionKey;
+      loc += '&needthankyou=1';
+      //alert('loc='+loc);
+      //return false;
+      loc=encrypt_query(loc,key);
+      lochead+=loc;
+      // var code = 'location="' + lochead + '"';
+      //eval(code);
+      postSubmit(lochead);
+      //     form.submit();
+      return true;
+  }
+  //
+  function do_apply()
+  {
+      var i = wlIndex;
+      var form = document.forms[0];
+
+      if (gv_ap_status!="1" && gv_enable == "enabled" )
+      {
+          alert("_(Enable wireless first.)_");
+          return false;
+
+      }
+
+      gv_WPSPin = document.getElementById("id_input_pin").value;
+      var rege = /[^0-9]/;
+      var mat = gv_WPSPin.match(rege);
+      document.getElementById("uiPostSsidIdx_"+i).disabled = false;
+      document.getElementById("uiPostSsidIdx_"+i).value = gv_cssid;
+
+      if (gv_old_enable != gv_enable)
+      {
+          document.getElementById("uiPostEnable_"+i).disabled = false;
+          document.getElementById("uiPostEnable_"+i).value = gv_enable;
+
+          document.getElementById("uiPostAppinEnable_"+i).disabled = false;
+          document.getElementById("uiPostAppinEnable_"+i).value = appin_enable;
+          disable_input_all();
+          do_submit();
+          return true;
+      }
+      else
+      {
+          document.getElementById("uiPostAppinEnable_"+i).disabled = false;
+          document.getElementById("uiPostAppinEnable_"+i).value = appin_enable;
+          disable_input_all();
+          do_submit();
+          return true;
+      }
+      return true;
+  }
+
+  function do_connect()
+  {
+      var i = wlIndex;
+      var form = document.forms[0];
+
+      if (gv_ap_status!="1" && gv_enable == "enabled" )
+      {
+          alert("_(Enable wireless first.)_");
+          return false;
+
+      }
+
+      gv_WPSPin = document.getElementById("id_input_pin").value;
+      var rege = /[^0-9]/;
+      var mat = gv_WPSPin.match(rege);
+
+      if (gv_old_enable != gv_enable)
+      {
+          document.getElementById("uiPostEnable_"+i).disabled = false;
+          document.getElementById("uiPostEnable_"+i).value = gv_enable;
+          disable_input_all();
+          do_submit();
+          return true;
+      }
+      else if (document.getElementById("uiPostEnable_"+i).value != "enabled")
+      {
+          document.getElementById("uiPostEnable_"+i).disabled = true;
+          disable_input_all();
+          do_submit();
+          return true;
+      }
+      else
+      {
+          if (trim(gv_WPSPin) == "")
+          {
+              alert("_(PIN cannot be left blank.)_");
+              return false;
+          }
+          if (isNaN(gv_WPSPin)==true)
+          {
+              alert("_(WPS PINs are numeric only. Letters and special characters are not supported.)_");
+              document.getElementById("WPSPin").focus();
+              return false;
+          }
+
+          if (mat)
+          {
+              if (mat.length > 0)
+              {
+                  alert("_(WPS PINs are numeric only. Letters and special characters are not supported.)_");
+                  return false;
+              }
+          }
+          if ((document.getElementById("id_input_pin").value).length < 8)
+          {
+              alert("_(PIN must be 8 digits)_.");
+              document.getElementById("id_input_pin").focus();
+              return false;
+          }
+
+          //PIN = document.getElementById("WPSPin").value;
+          var accum = 0;
+          accum += 3 * (Math.floor(gv_WPSPin / 10000000) % 10);
+          accum += 1 * (Math.floor(gv_WPSPin / 1000000) % 10);
+          accum += 3 * (Math.floor(gv_WPSPin / 100000) % 10);
+          accum += 1 * (Math.floor(gv_WPSPin / 10000) % 10);
+          accum += 3 * (Math.floor(gv_WPSPin / 1000) % 10);
+          accum += 1 * (Math.floor(gv_WPSPin / 100) % 10);
+          accum += 3 * (Math.floor(gv_WPSPin / 10) % 10);
+          accum += 1 * (Math.floor(gv_WPSPin / 1) % 10);
+          if (0 != (accum % 10))
+          {
+              alert("_(WPS PINs are numeric only. Letters and special characters are not supported.)_");
+              document.getElementById("id_input_pin").focus();
+              return false;
+          }
+
+          document.getElementById("uiPostEnable_"+i).disabled = true;
+          document.getElementById("uiPostPIN_"+i).disabled = false;
+          document.getElementById("uiPostPIN_"+i).value = gv_WPSPin;
+          document.getElementById("uiPostWPSPin_"+i).disabled = false;
+          document.getElementById("uiPostWPSPin_"+i).value = gv_WPSPin;
+
+          disable_input_all();
+          do_submit();
+      }
+      //  
+      return true;
+  }
+function dom_load(){ do_load(); }
+  </script>
+</head>
+<body>
+<div id="wrapper">
+  <!-- TOP NAV -->
+  <%ejInclude(top_btn_nav3.html)%>
+  <!-- END TOP NAV -->
+  <!-- SIDE NAV -->
+  <%ejInclude(wireless_left.html)%>
+  <!-- END SIDE NAV -->
+  <!-- MAIN CONTENT AREA -->
+  <div id="content_right">
+    <div id="content_right_header">
+    </div>
+    <div id="content_right_contentarea">
+      <h1 class="wirelesssetup_basic">_(WPS (Wi-Fi Protected Setup))_ </h1>
+        <form name="mainform" action="wirelesssetup_wps.wl" method="POST" onSubmit="return do_apply();">
+
+        <input type="hidden" name="radio_beg_0"    value="radio_beg_0"  id="radio_beg_0">
+        <input type="hidden" name="wlSsidIdx_wl0"        value="0" id="uiPostSsidIdx_0" >
+        <input type="hidden" name="wlWscMode"        value="<%ejGetWl(wlWscMode_wl0)%>" id="uiPostEnable_0" disabled>
+        <input type="hidden" name="wl_ap_pin"    value="<%ejGetWl(wlappin_wl0)%>" id="uiPostAppinEnable_0" disabled>
+        <input type="hidden" name="wlWscStaPin"        value="<%ejGetWl(wlWscStaPin_wl0)%>" id="uiPostPIN_0" disabled>
+        <input type="hidden" name="wsc_addER"          value="0" id="uiPostConnect_0" disabled>
+        <input type="hidden" name="wsc_event"          value="a" id="uiPostEvent_0" disabled>
+        <input type="hidden" name="wsc_config_state"   value="1" id="uiPostCfgSta_0" disabled>
+        <input type="hidden" name="wsc_force_restart"  value="n" id="uiPostRestart_0" disabled>
+        <input type="hidden" name="wsc_method"         value=""  id="uiPostMethod_0" disabled>
+        <input type="hidden" name="wsc_config_command" value="1" id="uiPostCommand_0" disabled>
+        <input type="hidden" name="wlWscConfig"        value=""  id="uiPostWscConfig_0" disabled>
+        <input type="hidden" name="WPSPin"             value=""  id="uiPostWPSPin_0" disabled>
+        <input type="hidden" name="action"             value=""  id="uiPostAction_0" disabled>
+        <input type="hidden" name="radio_end_0"    value="radio_end_0"  id="radio_end_0">
+
+        <input type="hidden" name="radio_beg_1"    value="radio_beg_1"  id="radio_beg_1">
+        <input type="hidden" name="wlSsidIdx_wl1"        value="0" id="uiPostSsidIdx_1" >
+        <input type="hidden" name="wlquantenna_wps_enable_wl1v0"        value="<%ejGetWl(wlquantenna_wps_enable_wl1v0)%>" id="uiPostEnable_1" disabled>
+        <input type="hidden" name="wlquantenna_wps_setup_wl1v0"        value="1" id="uiPostWpsSetup_1">
+        <input type="hidden" name="qtn_ap_pin_wl1v0"    value="<%ejGetWl(wlappin_wl1v0)%>" id="uiPostAppinEnable_1" disabled>
+        <input type="hidden" name="wlquantenna_wps_stapin_wl1v0"        value="<%ejGetWl(wlquantenna_wps_stapin_wl1v0)%>" id="uiPostPIN_1" disabled>
+        <input type="hidden" name="wsc_addER_wl1v0"          value="0" id="uiPostConnect_1" disabled>
+        <input type="hidden" name="wsc_event_wl1v0"          value="a" id="uiPostEvent_1" disabled>
+        <input type="hidden" name="wsc_config_state_wl1v0"   value="1" id="uiPostCfgSta_1" disabled>
+        <input type="hidden" name="wsc_force_restart_wl1v0"  value="n" id="uiPostRestart_1" disabled>
+        <input type="hidden" name="wsc_method_wl1v0"         value=""  id="uiPostMethod_1" disabled>
+        <input type="hidden" name="wsc_config_command_wl1v0" value="1" id="uiPostCommand_1" disabled>
+        <input type="hidden" name="wlquantenna_wps_method_wl1v0"         value=""  id="uiPostWscConfig_1" disabled>
+        <input type="hidden" name="WPSPin_wl1v0"             value=""  id="uiPostWPSPin_1" disabled>
+        <input type="hidden" name="action_wl1v0"             value=""  id="uiPostAction_1" disabled>
+        <!--wifi3 -->
+        <input type="hidden" name="wlquantenna_wps_enable_wl1v3"        value="<%ejGetWl(wlquantenna_wps_enable_wl1v3)%>" id="uiPostEnable_3" disabled>
+        <input type="hidden" name="wlquantenna_wps_setup_wl1v3"        value="1" id="uiPostWpsSetup_3">
+        <input type="hidden" name="qtn_ap_pin_wl1v3"    value="<%ejGetWl(wlappin_wl1v3)%>" id="uiPostAppinEnable_3" disabled>
+        <input type="hidden" name="wlquantenna_wps_stapin_wl1v3"        value="<%ejGetWl(wlquantenna_wps_stapin_wl1v3)%>" id="uiPostPIN_3" disabled>
+        <input type="hidden" name="wsc_addER_wl1v3"          value="0" id="uiPostConnect_3" disabled>
+        <input type="hidden" name="wsc_event_wl1v3"          value="a" id="uiPostEvent_3" disabled>
+        <input type="hidden" name="wsc_config_state_wl1v3"   value="1" id="uiPostCfgSta_3" disabled>
+        <input type="hidden" name="wsc_force_restart_wl1v3"  value="n" id="uiPostRestart_3" disabled>
+        <input type="hidden" name="wsc_method_wl1v3"         value=""  id="uiPostMethod_3" disabled>
+        <input type="hidden" name="wsc_config_command_wl1v3" value="1" id="uiPostCommand_3" disabled>
+        <input type="hidden" name="wlquantenna_wps_method_wl1v3"         value=""  id="uiPostWscConfig_3" disabled>
+        <input type="hidden" name="WPSPin_wl1v3"             value=""  id="uiPostWPSPin_3" disabled>
+        <input type="hidden" name="action_wl1v3"             value=""  id="uiPostAction_3" disabled>
+        <input type="hidden" name="radio_end_1"    value="radio_end_1"  id="radio_end_1">
+
+        <p>
+    _(WPS provides an easy and secure way to establish a wireless network by sharing the wireless key between the modem and wireless client.)_
+        </p>
+        <table width="85%" border="0" cellpadding="0" cellspacing="0"  style="margin:0 auto;">
+          <tr>
+            <td width="35%" style="text-align:left"><strong>_(Frequency)_:</strong></td>
+            <td width="10%" style="text-align:left"><input name="wireless_index" id="id_wl_5" type="radio" onClick="onSelectWlIndex();" />
+             _(5G)_ </td>
+            <td width="55%" style="text-align:left"><input name="wireless_index" id="id_wl_2" type="radio" onClick="onSelectWlIndex();" />
+             _(2.4G)_ </td>
+          </tr>
+        </table>
+        <table width="85%" border="0" cellpadding="0" cellspacing="0" id="id_wpsSsid"  style="margin:0 auto;">
+          <tr>
+            <td width="35%" style="text-align:left"><strong>_(Select SSID)_</strong></td>
+            <td width="65%" style="text-align:left">
+                <select name="ssid" id="id_ssid" onchange="onSelectSSID();">
+                  <option id="id_ssid_0" value="0"><%ejGetWl(wlSsid_wl1v0)%></option>
+                  <option id="id_ssid_1" value="3"><%ejGetWl(wlSsid_wl1v3)%></option>
+                </select>
+            </td>
+          </tr>
+         </table>
+        <div id="id_section_primary" style="display:none;">
+        <p>
+        <strong>1. _(Set the WPS state.)_ </strong>
+        </p>
+        <p>
+        &nbsp;&nbsp;&nbsp;&nbsp;_(WPS)_:
+        <input name="wps" id="id_state_enable" type="radio" value="enable" onclick="onClickWpsState();" />
+        _(Enable)_
+        <input name="wps" id="id_state_disable" type="radio" value="disable" onclick="onClickWpsState();" />
+        _(Disable)_
+        </p>
+        <p>&nbsp;
+        </p>
+        <div id="id_ap_pin" style="display:block;">
+        <p>
+        &nbsp;&nbsp;&nbsp;&nbsp;_(AP PIN)_:
+        <input name="appin" id="id_appinstate_enable" type="radio" value="enable" onclick="onClickAppinState();" />
+        _(Enable)_
+        <input name="appin" id="id_appinstate_disable" type="radio" value="disable" onclick="onClickAppinState();">
+        _(Disable)_
+        </p>
+        <p>&nbsp;
+
+        </p>
+       </div>
+        <p>
+        <strong>2. _(Click Apply to save changes.)_</strong>
+        </p>
+        <p>
+        <a class="button1" onclick="do_apply();" id="btn_apply"><span>_(Apply)_</span></a></a>
+        </p>
+        <div id="id_section_wps_pins" style="display:none;">
+        <h2 class="inlineheader">_(Connecting a device with WPS AP PIN)_ </h2>
+        <table width="85%" border="0" cellpadding="0" cellspacing="0" class="status_style">
+          <tr>
+            <td >
+              <p style="margin:0;">
+              _(Current WPS AP PIN)_:
+              <span class="connected" id="id_ap_pin_value">
+              <strong><%ejGetWl(wlWscDevPin)%></strong>
+              </span>
+              </p>
+              <p style="margin:0;">
+             _(Click Generate PIN to generate a new AP PIN)_:
+              </p>
+              <p>
+              <a class="button1" style=" padding-left:150px;text-decoration:none;" onclick="onClickGenAPPin();" id="btn_generatePIN"><span>_(Generate PIN)_</span></a>
+              </p>
+              <br/>
+              <p style="margin:0;">
+              _(Click Restore Default PIN to restore the default AP PIN.)_:
+              </p>
+              <p>
+              <a style=" padding-left:140px;text-decoration:none;" class="button1" onclick="onClickDefaultAPPin();" id="btn_restorePIN"><span>_(Restore Default PIN)_</span></a>
+              </p>
+              <!--p>
+              &nbsp;
+              </p-->
+            </td>
+          </tr>
+        </table>
+        <p>&nbsp;
+
+        </p>
+        <h2 class="inlineheader">_(Connecting a device with WPS PBC or End Device PIN)_ </h2>
+        <table width="85%" border="0" cellpadding="0" cellspacing="0" class="status_style">
+          <tr>
+            <td valign="top" style="text-align:left; ">
+              <input name="connecting_a_device" id="id_pbc_radio" type="radio" value="pbc" onclick="onClickPcbOrPin();" />
+              <span>_(Push Button Configuration (PBC))_<br />
+              </span>
+              <!--p>
+              &nbsp;
+              </p-->
+            </td>
+          </tr>
+          <tr>
+            <td valign="top" style="text-align:left; ">
+              <input name="connecting_a_device" id="id_pin_radio" type="radio" value="pin" onclick="onClickPcbOrPin();"/>
+              <span>_(End Device PIN)_:&nbsp; </span><br />
+              <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_(Insert End Device PIN)_: </span>
+              <input type="text" maxlength="8" name="textfield3" id="id_input_pin" style="height:18px;"/>
+              <!--p>
+              &nbsp;
+              </p-->
+            </td>
+          </tr>
+          <tr>
+            <td valign="top" style="text-align:left; ">
+              <a class="button1" style="padding-left:200px;text-decoration:none;" onclick="onClickConnect();" id="btn_connect"><span>_(Connect)_</span></a>
+              <br />
+              <br/>
+              <span class="smallprint"  style="text-align:left; border-bottom:0px"> _(Connect must be clicked within 120 seconds on client WPS device.)_
+              </span>
+            </td>
+          </tr>
+        </table>
+        <p>&nbsp;</p>
+        </div>
+        </div>
+        <div id="id_section_iptv" style="display:none;">
+        <table width="85%" border="0" cellpadding="0" cellspacing="0" class="status_style">
+          <tr>
+            <td valign="top" style="text-align:left; ">
+              <span>Push Button Configuration (PBC)<br />
+              </span>
+              <!--p>
+              &nbsp;
+              </p-->
+            </td>
+          </tr>
+          <tr>
+            <td valign="top" style="text-align:left; ">
+              <a class="button1" style="padding-left:200px;text-decoration:none;" onclick="onClickIptvConnect();" id="btn_iptv_connect"><span>Connect</span></a>
+              <br />
+              <br/>
+              <span class="smallprint"  style="text-align:left; border-bottom:0px"> Connect must be clicked within 120 seconds on client WPS device.
+              </span>
+            </td>
+          </tr>
+        </table>
+        </div>
+      </form>
+    </div>
+    <div id="content_right_footer">
+    </div>
+  </div>
+  <div class="clear_left">
+  </div>
+  <div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

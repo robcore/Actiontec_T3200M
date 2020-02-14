@@ -1,0 +1,115 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Status)_ - _(System Monitor)_ - _(ARP Table)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="Javascript">
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function do_load()
+{
+     draw_arp_table();
+
+	//highlight the button after user click on it
+	side_nav("arptable");
+}
+
+function draw_arp_table()
+{
+	var i;
+	var IP, HW_TYPE, FLAGS, HW_ADDR, MASK, DEVICE;
+	var init_value="<%ejGetOther(arptable)%>";
+	var input_value = init_value.split("|");
+    var len = input_value.length;
+    var getTb= document.getElementById("natDetails");
+
+    if (input_value == " ")
+    {
+        var blank = "_(No Entries Defined)_";
+        appendTableEmptyRow(getTb, "center", "6", blank);
+        return true;
+    }
+    /* Start parse */
+    for (i=0; i < len-1; i++)
+    {
+		var j;
+		var rule = input_value[i].split("/");
+		IP = rule[0];
+		HW_TYPE = rule[1];
+		FLAGS = rule[2];
+		HW_ADDR = rule[3];
+		MASK = rule[4];
+		DEVICE = rule[5];
+	/* append in real_arp_table */
+	var crTR = getTb.insertRow(-1);
+	var crTDa = crTR.insertCell(-1);
+	var crTDb = crTR.insertCell(-1);
+	var crTDc = crTR.insertCell(-1);
+	var crTDd = crTR.insertCell(-1);
+	var crTDe = crTR.insertCell(-1);
+	var crTDf = crTR.insertCell(-1);
+
+	crTDa.style.padding="10px";
+	crTDb.style.padding="10px";
+	crTDc.style.padding="10px";
+	crTDd.style.padding="10px";
+	crTDe.style.padding="10px";
+	crTDf.style.padding="10px";
+
+	crTDa.innerHTML=IP;
+	crTDb.innerHTML=HW_TYPE;
+	crTDc.innerHTML=FLAGS;
+	crTDd.innerHTML=HW_ADDR;
+	crTDe.innerHTML=MASK;
+	crTDf.innerHTML=DEVICE;
+
+	crTR.style.fontSize="6pt"
+	crTR.className="arptable";
+	crTR.align="center";
+    }
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="modemstatus_arptable">_(ARP Table)_ </h1>
+				<table id="natDetails" width="86%" border="0" align="center" cellpadding="5" cellspacing="0" class="nat_style">
+					<tr align="center">
+						<th style="padding-left:10px;">_(IP address)_ </th>
+						<th style="padding-left:10px;">_(HW type)_ </th>
+						<th style="padding-left:10px;">_(Flags)_ </th>
+						<th style="padding-left:10px;">_(HW address)_ </th>
+						<th style="padding-left:10px;">_(Mask)_ </th>
+						<th style="padding-left:10px;">_(Device)_ </th>
+					</tr>
+				</table>
+				<p>&nbsp;</p>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

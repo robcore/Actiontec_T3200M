@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Status)_ - _(Internet Services)_ - _(Routing Table)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="javascript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+var wanInfNames = '<%ejGetOther(wanInterfaces, all)%>';
+var wanInfNamesewan= '<%ejGetOther(wanInterfaces, ewan0)%>';
+var conntype;
+var sessionKey='<%ejGetOther(sessionKey)%>';
+function get_conn_type()
+{
+    if(wanInfNames!="")
+    {
+        var info = wanInfNames.split(':');
+        conntype = htmlDecodeStr(info[3]);
+    }
+    else if(wanInfNamesewan!="")
+    {
+        var info = wanInfNamesewan.split(':');
+        conntype = htmlDecodeStr(info[0]);
+    }
+}
+function do_load()
+{
+	//highlight the button after user click on it
+	side_nav("routingtable");
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="modemstatus_routingtable">_(Routing Table)_ </h1>
+
+				<div class="stepWrapper_header"></div>
+				<div class="stepWrapper">
+                <table id="firewallDetails" width="85%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style">
+			      <tr align="left">
+						<th style="padding:10px;">_(Valid)_</th>
+						<th style="padding:10px;">_(Destination)_</th>
+						<th style="padding:10px;">_(Netmask)_</th>
+						<th style="padding:10px;">_(Gateway)_ </th>
+				  </tr>
+                  <script>
+                    {
+                        var rttable = document.getElementById("firewallDetails");
+                        var route_table = '<%ejGetOther(routetable)%>';
+                        var route_rule = route_table.split('|');
+                        var i = 0;
+                        if (route_rule != '')
+                        {
+                            for (i=0; i<route_rule.length; i++)
+                            {
+                                var details = route_rule[i].split('/');
+
+                                document.writeln("<tr align=\"center\" class\"nattable\">");
+                                //show Valid
+                                document.writeln("<td style=\"padding:10px; \">_(YES)_</td>");
+                                //show Destination
+                                document.writeln("<td style=\"padding:10px;\">" + details[0] + "</td>");
+                                //show Netmask
+                                document.writeln("<td style=\"padding:10px;\">" + details[2] + "</td>");
+                                //show Gateway
+                                document.writeln("<td style=\"padding:10px;\">" + details[1] + "</td>");
+                                document.writeln("</tr>");
+                            }
+                        }
+                        else
+                        {
+                            var blank = "_(No Entries Defined)_";
+                            appendTableEmptyRow(rttable, "center", "4", blank);
+                        }
+                      }
+                      </script>
+					</table>
+				</div>
+				<div class="stepWrapper_footer"></div>
+
+				<br/>
+				<!-- show ipv6 routing table -->
+				<div class="stepWrapper_header"></div>
+				<div class="stepWrapper">
+				<p><strong>_(IPv6 Routing Table)_</strong></p>
+				<table id="ipv6routingDetails" width="85%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style">
+					<tr align="left">
+						<th style="padding:10px;">_(Valid)_</th>
+						<th style="padding:10px;">_(Destination)_</th>
+						<th style="padding:10px;">_(Netmask)_</th>
+						<th style="padding:10px;">_(Gateway)_ </th>
+					</tr>
+					<script>
+					{
+					    var ipv6rttable = document.getElementById("ipv6routingDetails");
+					    get_conn_type();
+
+						if(conntype=="Bridge")
+                        {
+				var blank = new Array(4);
+                            blank[0] = blank[2] = blank[3] = "_(N/A)_";
+                            blank[1] = "Disabled";
+                            appendTableRow(ipv6rttable, "center", blank);
+                        }
+                        else
+                        {
+						    //fd00::/64/0::0/br0|fe80::/64/0::0/br0|fe80::/64/0::0/eth0|fe80::/64/0::0/wl0|
+						    var ipv6route_table = '<%ejGetOther(ipv6_routingtable, 0)%>';
+						    var a_ipv6route_rule = ipv6route_table.split('|');
+						    if (a_ipv6route_rule.length > 0)
+						    {
+							    for (i=0; i<a_ipv6route_rule.length; i++)
+							    {
+								    var a_details = a_ipv6route_rule[i].split('/');
+								    if (a_details.length < 4)
+									    continue;
+
+								    document.writeln("<tr align=\"center\" class\"nattable\">");
+								    //show Valid
+								    document.writeln("<td style=\"padding:10px; \">_(YES)_</td>");
+								    //show Destination
+								    document.writeln("<td style=\"padding:10px;\">" + a_details[0] + "</td>");
+								    //show Netmask
+								    document.writeln("<td style=\"padding:10px;\">" + a_details[1] + "</td>");
+								    //show Gateway
+								    document.writeln("<td style=\"padding:10px;\">" + a_details[2] + "</td>");
+								    document.writeln("</tr>");
+							    }
+						    }
+						    else
+						    {
+                                    var blank = new Array(4);
+                                    blank[0] = blank[1] = blank[2] = blank[3] = "_(N/A)_";
+                                    appendTableRow(ipv6rttable, "center", blank);
+						    }
+					    }
+					}
+					</script>
+					</table>
+				</div>
+				<div class="stepWrapper_footer"></div>
+				<%ejInclude(vendorlogo.html)%>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>_(Status)_ - _(Internet Services)_ - _(WAN SFP Status)_</title>
+  <link href="css/basic.css" rel="stylesheet" type="text/css" />
+  <SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript">
+  </SCRIPT>
+  <script language="JavaScript" src="js/nav.js">
+  </script>
+  <script language="JavaScript" src="js/util.js">
+  </script>
+  <script language="JavaScript" src="js/htmldecode.js"></script>
+  <script language="Javascript">
+
+  var   glbWanL2IfName              = htmlDecodeStr('<%ejGet(wanL2IfName)%>');
+
+  var wanSFPLaserTxPower = '<%ejGetOther(wanSFPINFO,wanSFPLaserTxPower)%>';
+  var wanSFPLaserRxPower = '<%ejGetOther(wanSFPINFO,wanSFPLaserRxPower)%>';
+  var wanSFPLaserTxBias = '<%ejGetOther(wanSFPINFO,wanSFPLaserTxBias)%>';
+  var wanSFPLaserTemperature = '<%ejGetOther(wanSFPINFO,wanSFPLaserTemperature)%>';
+  var wanSFPLaserVoltage = '<%ejGetOther(wanSFPINFO,wanSFPLaserVoltage)%>';
+
+  var wanSFPVendorName = '<%ejGetOther(wanSFPINFO,wanSFPVendorName)%>';
+  var wanSFPVendorOUI = '<%ejGetOther(wanSFPINFO,wanSFPVendorOUI)%>';
+  var wanSFPVendorSN = '<%ejGetOther(wanSFPINFO,wanSFPVendorSN)%>';
+  var wanSFPVendorPN = '<%ejGetOther(wanSFPINFO,wanSFPVendorPN)%>';
+  var wanSFPType = '<%ejGetOther(wanSFPINFO,wanSFPType)%>';
+
+  var sessionKey='<%ejGetOther(sessionKey)%>';
+
+  function do_load()
+  {
+
+      if (glbWanL2IfName=="ewan1")
+      {
+          if(wanSFPVendorName != "N/A")
+          {
+               document.getElementById("vendor_name").className  = "status_text";
+               document.getElementById("vendor_name").innerHTML  = wanSFPVendorName;
+          }
+          if(wanSFPVendorOUI != "N/A")
+          {
+               document.getElementById("vendor_oui").className  = "status_text";
+               document.getElementById("vendor_oui").innerHTML  = wanSFPVendorOUI;
+          }
+          if(wanSFPVendorSN != "N/A")
+          {
+               document.getElementById("vendor_sn").className  = "status_text";
+               document.getElementById("vendor_sn").innerHTML  = wanSFPVendorSN;
+          }
+          if(wanSFPVendorPN != "N/A")
+          {
+               document.getElementById("vendor_pn").className  = "status_text";
+               document.getElementById("vendor_pn").innerHTML  = wanSFPVendorPN;
+          }
+          
+
+          if(wanSFPType != "N/A")
+          {
+               document.getElementById("sfp_type").className  = "status_text";
+               document.getElementById("sfp_type").innerHTML  = wanSFPType;
+          }
+          if(wanSFPLaserTxPower != "N/A")
+          {
+               document.getElementById("laser_tx_power").className  = "status_text";
+               document.getElementById("laser_tx_power").innerHTML  = wanSFPLaserTxPower;
+          }
+          if(wanSFPLaserRxPower != "N/A")
+          {
+               document.getElementById("laser_rx_power").className  = "status_text";
+               document.getElementById("laser_rx_power").innerHTML  = wanSFPLaserRxPower;
+          }
+          if(wanSFPLaserTxBias != "N/A")
+          {
+               document.getElementById("laser_tx_bias").className  = "status_text";
+               document.getElementById("laser_tx_bias").innerHTML  = wanSFPLaserTxBias;
+          }
+          if(wanSFPLaserTemperature != "N/A")
+          {
+               document.getElementById("laser_temperature").className  = "status_text";
+               document.getElementById("laser_temperature").innerHTML  = wanSFPLaserTemperature;
+          }
+          if(wanSFPLaserVoltage != "N/A")
+          {
+               document.getElementById("laser_voltage").className  = "status_text";
+               document.getElementById("laser_voltage").innerHTML  = wanSFPLaserVoltage;
+          }
+      }
+      side_nav("wansfpstatus");
+  }
+
+  /*
+  function WanStatusClear()
+  {
+      var loc = 'modemstatus_wanstatus.cgi';
+
+      var code = 'location="' + loc + '"';
+      eval(code);
+  }
+  */
+
+function dom_load(){ do_load(); }
+
+  </script>
+</head>
+
+<body>
+<div id="wrapper">
+  <!-- TOP NAV -->
+  <%ejInclude(top_btn_nav1.html)%>
+  <!-- END TOP NAV -->
+  <!-- SIDE NAV -->
+  <%ejInclude(status_left.html)%>
+  <!-- END SIDE NAV -->
+  <!-- MAIN CONTENT AREA -->
+  <div id="content_right">
+    <div id="content_right_header">
+    </div>
+    <div id="content_right_contentarea">
+
+      <h1 class="modemstatus_wanstatus">_(WAN SFP Status)_ </h1>
+      <form>
+        <table width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+          <tr>
+            <th width="57%" style="text-align:left"><strong>_(Parameter)_ </strong></th>
+            <th width="43%" style="text-align:left"><strong>_(Status)_ </strong></th>
+          </tr>
+          <tr>
+            <td >_(SFP Vendor Name)_: </td>
+            <td>
+              <span id='vendor_name'>
+              _(N/A)_
+              </span>
+            </td>
+          </tr>
+
+          <tr>
+            <td >_(SFP Vendor OUI)_: </td>
+            <td>
+              <span id='vendor_oui'>
+              _(N/A)_
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(SFP Vendor SN)_: </td>
+            <td>
+              <span id='vendor_sn'>
+              _(N/A)_
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(SFP Vendor PN)_: </td>
+            <td>
+              <span id='vendor_pn'>
+              _(N/A)_
+              </span>
+            </td>
+          </tr>
+
+          <tr>
+            <td >_(SFP Type)_: </td>
+            <td>
+              <span id='sfp_type'>
+              _(N/A)_
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(Laser Tx Power)_: </td>
+            <td>
+              <span id='laser_tx_power'>
+              _(N/A)_
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(Laser Rx Power)_: </td>
+            <td>
+              <span id='laser_rx_power'>
+              _(N/A)_
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(Laser Tx Bias)_: </td>
+            <td>
+              <span id='laser_tx_bias'>
+              _(N/A)_
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(Laser Temperature)_: </td>
+            <td>
+              <span id='laser_temperature'>
+              _(N/A)_
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(Laser Voltage)_: </td>
+            <td>
+              <span id='laser_voltage'>
+              _(N/A)_
+              </span>
+            </td>
+          </tr>
+
+        </table>
+        <!--
+        <p>
+        <a href="#" id="clear_btn" class="btn" onclick="WanStatusClear()"></a>
+        </p>
+        -->
+      </form>
+    </div>
+    <div id="content_right_footer">
+    </div>
+</div>
+<div class="clear_left">
+</div>
+<div id="footer">
+  &nbsp;
+</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

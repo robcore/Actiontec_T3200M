@@ -1,0 +1,86 @@
+<PUBLISH>
+--- targets/963268GW/963268GW	2014-08-06 16:33:44.497735183 -0700
++++ targets/963268GW_DESKTOP/963268GW_DESKTOP	2014-08-06 17:30:16.183095924 -0700
+@@ -106,7 +106,8 @@
+ BUILD_DM_HYBRID=y
+ # BUILD_DM_PURE181 is not set
+ # BUILD_DM_DETECT is not set
+-# DESKTOP_LINUX is not set
++DESKTOP_LINUX=y
++PROFILE_ARCH=i386
+ BUILD_BUSYBOX=dynamic
+ # BUILD_BUSYBOX_BRCM_LITE is not set
+ BUILD_BUSYBOX_BRCM_FULL=y
+@@ -213,25 +214,24 @@
+ #
+ # WLAN Selection
+ #
+-BRCM_DRIVER_WIRELESS=m
++# BRCM_DRIVER_WIRELESS is not set
+ # BRCM_WAPI is not set
+-BRCM_DRIVER_DHD=m
+-BRCM_WLALTBLD="default"
++# BRCM_DRIVER_DHD is not set
+ BUILD_WIFIWAN=
+ # BRCM_WLMEDIA is not set
+ WLBRAND_none=y
+ BRCM_WLBRAND=
+ BCM_WLIMPL=
+-BUILD_WLCTL=dynamic
+-BUILD_DHDCTL=dynamic
+-BUILD_WLHSPOT=y
+-BUILD_NAS=dynamic
+-WLSETUP_WPS=y
+-# WLSETUP_none is not set
+-BUILD_WPS_BTN=dynamic
+-BUILD_LLTD=dynamic
+-BUILD_WSC=dynamic
+-BUILD_NVRAM=dynamic
++# BUILD_WLCTL is not set
++# BUILD_DHDCTL is not set
++# BUILD_WLHSPOT is not set
++# BUILD_NAS is not set
++# WLSETUP_WPS is not set
++WLSETUP_none=y
++BUILD_WPS_BTN=
++BUILD_LLTD=
++BUILD_WSC=
++# BUILD_NVRAM is not set
+ # BRCM_DRIVER_WIRELESS_USBAP is not set
+ 
+ #
+@@ -399,7 +399,7 @@
+ # BUILD_IEEE1905 is not set
+ BUILD_CERT=dynamic
+ BRCM_DEFAULTCFG=""
+-BRCM_USER_SSP=y
++# BRCM_USER_SSP is not set
+ 
+ #
+ # Management Protocols and User Interface Selection
+@@ -429,12 +429,12 @@
+ # BRCM_LANG_TW is not set
+ # BRCM_LANG_KR is not set
+ BRCM_WEBUI_LANG=en_US
+-# MGMT_TR69C is not set
++MGMT_TR69C=y
+ # MGMT_TR69C_BCM_SSL is not set
+-MGMT_TR69C_SSL=y
++# MGMT_TR69C_SSL is not set
+ # MGMT_none is not set
+-BUILD_TR69C=
+-BUILD_TR69C_SSL=dynamic
++BUILD_TR69C=dynamic
++BUILD_TR69C_SSL=
+ BUILD_TR69C_BCM_SSL=
+ BRCM_CERT_FILE=
+ BUILD_TR69_XBRCM=y
+@@ -443,7 +443,7 @@
+ BUILD_TR69_TR143=y
+ # BUILD_TR69_VENDOR_RPC is not set
+ # BUILD_TR69_AUTONOMOUS_TRANSFER_COMPLETE_RPC is not set
+-BUILD_XMPP=y
++# BUILD_XMPP is not set
+ # BUILD_SNMP is not set
+ BUILD_TR64=y
+ BUILD_TR64_LAYER3=y

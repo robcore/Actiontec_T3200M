@@ -1,0 +1,178 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(DLNA)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="javascript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var natstatus = '<%ejGetOther(sysInfo, dmsEnabled)%>';
+var dmsRescan = '<%ejGetOther(sysInfo, dmsRescan)%>';
+var glb_dmsMediaPath = htmlDecodeStr("<%ejGetOther(sysInfo, dmsMediaPath)%>");
+function get_usb_device()
+{
+   if(xmlhttp != null)
+   {
+      //SW-Bug #127719
+      var curTime = new Date();
+      curTime = curTime.getTime();
+      xmlhttp.open("GET","./network_usb_refresh.html?time="+curTime,true);
+      xmlhttp.onreadystatechange =function()
+      {
+         if(xmlhttp.readyState==4)
+         {
+            var statusval = xmlhttp.responseText;
+            // If GUI is locked, return it to avoid parameters undefined error.
+            if(statusval.indexOf("Lock error")!=-1){
+                get_usb_device();
+            }else{
+                tag = 1;
+                get_dlna_libpath(statusval);
+            }
+         }
+      }
+      xmlhttp.send(null);
+   }
+   setTimeout("get_usb_device()",30000);
+}
+function get_dlna_libpath(usbdevice)
+{
+	document.myform.dmsMediaPath.options.length = 0;
+     if(tag == 1 && usbdevice != 0)
+     {
+             add_dlna_libpath(usbdevice);
+     }
+
+}
+
+function add_dlna_libpath(instr)
+{
+        var form=document.myform;
+        var getSelect = document.getElementById("dmsMediaPath");
+        var storagedevice_item = instr.split('|');
+        var i = 0;
+	var detail_show;
+        for (i=0; i<storagedevice_item.length; i++)
+        {
+                var details = storagedevice_item[i].split('/');
+                details[0] = htmlDecodeStr(details[0]);
+		detail_show = "/mnt/" + details[0];
+                form.dmsMediaPath[i]=new Option(detail_show,detail_show);
+                if(glb_dmsMediaPath == detail_show)
+                {
+                   form.dmsMediaPath[i].selected="selected";
+                }
+        }
+
+}
+function do_load()
+{ 
+    htmlDecode();
+    var form = document.myform;
+
+
+    if( natstatus == "1" )
+    {
+        form.nat[0].checked = true;
+        form.nat[1].checked = false;
+    }
+    else
+    {
+        form.nat[0].checked = false;
+        form.nat[1].checked = true;
+    }
+	//highlight the button after user click on it
+	side_nav("advancedutilities_dlna");
+
+
+  get_usb_device();
+  document.getElementById("dmsRescan").value = dmsRescan;
+}
+
+
+function do_apply()
+{
+    var lochead='dlnacfg.cmd?';
+    var loc = 'action=savapply&dmsEnabled=';
+    var form = document.myform;
+    if( form.nat[0].checked )
+    {
+        loc += '1';
+        loc += '&dmsMediaPath='+ form.dmsMediaPath.value;
+        loc += '&dmsBrName=' + "Default";
+        loc += '&dmsRescan=' + form.dmsRescan.value;
+    }
+    else
+    {
+        loc += '0';
+        loc += '&dmsRescan=' + form.dmsRescan.value;
+    }
+    DisableUseless(form);
+    loc += '&needthankyou=advancedutilities_dlna.html';
+    loc += '&sessionKey=<%ejGetOther(sessionKey)%>';
+    lochead+=loc;
+    //var code = 'location="' + lochead + '"';
+    //eval(code);
+    postSubmit(lochead);
+}
+
+function DisableUseless(form)
+{
+    form.nat[0].disabled = true;
+    form.nat[1].disabled = true;
+}
+</script>
+</head>
+
+<body onload="do_load()">
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="advancedsetup_security_nat">_(DLNA)_</h1>
+            <form  name="myform" onSubmit="return false;">
+                <input type="hidden" name="ippEnabled" value="<%ejGet(ippEnabled)%>" />
+				<p><strong>1. _(Set the DLNA Server state.)_</strong></p>
+				<table width="70%" border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td width="40%">&nbsp;&nbsp;&nbsp;_(DLNA)_: </td>
+                    <td><input name="nat" id="nat_on" type="radio" value="Enable" checked="checked" /> _(Enable)_ &nbsp;&nbsp;<input name="nat" id="nat_off" type="radio" value="Disable" /> _(Disable)_</td>
+                  </tr>
+                  <tr>
+                    <td width="40%">&nbsp;&nbsp;&nbsp;_(Media Library Path)_: </td>
+                    <td>
+                        <select name="dmsMediaPath"  style="width:185px" id="dmsMediaPath" onchange="dmsMediaPath_select();">
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td width="40%">&nbsp;&nbsp;&nbsp;_(Scan Interval(0=disable))_: </td>
+                    <td>
+                        <input type="text" name="dmsRescan" id="dmsRescan" size="8" />&nbsp;s
+                    </td>
+                  </tr>
+                </table>
+				<p>&nbsp;</p>
+				<p><strong>2. _(Click Apply to save changes.)_</strong></p>
+				<p><a class="button1" onclick="do_apply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+			</form>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">//var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

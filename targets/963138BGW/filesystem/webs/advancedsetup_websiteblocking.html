@@ -1,0 +1,268 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Blocking/Filtering)_ - _(Website Blocking)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="Javascript">
+var MAX_WEBSITE_BLOCKING_ENTRY = 25;
+var current_list_length;
+var rules = '<%ejGetOther(urlFilterList)%>'.split('|');
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function do_load()
+{
+	//highlight the button after user click on it
+	side_nav("advancedsetup_websiteblocking");
+}
+
+function TrimData(form) {
+    var url;
+    var ind;
+    var re_url;
+    var len = 0;
+    var start = 0;
+    url = form.BlOcKuRl.value;
+    len = url.length;
+    if(url.indexOf(":") != -1) {
+        start = url.indexOf(":");
+        if(url.substring(start, start+3) != "://") {
+            alert ("_(Invalid URL. You must enter a proper URL heading (e.g., http:// or ftp://).)_");
+            return false;
+        }
+        else {
+            url = form.BlOcKuRl.value.substring(start+3, len);
+        }
+    }
+
+    ind = url.indexOf("/");
+    if(ind != -1) {
+        form.BlOcKuRl.value = url.substring(0, ind);
+    }
+    else
+        form.BlOcKuRl.value = url;
+
+    for (var i = 0; i < rules.length-1; i++ )
+    {
+        rules[i] = htmlDecodeStr(rules[i]);
+        re_url = url.indexOf(rules[i]);
+        if (re_url != -1)
+        {
+            alert ("_(You cannot add the same URL twice to the list.)_");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function setEnterFlag(evt)
+{
+	var keycode;
+        if (window.event) keycode = evt.keyCode;
+	else if (evt) keycode = evt.which;
+
+	if (keycode == 13) return false;
+
+	return true;
+}
+
+function isIpAddress(address) {
+
+   var addrParts = address.split('.');
+
+   for (i = 0; i < addrParts.length; i++) {
+      if (isNaN(addrParts[i]))
+          return false;
+   }
+   return true;
+}
+
+function checkWebSiteAddr(address)
+{
+    var web_rule=/[^A-Za-z0-9-._:\/]/;
+    var isIp = false;
+    var isUrl = false;
+    if (isIpAddress(address)) {
+        isIp = true;
+    }
+    else {
+        isUrl = true;
+    }
+
+    if (isIp)
+    {
+        if (!isValidIpAddress(address))
+        {
+            alert("_(You cannot add an invalid or blank entry to the list.)_");
+            return false;
+        }
+    }
+
+    if (isUrl)
+    {
+        if(web_rule.test(address))
+        {
+            alert("_(You cannot add an invalid or blank entry to the list.)_");
+            return false;
+        }
+    }
+    return true;
+}
+
+function additem(form)
+{
+    var form = document.forms[0];
+    var lochead = 'urlfilter.cmd?';
+    var loc = 'action=set_url';
+    var i;
+
+    /* To avoid adding empty keyword */
+    var temp_value = form.BlOcKuRl.value;
+    var len = temp_value.length;
+    var flag = 1;
+    var prefix = "";
+    for (i=0; i<len; i++) {
+        if (temp_value.charAt(i) == " ") {
+            flag = 0;
+            break;
+        }
+    }
+
+    if ((temp_value == "")||(temp_value == null)||(flag == 0)) {
+        alert("_(You cannot add an invalid or blank entry to the list.)_");
+        return false;
+    }
+
+    if(!checkWebSiteAddr(temp_value))
+    {
+        return false;
+    }
+
+    if(TrimData(form) == false) return;
+
+    if (current_list_length >= MAX_WEBSITE_BLOCKING_ENTRY)
+    {
+        alert("_(Too many rules.)_");
+        return;
+    }
+
+    with (form) {
+        //if (port_num.value == '') {
+        //port_num.value = 80;
+        //}
+        //loc += '&TodHostMac=' + TodHostMac.value;
+        loc += '&TodUrlAdd=' + BlOcKuRl.value;
+        loc += '&port_num=80';
+        loc += '&listtype=Exclude';
+        loc += '&needthankyou=advancedsetup_websiteblocking.html';
+        //loc += '&BlOcKuRl=' + form.BlOcKuRl.value;
+
+       loc += '&sessionKey=' + sessionKey;
+
+        lochead+=loc;
+        //var code = 'location="' + lochead + '"';
+        //eval(code);
+		postSubmit(lochead);
+
+    }
+}
+
+function removeitem(id)
+{
+    var form = document.forms[0];
+    var url = '';
+    var lochead='urlfilter.cmd?';
+    url += rules[id];
+
+    var loc = 'action=remove_url&rmLst=' + url;
+    loc += '&needthankyou=advancedsetup_websiteblocking.html';
+ 
+    loc += '&sessionKey=' + sessionKey;
+    lochead+=loc;
+	postSubmit(lochead);
+
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="advancedsetup_websiteblocking">_(Website Blocking)_ </h1>
+				<form name="myform" method="POST" onSubmit="return false;">
+                <!--0><input type="hidden" name="BlOcKuRlInPuT"-->
+                <h2>_(Website Blocking)_ </h2>
+					<p><strong>1. _(To block a specific website, enter the website address (such as www.abcd.com) in the text box below.)_</strong></p>
+
+<table border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td width="130px">&nbsp;&nbsp;&nbsp;_(Website Address)_: <br />
+                        </td>
+                        <td><input name="BlOcKuRl" id="BlOcKuRl"  type="text" size="40" onKeyPress = "return setEnterFlag(event);" style="height:18px;"/>
+</td>
+                      </tr>
+                </table>
+
+					<p>&nbsp;</p>
+					<p><strong>2.  _(Click Apply to save changes.)_ </strong></p>
+					<p><a class="button1" onclick="additem(forms[0]);" id="btn_apply"><span>_(Apply)_</span></a></p>
+                    <p align="center"><strong>_(Blocked Websites)_</strong></p>
+					<table width="85%" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;" id="website_table" name="website_table">
+                        <tr>
+							<th><strong>_(Website Blocked)_ </strong></th>
+							<th align='left'><strong>_(EDIT)_ </strong></th>
+						</tr>
+                        <!--tr id="noEntriesDefined">
+                            <td colspan=2 align="center">No Entries Defined</td>
+                        </tr-->
+                        <script language="javascript">
+                        <!-- hide
+                        var table = document.getElementById("website_table");
+                        current_list_length = rules.length-1;
+                        if (rules != '')
+                        {
+                        for (var i = 0; i < rules.length-1; i++ ) {
+                            document.write("<tr id='entries'>"+
+                                    "<td align='center'>"+ rules[i]+"</td>"+
+                                    "<td align='center'><a href='#' class='button1' type='button' id='btn_remove_"+i+"' onClick='removeitem("+i+");' style='text-decoration:none;'><span>_(Remove)_</span></a></td>"+
+                                    "</tr>");
+                        }
+                        }
+                        else
+                        {
+                            var blank = "_(No Entries Defined)_";
+                            appendTableEmptyRow(table, "center", "2", blank);
+                        }
+                        // done hiding -->
+                        </script>
+					</table>
+					<p></p>
+                   <input type="hidden" name="var:frompage" value="advancedsetup_websiteblocking.html">
+				</form>
+				<div class="clear_left"></div>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

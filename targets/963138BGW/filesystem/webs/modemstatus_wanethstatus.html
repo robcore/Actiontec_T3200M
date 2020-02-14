@@ -1,0 +1,364 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>_(Status)_ - _(Internet Services)_ - _(WAN Ethernet Status)_</title>
+  <link href="css/basic.css" rel="stylesheet" type="text/css" />
+  <SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript">
+  </SCRIPT>
+  <script language="JavaScript" src="js/nav.js">
+  </script>
+  <script language="JavaScript" src="js/util.js">
+  </script>
+  <script language="JavaScript" src="js/htmldecode.js"></script>
+  <script language="Javascript">
+
+  var   glbWanL2IfName              = htmlDecodeStr('<%ejGet(wanL2IfName)%>');
+  var   wanEthStatus_LinkStatus     = htmlDecodeStr('<%ejGet(wanEthStatus_LinkStatus)%>');
+  var   wanEthStatus_ISPStatus      = htmlDecodeStr('<%ejGet(wanEthStatus_ISPStatus)%>');
+  var   wanEthStatus_MACAddress     = htmlDecodeStr('<%ejGet(wanEthStatus_MACAddress)%>');
+  var   wanEthStatus_IPAddress      = htmlDecodeStr('<%ejGet(wanEthStatus_IPAddress)%>');
+  var   wanEthStatus_SubnetMask     = htmlDecodeStr('<%ejGet(wanEthStatus_SubnetMask)%>');
+  var   wanEthStatus_DefaultGateway = htmlDecodeStr('<%ejGet(wanEthStatus_DefaultGateway)%>');
+  var   wanEthStatus_DNSServer      = htmlDecodeStr('<%ejGet(wanEthStatus_DNSServer)%>');
+  var   wanEthStatus_Portocol       = htmlDecodeStr('<%ejGet(wanEthStatus_Protocol)%>');
+  var   wanEthStatus_ReceivedPackets= htmlDecodeStr('<%ejGet(wanEthStatus_ReceivedPackets)%>');
+  var   wanEthStatus_SendPackets    = htmlDecodeStr('<%ejGet(wanEthStatus_SendPackets)%>');
+  var   wanEthStatus_TimeSpan       = htmlDecodeStr('<%ejGet(wanEthStatus_TimeSpan)%>');
+
+  var   wanEthStatus_AddressingType = htmlDecodeStr('<%ejGet(wanEthStatus_AddressingType)%>');
+  var   wanEthStatus_LeaseTimeRemaining = htmlDecodeStr('<%ejGet(wanEthStatus_LeaseTimeRemaining)%>');
+
+  var   wanEthStatus_DuplexMode = '<%ejGet(wanEthStatus_DuplexMode)%>';
+  var   wanEthStatus_Speed = '<%ejGet(wanEthStatus_Speed)%>';
+  var wan_dns1 = htmlDecodeStr('<%ejGetOther(sysInfo, dns1)%>'); if ( wan_dns1 == '&nbsp' ) wan_dns1 = '';
+  var wan_dns2 = htmlDecodeStr('<%ejGetOther(sysInfo, dns2)%>');  if ( wan_dns2 == '&nbsp' || wan_dns2 == '0.0.0.0') wan_dns2 = '';
+  var wan_dnsIfc = htmlDecodeStr('<%ejGetOther(sysInfo, dnsIfcs)%>'); if (wan_dnsIfc == '&nbsp') wan_dnsIfc = '';
+  var sessionKey='<%ejGetOther(sessionKey)%>';
+  if ( wan_dnsIfc == '' && wan_dns1 != '' )
+  {
+	wanEthStatus_DNSServer = wan_dns1+","+wan_dns2;
+  }
+
+  function  trim(str){
+	return str.replace(/(^\s*)|(\s*$)/g, "");
+  }
+
+  function time_to_str(time)
+  {
+      var    days=0,hours=0,minutes=0,seconds=0;
+      var    time_str ;
+      while (time > 86400 ) {
+          days++;
+          time = time - 86400 ;
+      }
+      while (time > 3600 ) {
+          hours++;
+          time = time - 3600 ;
+      }
+      while (time > 60 ) {
+          minutes++;
+          time = time - 60 ;
+      }
+      seconds = time ;
+      time_str = days+" _(Days)_, " +hours+"_(H)_:" + minutes + "_(M)_:" + seconds +"_(S)_" ;
+      return time_str;
+  }
+
+  function do_load()
+  {
+
+      if (glbWanL2IfName=="ewan1")
+      {
+          wanEthStatus_LinkStatus     = 'Disabled';
+          wanEthStatus_ISPStatus      = '';
+          wanEthStatus_MACAddress     = '';
+          wanEthStatus_IPAddress      = '';
+          wanEthStatus_SubnetMask     = '';
+          wanEthStatus_DefaultGateway = '';
+          wanEthStatus_DNSServer      = '';
+          wanEthStatus_Portocol       = '';
+          wanEthStatus_ReceivedPackets= '0';
+          wanEthStatus_SendPackets    = '0';
+          wanEthStatus_TimeSpan       = '0';
+          wanEthStatus_AddressingType = '';
+          wanEthStatus_LeaseTimeRemaining = '';
+          wan_dns1 = '';
+          wan_dns2 = '';
+          wan_dnsIfc = '';
+
+      }
+      // Link Status
+      /*
+      if (wanEthStatus_LinkStatus == "Connecting"){
+          document.getElementById("id_link_status").className  = "status_text_y";
+          document.getElementById("id_link_status").innerHTML  = "CONNECTING";
+      }
+      else*/ if (wanEthStatus_LinkStatus=="Up"){
+          document.getElementById("id_link_status").className  = "status_text";
+          document.getElementById("id_link_status").innerHTML  = "_(Connected)_";
+      }
+      else{
+          document.getElementById("id_link_status").className  = "status_text_r";
+          document.getElementById("id_link_status").innerHTML  = "_(Disconnected)_";
+      }
+
+      // ISP Status
+      if (wanEthStatus_ISPStatus=="Connected"){
+          document.getElementById("id_isp_status").className  = "status_text";
+          document.getElementById("id_isp_status").innerHTML  = "_(Connected)_";
+      }
+      else if (wanEthStatus_Portocol == "Bridge" &&
+            wanEthStatus_LinkStatus == "Up") {
+          // When in wan Bridge mode, if the wan l2 is up, the ISP should be CONNECTED
+          document.getElementById("id_isp_status").className  = "status_text";
+          document.getElementById("id_isp_status").innerHTML  = "_(Connected)_";
+      }
+      else if (wanEthStatus_Portocol == "IPoW" &&
+                wanEthStatus_IPAddress != null &&
+                isValidIpAddress(wanEthStatus_IPAddress) == true &&
+                wanEthStatus_LinkStatus == "Up"){
+          // When in wan dhcp mode, plug out eth link, and plug in eth link back,
+          // the wan l2 shows Up, and the wan l3 shows disabled. And the l3 is Up
+          // actully.
+          document.getElementById("id_isp_status").className  = "status_text";
+          document.getElementById("id_isp_status").innerHTML  = "_(Connected)_";
+      }
+      else if (wanEthStatus_ISPStatus == "Connecting"){
+          document.getElementById("id_isp_status").className  = "status_text_y";
+          document.getElementById("id_isp_status").innerHTML  = "_(Connecting)_";
+      }
+      else{
+          document.getElementById("id_isp_status").className  = "status_text_r";
+          document.getElementById("id_isp_status").innerHTML  = "_(Disconnected)_";
+      }
+      if(trim(wanEthStatus_MACAddress) != "" )
+          document.getElementById("id_mac_address").innerHTML = wanEthStatus_MACAddress;
+      else
+          document.getElementById("id_mac_address").innerHTML = "_(N/A)_";
+
+	  if(trim(wanEthStatus_IPAddress) != "")
+		document.getElementById("id_ip_address").innerHTML        = wanEthStatus_IPAddress;
+	  else
+		document.getElementById("id_ip_address").innerHTML        = "_(N/A)_";
+      if (trim(wanEthStatus_SubnetMask)!="")
+		document.getElementById("id_subnet_mask").innerHTML       = wanEthStatus_SubnetMask;
+	  else
+		document.getElementById("id_subnet_mask").innerHTML       ="_(N/A)_";
+
+	  if (trim(wanEthStatus_DefaultGateway)!="")
+	document.getElementById("id_default_gateway").innerHTML   = wanEthStatus_DefaultGateway;
+      else
+	document.getElementById("id_default_gateway").innerHTML   = "_(N/A)_";
+
+   var lease_time_str = "_(N/A)_";
+   if(wanEthStatus_AddressingType == "DHCP" && parseInt(wanEthStatus_LeaseTimeRemaining)>0){
+	lease_time_str = "";
+        var time_num = parseInt(wanEthStatus_LeaseTimeRemaining);
+        if(parseInt(time_num/86400))//days
+                lease_time_str = lease_time_str + parseInt(time_num/86400) + "D ";
+        time_num = parseInt(time_num%86400);
+        if(parseInt(time_num/3600))//hours
+                lease_time_str = lease_time_str + parseInt(time_num/3600) + "_(H)_ ";
+        time_num = parseInt(time_num%3600);
+        if(parseInt(time_num/60))//mins
+                lease_time_str = lease_time_str + parseInt(time_num/60) + "_(M)_ ";
+        time_num = parseInt(time_num%60);//secs
+        lease_time_str = lease_time_str + time_num + "_(S)_";
+   }
+      document.getElementById("id_default_leasetimeremaining").innerHTML = lease_time_str;
+
+	  if(trim(wanEthStatus_DNSServer) != "" && trim(wanEthStatus_DNSServer) != ",")
+	document.getElementById("id_dns_server").innerHTML        = wanEthStatus_DNSServer;
+	  else
+		document.getElementById("id_dns_server").innerHTML        = "_(N/A)_";
+
+      document.getElementById("id_received_packets").innerHTML  = wanEthStatus_ReceivedPackets;
+      document.getElementById("id_sent_packets").innerHTML      = wanEthStatus_SendPackets;
+      document.getElementById("id_time_span").innerHTML         = time_to_str(wanEthStatus_TimeSpan);
+      document.getElementById("id_duplex").innerHTML      = wanEthStatus_DuplexMode;
+      if (wanEthStatus_Speed == '')
+          document.getElementById("id_speed").innerHTML      = "_(N/A)_";
+      else if (wanEthStatus_Speed == 'Auto')
+          document.getElementById("id_speed").innerHTML      = wanEthStatus_Speed;
+      else
+          document.getElementById("id_speed").innerHTML      = wanEthStatus_Speed+"M";
+
+	  //highlight the button after user click on it
+	  side_nav("wanethstatus");
+  }
+
+  /*
+  function WanStatusClear()
+  {
+      var loc = 'modemstatus_wanstatus.cgi';
+
+      var code = 'location="' + loc + '"';
+      eval(code);
+  }
+  */
+
+function dom_load(){ do_load(); }
+
+  </script>
+</head>
+
+<body>
+<div id="wrapper">
+  <!-- TOP NAV -->
+  <%ejInclude(top_btn_nav1.html)%>
+  <!-- END TOP NAV -->
+  <!-- SIDE NAV -->
+  <%ejInclude(status_left.html)%>
+  <!-- END SIDE NAV -->
+  <!-- MAIN CONTENT AREA -->
+  <div id="content_right">
+    <div id="content_right_header">
+    </div>
+    <div id="content_right_contentarea">
+
+      <h1 class="modemstatus_wanstatus">_(WAN Ethernet Status)_ </h1>
+      <form>
+        <table width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+          <tr>
+            <th width="57%" style="text-align:left"><strong>_(Parameter)_ </strong></th>
+            <th width="43%" style="text-align:left"><strong>_(Status)_ </strong></th>
+          </tr>
+          <tr>
+            <td >_(Broadband)_: </td>
+            <td>
+              <span class="status_text" id='id_link_status'>
+              _(Connected)_
+              </span>
+            </td>
+          </tr>
+
+          <tr>
+            <td >_(Internet Service Provider)_:</td>
+            <td >
+              <span class="status_text" id='id_isp_status'>
+              _(Connected)_
+              </span>
+            </td>
+          </tr>
+           <!--
+          <tr>
+            <td >Connection Status: </td>
+            <td>
+              <span id="id_">
+              Idle
+              </span>
+            </td>
+          </tr>
+          -->
+          <tr>
+            <td >_(MAC Address)_: </td>
+            <td>
+              <span id='id_mac_address'>
+              00:00:00:00:00:00
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(IP Address)_: </td>
+            <td>
+              <span id='id_ip_address'>
+              0.0.0.0
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(Subnet Mask)_: </td>
+            <td>
+              <span id='id_subnet_mask'>
+              0.0.0.0
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(Default Gateway)_: </td>
+            <td>
+              <span id='id_default_gateway'>
+              0.0.0.0
+              </span>
+            </td>
+          </tr>
+	  <tr>
+            <td >_(Lease Time Remaining)_: </td>
+            <td>
+              <span id='id_default_leasetimeremaining'>
+              _(N/A)_
+              </span>
+            </td>
+          </tr>
+
+          <tr>
+            <td >_(DNS Server)_: </td>
+            <td>
+              <span id='id_dns_server'>
+              0.0.0.0
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(Received Packets)_: </td>
+            <td>
+              <span id='id_received_packets'>
+              0
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(Sent Packets)_: </td>
+            <td>
+              <span id='id_sent_packets'>
+              0
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(Time Span)_: </td>
+            <td>
+              <span id='id_time_span'>
+              0
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(Duplex)_: </td>
+            <td>
+              <span id='id_duplex'>
+              Auto
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td >_(Link Speed)_: </td>
+            <td>
+              <span id='id_speed'>
+              0M
+              </span>
+            </td>
+          </tr>
+        </table>
+        <!--
+        <p>
+        <a href="#" id="clear_btn" class="btn" onclick="WanStatusClear()"></a>
+        </p>
+        -->
+      </form>
+    </div>
+    <div id="content_right_footer">
+    </div>
+</div>
+<div class="clear_left">
+</div>
+<div id="footer">
+  &nbsp;
+</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

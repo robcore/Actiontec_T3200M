@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(DNS Cache)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="javascript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+function do_load()
+{
+	htmlDecode();
+	side_nav("advancedutilities_dnscache");
+    var form = document.forms[0];
+    if(htmlDecodeStr("<%ejGet(dnscache)%>") == "1")
+        form.dns_cache[1].checked = true;
+    else
+        form.dns_cache[0].checked = true;
+}
+
+function do_apply(){
+    var form = document.forms[0];
+    if(form.dns_cache[1].checked)
+        form.dnscache.value = "1";
+    else
+        form.dnscache.value = "0";
+    form.dns_cache[0].disabled = true;
+    form.dns_cache[1].disabled = true;
+    form.submit();
+}
+function dom_load(){ do_load(); }
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="advancedutilities_systemlog">_(DNS Cache)_ </h1>
+            <form  name="myform" method="POST" action="advancedutilities_dnscache.cgi" onSubmit="return do_apply();">
+			<input type="hidden" name="sessionKey" value='<%ejGetOther(sessionKey)%>' >
+                <input name="dnscache" type="hidden" value="<%ejGet(dnscache)%>" />
+                <p>_(The modem provides DNS Caching ablility. In most cases, DNS Caching allows a DNS Server to respond more quickly to multiple queries for the same domain or host.)_</p>
+			<p class="smallprint">_(Note: Although DNS Caching can resolve an Internet request more quickly, it also poses risks, such as DNS Poisoning.)_</p>
+			<p><strong>1. _(Select Disable or Enable DNS Cache.)_</strong></p>
+			<p>
+				<input name="dns_cache" type="radio" id="disable" value="disable" />
+				</label>
+				_(Disable (Recommended))_</p>
+			<p>
+				<label>
+				<input name="dns_cache" type="radio" id="enable" value="enable" />
+				</label>
+				_(Enable)_ </p>
+			<p>&nbsp;</p>
+			<p><strong>2. _(Click Apply to save changes.)_ </strong></p>
+			<p><a class="button1" onclick="do_apply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+			</form>
+			</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<script language="javascript">
+var foobar = new domFunction(dom_load);
+</script>
+</body>
+</html>

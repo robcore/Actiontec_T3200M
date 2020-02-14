@@ -1,0 +1,16 @@
+/* HURL CSS   */
+#main_column_wrapper_hurl{width:910px; height:240px; background:url(../images/mp_mid.png); background-repeat: repeat-y;}
+#hurl_container {width:700px;padding: 0 0 0 10px;margin-left:auto;margin-right:auto;}
+.hurl_hdr_title {font-family:verdana,arial,helvetica; font-weight:bold; font-size:2.0em; color:#000; padding:15px 0 0 0;}
+#hurl_q {font-family:verdana,arial,helvetica; font-weight:bold; font-size:1.0em; color:#000;margin:20px 0 0 0;}
+#hurl_a {width:400px;margin: auto; height:50px; }
+#hurl_a #yes {width:200px;margin: auto; float:left; margin-left:50px;}
+#hurl_a #no {width:150px;margin: auto; float:left; }
+#hurl_yes_btn{width:74px; height:20px; background:url(../images/btn_yes.png); display:block;}
+#hurl_no_btn{width:74px; height:20px; background:url(../images/btn_no.png); display:block;}
+#hurl_apply_btn{width:74px; height:20px; background:url(../images/btn_apply.png); display:block;}
+.btn{margin:15px 15px 0 0; }
+#hurl_yes_btn:hover, #hurl_no_btn:hover{background-position:0 -20px;}
+#hurl_yes_btn:active, #hurl_no_btn:active{background-position:0 -40px;}
+#hurl_apply_btn:hover, #hurl_apply_btn:hover{background-position:0 -20px;}
+/* END HURL CSS   */

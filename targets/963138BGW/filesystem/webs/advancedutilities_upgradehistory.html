@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Upgrade History)_</title>
+
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+
+<script language="JavaScript" src="js/util.js"></script>
+
+<script language="JavaScript" src="js/functions.js"></script>
+
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+
+
+
+<script language="Javascript">
+
+var table_length;
+
+var upgradehistory = '<%ejGetOther(upgradehistory)%>'; //format: Date|Time|Type|Status|Firmware Version,Date|Time...
+
+/* for debug:
+
+** var   upgradehistory = "11/03/2009|12:00 PM|LAN|Complete|QAQ01-3.40.45.L10,11/04/2009|11:00 PM|LAN|Failed|QAQ01-3.40.45.L10,";
+
+*/
+
+var info = upgradehistory.split(',');
+
+table_length = info.length -1;
+
+
+
+function showUpgradeHistory(){
+
+    var i = 0;
+
+
+
+    var uhtable = document.getElementById("upgrade_history_table");
+
+
+
+    if (table_length == 0)
+
+    {
+
+        var blank = "_(No Upgrade Entries)_";
+
+        appendTableEmptyRow(uhtable, "center", "5", blank);
+
+    }
+
+
+
+    for (i = 0; i < table_length; i++) {
+
+        var records = info[i].split('|');
+
+        for(var j=0; j<5; j++)
+        {
+            records[j] = htmlDecodeStr(records[j]);
+        }
+
+        var col = new Array();
+
+        col[0] = records[0]; //Date
+
+        col[1] = records[1]; //Time
+
+        col[2] = records[2]; //Type
+
+	 if(records[3] == 'Complete')
+
+		col[3] = '<div style=color:#0F0>'+records[3]+'</div>' //Status
+
+        else
+
+		col[3] = '<div style=color:#F00>'+records[3]+'</div>';
+
+        col[4] = records[4] //version
+
+        appendTableRow(uhtable, "center", col);
+
+    }
+
+}
+
+
+
+function do_load()
+
+{
+	side_nav("advancedutilities_upgradehistory");
+    showUpgradeHistory();
+
+}
+
+</script>
+
+</head>
+
+<body onload=do_load()>
+
+<div id="wrapper">
+
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+
+
+
+    <!-- MAIN CONTENT AREA -->
+
+    <div id="content_right">
+        <div id="content_right_header"></div>
+        <div id="content_right_contentarea">
+
+            <h1 class="advancedutilities_upgradehistory">_(Upgrade History)_
+
+            </h1>
+
+            <form><p>_(Provides upgrade history data for the modem.)_</p>
+
+	    <div class="stepWrapper_header"></div>
+
+              <!--  <div class="stepWrapper">
+
+                <table>
+
+                    <tr>
+
+                        <td>Factory Version: </td>
+
+                        <td><span class="status_text_big"> <%ejGetOther(factoryFWVersion)%></span></td>
+
+                    </tr>
+
+                </table>
+
+                </div>-->
+
+		<div class="stepWrapper_footer"></div>
+
+		<div class="stepWrapper_header"></div>
+
+                <div class="stepWrapper">
+
+                <p align="center"><strong>_(Upgrade History)_</strong></p>
+
+                <table id="upgrade_history_table">
+
+                    <tr>
+
+                        <th width="13%"><strong>_(Date)_</strong></th>
+
+                        <th width="14%"><strong>_(Time)_</strong></th>
+
+                        <th width="11%"><strong>_(Type)_</strong></th>
+
+                        <th width="17%"><strong>_(Status)_</strong></th>
+
+                        <th width="32%"><strong>_(Firmware Version)_</strong></th>
+
+                    </tr>
+
+                </table>
+
+                </div>
+
+		<div class="stepWrapper_footer"></div>
+
+            </form>
+
+            <div class="clear_left">
+
+            </div>
+
+        </div>
+
+
+    <div id="content_right_footer"></div>
+    </div>	<div class="clear_left"></div>
+</div>
+
+<SCRIPT LANGUAGE="JavaScript">//var foobar = new domFunction(dom_load);</SCRIPT></body>
+
+</html>

@@ -1,0 +1,735 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>_(Advanced Setup)_ - _(IP Address)_ - _(IPv6 LAN Settings)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<%ejInclude("ipv6_common.html")%>
+<script language="Javascript">
+var g_wan_subnet = 0;		// 0: means no reserved subnet number for 6RD WAN
+var g_max_subnet = 0xFFFF;	// calculated based on prefixlen,
+var g_bbtype = 2;		// 1: eth;	2:xDSL
+var g_wantype = 1;		// 1: ip; 	2:ppp
+if (htmlDecodeStr("<%ejGetOther(ipv6_specparameter, wan_ipenabled, 1)%>") == 1)
+{
+	g_bbtype = 1;
+	g_wantype = 1;
+}
+else if (htmlDecodeStr("<%ejGetOther(ipv6_specparameter, wan_pppenabled, 1)%>") == 1)
+{
+	g_bbtype = 1;
+	g_wantype = 2;
+}
+else if (htmlDecodeStr("<%ejGetOther(ipv6_specparameter, wan_ipenabled, 2)%>") == 1)
+{
+	g_bbtype = 2;
+	g_wantype = 1;
+}
+else if (htmlDecodeStr("<%ejGetOther(ipv6_specparameter, wan_pppenabled, 2)%>") == 1)
+{
+	g_bbtype = 2;
+	g_wantype = 2;
+}
+
+var g_last_lan_type = -1;
+var s_pl = "";
+
+function do_load(){
+	 side_nav("ipv6_lansetting");
+
+	 var stateless_ulasupport = document.getElementsByName("ipv6_lan_stateless_ulasupport");
+	 var stateful_ulasupport = document.getElementsByName("ipv6_lan_stateful_ulasupport");
+
+	 for(var i = 0; i < stateless_ulasupport.length; i++)
+	 {
+		stateless_ulasupport[i].onclick = function(){
+			stateless_ula_change(this.value);
+		};
+	 }
+
+	 for(var j = 0; j < stateful_ulasupport.length; j++)
+	 {
+		stateful_ulasupport[j].onclick = function(){
+			stateful_ula_change(this.value);
+		};
+	 }
+}
+
+function stateless_ula_change(value)
+{
+	var stateless_ulaaddress = document.getElementById("stateless_ula_address_tr");
+	var stateless_ulaprefix = document.getElementById("stateless_ula_prefix_tr");
+	var stateless_ulasupport_enable = document.getElementById("ipv6_lan_stateless_ulasupport_enable");
+	var stateless_ulasupport_disable = document.getElementById("ipv6_lan_stateless_ulasupport_disable");
+
+	if(value == "1")
+	{
+		stateless_ulasupport_enable.checked = true;
+		stateless_ulaaddress.style.display = "";
+		stateless_ulaprefix.style.display = "";
+	}
+	else if(value == "0")
+	{
+		stateless_ulasupport_disable.checked = true;
+		stateless_ulaaddress.style.display = "none";
+		stateless_ulaprefix.style.display = "none";
+	}
+
+
+}
+
+function stateful_ula_change(value)
+{
+	var stateful_ulaaddress = document.getElementById("stateful_ula_address_tr");
+	var stateful_ulaprefix = document.getElementById("stateful_ula_prefix_tr");
+	var stateful_ulasupport_enable = document.getElementById("ipv6_lan_stateful_ulasupport_enable");
+	var stateful_ulasupport_disable = document.getElementById("ipv6_lan_stateful_ulasupport_disable");
+
+	if(value == "1")
+	{
+		stateful_ulasupport_enable.checked = true;
+		stateful_ulaaddress.style.display = "";
+		stateful_ulaprefix.style.display = "";
+	}
+	else if(value == "0")
+	{
+		stateful_ulasupport_disable.checked = true;
+		stateful_ulaaddress.style.display = "none";
+		stateful_ulaprefix.style.display = "none";
+	}
+}
+
+function setfieldstyle()
+{
+	document.getElementById("SpanApply").innerHTML = "<a class='button1' onclick='On_Apply()' id='btn_apply'><span>_(Apply)_</span></a>";
+}
+
+function initFieldValue()
+{
+	var s_lla = htmlDecodeStr("<%ejGetOther(ipv6_parameter_fresh, lan_lla)%>");
+	var n_pllen = 0;
+	var n_subnetlen = 16;
+
+	if(g_wantype == 1) {
+		s_pl =htmlDecodeStr("<%ejGetOther(ipv6_wanparameter, wan_staticprefix)%>");
+	} else if(g_wantype == 2) {
+		s_pl = htmlDecodeStr("<%ejGetOther(ipv6_wanparameter, wan_pppprefix)%>");
+	}
+	if(s_pl.indexOf("/") != -1) {
+		s_pl = s_pl.split("/")[1];
+
+		// Caluculate max subnet
+		n_pllen = parseInt(s_pl, 10 );
+		if( n_pllen <= 0 ) {
+			n_pllen = 1;
+		}
+		if( n_pllen > 64 ) {
+			n_pllen = 64;
+		}
+
+		n_subnetlen = 64 - n_pllen;
+		if( n_subnetlen > 16 ) {
+			n_subnetlen = 16;
+		}
+		g_max_subnet = (1<<n_subnetlen) - 1;
+	}
+
+	var lanType = document.getElementById("ipv6_lan_type").value;
+	var lan_ula = switchCase(htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_ula)%>"));
+	var lan_ulaprefix = switchCase(htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_ulaprefix)%>"));
+	var a_lan_ulaprefix = lan_ulaprefix.split("/");
+
+	g_wan_subnet = parseInt(htmlDecodeStr("<%ejGetOther(ipv6_parameter, wan_subnet)%>"), 10);
+	//if(lanType == 0)
+	{
+		document.getElementById("ipv6_lan_statelesspl").innerHTML = s_pl;
+		document.getElementById("ipv6_lan_statelesslla").innerHTML = switchCase(s_lla);
+
+		document.form1.ipv6_lan_statelessulaaddr.value = lan_ula;
+		document.getElementById("span_ipv6_lan_statelessulaaddr").innerHTML = lan_ula;
+
+		if (a_lan_ulaprefix[0])
+			document.form1.ipv6_lan_statelessulaprefix.value = a_lan_ulaprefix[0];
+
+		document.form1.ipv6_lan_statelesssubnet.value = switchCase(parseInt(htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_subnet)%>"), 10).toString(16));
+		document.form1.ipv6_lan_statelessadvlifetime1.value = Math.ceil(parseInt(htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_statelessadvlifetime)%>"), 10)/60);
+	}
+	//else if(lanType == 1)
+	{
+		document.getElementById("ipv6_lan_statefulpl").innerHTML = s_pl;
+		document.getElementById("ipv6_lan_statefullla").innerHTML = switchCase(s_lla);
+		document.form1.ipv6_lan_statefululaaddr.value = lan_ula;
+		document.getElementById("span_ipv6_lan_statefululaaddr").innerHTML = lan_ula;
+
+		if (a_lan_ulaprefix[0])
+			document.form1.ipv6_lan_statefululaprefix.value = a_lan_ulaprefix[0];
+
+		document.form1.ipv6_lan_statefulsubnet.value = switchCase(parseInt(htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_subnet)%>"), 10).toString(16));
+		document.form1.ipv6_lan_statefulmin.value = splitZeroPrefix(htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_statefulmin)%>"));
+		document.form1.ipv6_lan_statefulmax.value = splitZeroPrefix(htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_statefulmax)%>"));
+		document.form1.ipv6_lan_statelessadvlifetime2.value = Math.ceil(parseInt(htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_statelessadvlifetime)%>"), 10)/60);
+		document.form1.ipv6_lan_statefuladdrlifetime2.value = Math.ceil(parseInt(htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_statefuladdrlifetime)%>"), 10)/60);
+	}
+
+	var lan_ipv6ulasupport = htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_ipv6ulasupport)%>");
+
+	stateless_ula_change(lan_ipv6ulasupport);
+	stateful_ula_change(lan_ipv6ulasupport);
+}
+
+function init()
+{
+	var lanenable = htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_enable)%>");
+	if(lanenable == 1)
+		document.getElementById("ipv6_lan_type").value = htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_type)%>");
+	else
+		document.getElementById("ipv6_lan_type").value = -1;
+
+    initFieldValue();
+	changlanType();
+	setfieldstyle();
+}
+
+function changlanType(){
+	var lanType = document.getElementById("ipv6_lan_type").value;
+    var lan_addresspd = htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_dpenable)%>");
+    var delegated_lan_enabled = htmlDecodeStr("<%ejGetOther(ipv6_parameter, lan_enableddp)%>");
+	if(lanType == 0)
+	{
+		document.getElementById("lan_stateless").style.display = "block";
+		document.getElementById("lan_stateful").style.display = "none";
+        document.getElementById("ipv6_lan_addresspd_yes").disabled = true;
+        document.getElementById("ipv6_lan_addresspd_no").disabled = true;
+	}
+	else if(lanType == 1)
+	{
+		document.getElementById("lan_stateless").style.display = "none";
+		document.getElementById("lan_stateful").style.display = "block";
+        if (parseInt(s_pl, 10) > 60)
+        {
+            document.getElementById("ipv6_lan_addresspd_yes").disabled = true;
+            document.getElementById("ipv6_lan_addresspd_no").disabled = true;
+        }
+        else
+        {
+            document.getElementById("ipv6_lan_addresspd_yes").disabled = false;
+            document.getElementById("ipv6_lan_addresspd_no").disabled = false;
+        }
+	}
+	else
+	{
+		document.getElementById("lan_stateless").style.display = "none";
+		document.getElementById("lan_stateful").style.display = "none";
+	}
+
+    if(lanType == 0|| lanType == 1)
+    {
+        if (delegated_lan_enabled.toUpperCase() == "ON")
+        {
+            document.getElementById("delegated_lan").style.display = "block";
+            document.getElementById("advance_set").innerHTML = parseInt(lanType) + 3;
+	        document.getElementById("apply_id").innerHTML = parseInt(lanType) + 4;
+            if(lan_addresspd == "0" || lanType == 0)
+	        {
+		        document.getElementById("ipv6_lan_addresspd_no").checked = true;
+	        }
+	        else if(lan_addresspd == "1")
+	        {
+		        document.getElementById("ipv6_lan_addresspd_yes").checked = true;
+	        }
+        }
+        else
+        {
+            document.getElementById("delegated_lan").style.display = "none";
+	        document.getElementById("apply_id").innerHTML = parseInt(lanType) + 3;
+        }
+    }
+    else
+    {
+        document.getElementById("delegated_lan").style.display = "none";
+	    document.getElementById("apply_id").innerHTML = parseInt(lanType) + 3;
+    }
+
+	if(g_last_lan_type == 0)
+	{
+		 var stateless_ulasupport = document.getElementsByName("ipv6_lan_stateless_ulasupport");
+
+		 for(var i = 0; i < stateless_ulasupport.length; i++)
+		 {
+			 if(stateless_ulasupport[i].checked && (lanType == 1))
+				stateful_ula_change(stateless_ulasupport[i].value);
+		 }
+
+	}
+	else if(g_last_lan_type == 1)
+	{
+		var stateful_ulasupport = document.getElementsByName("ipv6_lan_stateful_ulasupport");
+
+		for(var i = 0; i < stateful_ulasupport.length; i++)
+		{
+			 if(stateful_ulasupport[i].checked && (lanType == 0))
+				stateless_ula_change(stateful_ulasupport[i].value);
+		}
+	}
+
+	g_last_lan_type = lanType;
+}
+
+function calStatefulULAAddr()
+{
+	var s_ipv6_lan_statefululaprefix = document.form1.ipv6_lan_statefululaprefix.value;
+	var s_ipv6_lan_statefulsubnet = document.form1.ipv6_lan_statefulsubnet.value;
+
+	if (!isipv6(s_ipv6_lan_statefululaprefix))	return;
+	if (s_ipv6_lan_statefulsubnet.length < 1 || !isHexNumber(s_ipv6_lan_statefulsubnet) || parseInt(s_ipv6_lan_statefulsubnet) > 65535 || parseInt(s_ipv6_lan_statefulsubnet) < 0)
+		return;
+
+	s_ipv6_lan_statefululaprefix = cutIPv6Address(s_ipv6_lan_statefululaprefix+"/48").toLowerCase();
+
+	var s = s_ipv6_lan_statefululaprefix + ":" + s_ipv6_lan_statefulsubnet + "::1/64";
+
+	document.form1.ipv6_lan_statefululaaddr.value = s;
+	document.getElementById("span_ipv6_lan_statefululaaddr").innerHTML = s;
+}
+
+function calStatelessULAAddr()
+{
+	var s_ipv6_lan_statelessulaprefix = document.form1.ipv6_lan_statelessulaprefix.value;
+	var s_ipv6_lan_statelesssubnet = document.form1.ipv6_lan_statelesssubnet.value;
+
+
+	if (!isipv6(s_ipv6_lan_statelessulaprefix))	return;
+	if (s_ipv6_lan_statelesssubnet.length < 1 || !isHexNumber(s_ipv6_lan_statelesssubnet) || parseInt(s_ipv6_lan_statelesssubnet) > 65535 || parseInt(s_ipv6_lan_statelesssubnet) < 0)
+		return;
+
+	s_ipv6_lan_statelessulaprefix = cutIPv6Address(s_ipv6_lan_statelessulaprefix+"/48").toLowerCase();
+
+	var s = s_ipv6_lan_statelessulaprefix + ":" + s_ipv6_lan_statelesssubnet + "::1/64";
+
+	document.form1.ipv6_lan_statelessulaaddr.value = s;
+	document.getElementById("span_ipv6_lan_statelessulaaddr").innerHTML = s;
+}
+
+function checkField()
+{
+	var ula_address_popup = "_(The LAN ULA Address is invalid)_. _(e.g.)_ 'fd00::1/64'";
+	var ula_prefix_popup = "_(The LAN ULA Prefix is invalid)_. _(e.g.)_ 'fd00::/48'";
+	var ula_address_prefix_subnet_popup = "_(The LAN ULA Address, Prefix, Subnet Number is invalid)_.";
+	var ula_address_range_popup = "_(The LAN ULA Address or Address Range is invalid)_.";
+
+	var lanType = document.getElementById("ipv6_lan_type").value;
+	if (lanType == 0)
+	{
+		var s_ipv6_lan_statelessulaaddr = document.form1.ipv6_lan_statelessulaaddr.value;
+		var s_ipv6_lan_statelessulaprefix = document.form1.ipv6_lan_statelessulaprefix.value;
+		var s_ipv6_lan_statelesssubnet = document.form1.ipv6_lan_statelesssubnet.value;
+		var s_ipv6_lan_statelessadvlifetime = document.form1.ipv6_lan_statelessadvlifetime1.value;
+
+		var a_ipv6_lan_statelessulaaddr = s_ipv6_lan_statelessulaaddr.split('/');
+		if (a_ipv6_lan_statelessulaaddr.length < 2)
+		{
+			pop_up(ula_address_popup, 0);
+			return false;
+		}
+		if (!isipv6(a_ipv6_lan_statelessulaaddr[0]))
+		{
+			pop_up(ula_address_popup, 0);
+			return false;
+		}
+
+		if(a_ipv6_lan_statelessulaaddr[1] != 64)
+		{
+			pop_up(ula_address_popup, 0);
+			return false;
+		}
+
+		if (!isipv6(s_ipv6_lan_statelessulaprefix))
+		{
+			pop_up(ula_prefix_popup, 0);
+			return false;
+		}
+		if (s_ipv6_lan_statelessulaprefix.length < 2 || (s_ipv6_lan_statelessulaprefix.toLowerCase().substr(0, 2) != "fc" && s_ipv6_lan_statelessulaprefix.toLowerCase().substr(0, 2) != "fd"))
+		{
+			pop_up(ula_prefix_popup, 0);
+			return false;
+		}
+
+		if (s_ipv6_lan_statelesssubnet.length < 1 || !isHexNumber(s_ipv6_lan_statelesssubnet))
+		{
+			pop_up("_(The LAN Subnet Number is invalid)_.", 0);
+			return false;
+		}
+		var n_subnetnum = parseInt(s_ipv6_lan_statelesssubnet, 16);
+		if( g_wan_subnet && (n_subnetnum >= g_wan_subnet)) {
+			var range_max = g_wan_subnet - 1;
+			pop_up("_(Subnet Number must be in range)_ 0.." + range_max.toString(16), 0);
+			return false;
+		}
+		if( (n_subnetnum > g_max_subnet) || (n_subnetnum < 0))
+		{
+			pop_up("_(Subnet Number must be in range)_ 0.." + g_max_subnet.toString(16), 0);
+			return false;
+		}
+
+		if(!checkAddressPrefixSubnet(s_ipv6_lan_statelessulaaddr, s_ipv6_lan_statelessulaprefix+"/48", s_ipv6_lan_statelesssubnet)) {
+			pop_up(ula_address_prefix_subnet_popup, 0);
+			return false;
+		}
+
+		if (s_ipv6_lan_statelessadvlifetime.length < 1 || !isNumber(s_ipv6_lan_statelessadvlifetime) || parseInt(s_ipv6_lan_statelessadvlifetime) < 0 || parseInt(s_ipv6_lan_statelessadvlifetime) > 150)
+		{
+			pop_up("_(The Router Advertisement Lifetime is invalid)_.", 0);
+			return false;
+		}
+	}
+	else if (lanType == 1)
+	{
+		var s_ipv6_lan_statefululaaddr = document.form1.ipv6_lan_statefululaaddr.value;
+		var s_ipv6_lan_statefululaprefix = document.form1.ipv6_lan_statefululaprefix.value;
+		var s_ipv6_lan_statefulsubnet = document.form1.ipv6_lan_statefulsubnet.value;
+		var s_ipv6_lan_statefulmin = document.form1.ipv6_lan_statefulmin.value;
+		var s_ipv6_lan_statefulmax = document.form1.ipv6_lan_statefulmax.value;
+		var s_ipv6_lan_statelessadvlifetime = document.form1.ipv6_lan_statelessadvlifetime2.value;
+		var s_ipv6_lan_statefuladdrlifetime = document.form1.ipv6_lan_statefuladdrlifetime2.value;
+
+		var a_ipv6_lan_statefululaaddr = s_ipv6_lan_statefululaaddr.split('/');
+		if (a_ipv6_lan_statefululaaddr.length < 2)
+		{
+			pop_up(ula_address_popup, 0);
+			return false;
+		}
+		var s_ipv6_lan_statefululaaddr_0 = a_ipv6_lan_statefululaaddr[0];
+		if (!isipv6(s_ipv6_lan_statefululaaddr_0))
+		{
+			pop_up(ula_address_popup, 0);
+			return false;
+		}
+
+		var suffix_address = s_ipv6_lan_statefululaaddr_0.substring(s_ipv6_lan_statefululaaddr_0.lastIndexOf(":")+1, s_ipv6_lan_statefululaaddr_0.length);
+
+		if(a_ipv6_lan_statefululaaddr[1] != 64)
+		{
+			pop_up(ula_address_popup, 0);
+			return false;
+		}
+
+		if (!isipv6(s_ipv6_lan_statefululaprefix))
+		{
+			pop_up(ula_prefix_popup, 0);
+			return false;
+		}
+		if (s_ipv6_lan_statefululaprefix.length < 2 || (s_ipv6_lan_statefululaprefix.toLowerCase().substr(0, 2) != "fc" && s_ipv6_lan_statefululaprefix.toLowerCase().substr(0, 2) != "fd"))
+		{
+			pop_up(ula_prefix_popup, 0);
+			return false;
+		}
+
+		if (s_ipv6_lan_statefulsubnet.length < 1 || !isHexNumber(s_ipv6_lan_statefulsubnet))
+		{
+			pop_up("_(The LAN Subnet Number is invalid)_.", 0);
+			return false;
+		}
+		var n_subnetnum = parseInt(s_ipv6_lan_statefulsubnet, 16);
+		if( g_wan_subnet && (n_subnetnum >= g_wan_subnet)) {
+			var range_max = g_wan_subnet - 1;
+			pop_up("_(Subnet Number must be in range)_ 0.." + range_max.toString(16), 0);
+			return false;
+		}
+		if( (n_subnetnum > g_max_subnet) || (n_subnetnum < 0))
+		{
+			pop_up("_(Subnet Number must be in range)_ 0.." + g_max_subnet.toString(16), 0);
+			return false;
+		}
+
+		if(!checkAddressPrefixSubnet(s_ipv6_lan_statefululaaddr, s_ipv6_lan_statefululaprefix+"/48", s_ipv6_lan_statefulsubnet)) {
+			pop_up(ula_address_prefix_subnet_popup, 0);
+			return false;
+		}
+
+		if(!isHexNumber(s_ipv6_lan_statefulmin) || !isHexNumber(s_ipv6_lan_statefulmax)
+			|| (s_ipv6_lan_statefulmin.length > 4) || (s_ipv6_lan_statefulmin.length < 1)
+			|| (s_ipv6_lan_statefulmax.length > 4) || (s_ipv6_lan_statefulmax.length < 1)
+			|| (parseInt(s_ipv6_lan_statefulmin, 16) > parseInt(s_ipv6_lan_statefulmax, 16))
+			|| (parseInt(s_ipv6_lan_statefulmax, 16) > 273) || (parseInt(s_ipv6_lan_statefulmin, 16) < 2))
+		{
+			 pop_up("_(The LAN IPv6 Address Range is invalid)_.", 0);
+			return false;
+		}
+
+		if(parseInt(suffix_address, 16) >= parseInt(s_ipv6_lan_statefulmin, 16) && parseInt(suffix_address, 16) <= parseInt(s_ipv6_lan_statefulmax, 16))
+		{
+			pop_up(ula_address_range_popup, 0);
+			return false;
+		}
+
+		if (s_ipv6_lan_statelessadvlifetime.length < 1 || !isNumber(s_ipv6_lan_statelessadvlifetime) || parseInt(s_ipv6_lan_statelessadvlifetime) < 0 || parseInt(s_ipv6_lan_statelessadvlifetime) > 150)
+		{
+			pop_up("_(The Router Advertisement Lifetime is invalid)_.", 0);
+			return false;
+		}
+
+		if (s_ipv6_lan_statefuladdrlifetime.length < 1 || !isNumber(s_ipv6_lan_statefuladdrlifetime) || parseInt(s_ipv6_lan_statefuladdrlifetime) < 3 || parseInt(s_ipv6_lan_statefuladdrlifetime) > 150)
+		{
+			pop_up("_(The IPv6 Address Lifetime is invalid)_.", 0);
+			return false;
+		}
+	}
+
+	return true;
+}
+
+function checkAddressPrefixSubnet(address, prefix, subnet)
+{
+	address = cutIPv6Address(address).toLowerCase();
+	prefix = cutIPv6Address(prefix).toLowerCase();
+
+	var mergeAddress = prefix + ":" + subnet;
+	mergeAddress = mergeAddress.toLowerCase();
+
+	if(address == mergeAddress) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+function isNumber(str)
+{
+	var re = /^[0-9]*$/;
+	var flag = true;
+	if(!re.test(str)) {
+		flag = false;
+	}
+	return flag;
+}
+
+function isHexNumber(str)
+{
+	var re = /^[A-Fa-f0-9]*$/;
+	var flag = true;
+	if(!re.test(str)) {
+		flag = false;
+	}
+	return flag;
+}
+
+
+function On_Apply()
+{
+	if (!checkField())	return;
+
+	var lanType = document.getElementById("ipv6_lan_type").value;
+	if (lanType == 0)
+	{
+		document.form1.ipv6_lan_ulaaddr.value = document.form1.ipv6_lan_statelessulaaddr.value;
+		document.form1.ipv6_lan_ulaprefix.value = document.form1.ipv6_lan_statelessulaprefix.value + "/48";
+		document.form1.ipv6_lan_subnet.value = parseInt(document.form1.ipv6_lan_statelesssubnet.value, 16);
+
+		document.form1.ipv6_lan_statelessadvlifetime.value = document.form1.ipv6_lan_statelessadvlifetime1.value*60;
+	}
+	else if (lanType == 1)
+	{
+		document.form1.ipv6_lan_ulaaddr.value = document.form1.ipv6_lan_statefululaaddr.value;
+		document.form1.ipv6_lan_ulaprefix.value = document.form1.ipv6_lan_statefululaprefix.value + "/48";
+		document.form1.ipv6_lan_subnet.value = parseInt(document.form1.ipv6_lan_statefulsubnet.value, 16);
+
+		document.form1.ipv6_lan_statelessadvlifetime.value = document.form1.ipv6_lan_statelessadvlifetime2.value*60;
+		document.form1.ipv6_lan_statefuladdrlifetime.value = document.form1.ipv6_lan_statefuladdrlifetime2.value*60;
+		//document.form1.ipv6_lan_statefulmin.value = document.form1.ipv6_lan_statefulmin.value;
+		//document.form1.ipv6_lan_statefulmax.value = document.form1.ipv6_lan_statefulmax.value;
+	}
+
+	if(confirm("_(Do not make changes to this page unless you are an experienced network professional. Before calling support, reset the modem to its factory default settings)_."))
+	{
+		document.form1.submit();
+	}
+
+}
+</script>
+</head>
+<body >
+<div id="wrapper">
+    <%ejInclude(top_btn_nav5.html)%>
+    <%ejInclude(adv_left.html)%>
+
+    <form name="form1" method="post" action="ipv6_lansetting.cgi">
+	<input type="hidden" name="ipv6_lan_ulaaddr">
+	<input type="hidden" name="ipv6_lan_ulaprefix">
+	<input type="hidden" name="ipv6_lan_subnet">
+
+	<input type="hidden" name="ipv6_lan_statelessadvlifetime">
+	<input type="hidden" name="ipv6_lan_statefuladdrlifetime">
+	<input type="hidden" name="sessionKey" value='<%ejGetOther(sessionKey)%>' >
+
+    <div id="content_right">
+	<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="advancedsetup_ipaddressing_lanip">_(IPv6 LAN Settings)_</h1>
+			<p>_(IPv6 is the next generation of IP addressing)_. </p>
+			<div class="stepWrapper_header"></div>
+			<div class="stepWrapper">
+				<p><strong>1. _(Set the IPv6 LAN connection type)_.</strong></p>
+				<table>
+					<tr>
+						<td width="195">_(LAN Connection Type)_: </td>
+						<td>
+							<select name="ipv6_lan_type" id="ipv6_lan_type" style=" width:100px" onchange="changlanType();">
+								<option value="-1">_(Disabled)_</option>
+								<option value="0">_(Stateless)_</option>
+								<option value="1">_(Stateful)_</option>
+							</select>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="stepWrapper_footer"></div>
+
+
+			<div id="lan_stateless" style="display:none">
+				<div class="stepWrapper_header"></div>
+				<div class="stepWrapper">
+					<p><strong>2. _(Set the IPv6 LAN addressing values)_.</strong></p>
+					<table>
+						<tr>
+							<td width="195" style="padding:5px">_(Prefix Length)_: </td>
+							<td style="padding:5px"><span id="ipv6_lan_statelesspl"></span></td>
+						</tr>
+						<tr>
+							<td width="195" style="padding:5px">_(Link-Local Address)_: </td>
+							<td style="padding:5px"><span id="ipv6_lan_statelesslla"></span></td>
+						</tr>
+						<tr>
+							<td width="195" style="padding:5px">_(ULA Support)_: </td>
+							<td style="padding:5px">
+								<input type="radio" id="ipv6_lan_stateless_ulasupport_enable" name="ipv6_lan_stateless_ulasupport" value="1"/>
+								<label for="ipv6_lan_stateless_ulasupport_enable">_(Enable)_</label>
+								<input type="radio" id="ipv6_lan_stateless_ulasupport_disable" name="ipv6_lan_stateless_ulasupport" value="0" checked/>
+								<label for="ipv6_lan_stateless_ulasupport_disable">_(Disable)_</label>
+							</td>
+						</tr>
+						<tr id="stateless_ula_address_tr" style="display: none">
+							<td width="195" style="padding:5px">_(ULA Address)_: </td>
+							<td style="padding:5px"><span id="span_ipv6_lan_statelessulaaddr"></span>&nbsp;
+								<input type="hidden" name="ipv6_lan_statelessulaaddr" id="ipv6_lan_statelessulaaddr" size="40"/></td>
+						</tr>
+						<tr id="stateless_ula_prefix_tr" style="display: none">
+							<td width="195" style="padding:5px">_(ULA Prefix)_: </td>
+							<td style="padding:5px"><input name="ipv6_lan_statelessulaprefix" id="ipv6_lan_statelessulaprefix" size="20" onBlur="calStatelessULAAddr()"/>&nbsp;/48</td>
+						</tr>
+						<tr>
+							<td width="195" style="padding:5px">_(Subnet Number)_: </td>
+							<td style="padding:5px"><input name="ipv6_lan_statelesssubnet" id="ipv6_lan_statelesssubnet" size="5" onBlur="calStatelessULAAddr()"/></td>
+						</tr>
+						<tr>
+							<td width="195" style="padding:5px">_(Router Advertisement Lifetime)_: </td>
+							<td style="padding:5px"><input name="ipv6_lan_statelessadvlifetime1" id="ipv6_lan_statelessadvlifetime1" size="5"/>&nbsp;_(Minute(s))_&nbsp;(0 - 150)</td>
+						</tr>
+					</table>
+				</div>
+				<div class="stepWrapper_footer"></div>
+			</div>
+
+			<div id="lan_stateful" style="display:none">
+				<div class="stepWrapper_header"></div>
+				<div class="stepWrapper" >
+					<p><strong>2. _(Set the IPv6 LAN subnet information, below)_.</strong></p>
+					<table>
+						<tr>
+							<td width="180" style="padding:5px">_(Prefix Length)_: </td>
+							<td style="padding:5px"><span id="ipv6_lan_statefulpl"></span></td>
+						</tr>
+						<tr>
+							<td width="180" style="padding:5px">_(Link-Local Address)_: </td>
+							<td style="padding:5px"><span id="ipv6_lan_statefullla"></span></td>
+						</tr>
+						<tr>
+							<td width="180" style="padding:5px">_(ULA Support)_: </td>
+							<td style="padding:5px">
+								<input type="radio" id="ipv6_lan_stateful_ulasupport_enable" name="ipv6_lan_stateful_ulasupport" value="1"/>
+								<label for="ipv6_lan_stateful_ulasupport_enable">_(Enable)_</label>
+								<input type="radio" id="ipv6_lan_stateful_ulasupport_disable" name="ipv6_lan_stateful_ulasupport" value="0" checked/>
+								<label for="ipv6_lan_stateful_ulasupport_disable">_(Disable)_</label>
+							</td>
+						</tr>
+						<tr id="stateful_ula_address_tr" style="display: none">
+							<td width="180" style="padding:5px">_(ULA Address)_: </td>
+							<td style="padding:5px"><span id="span_ipv6_lan_statefululaaddr"></span>&nbsp;
+								<input type="hidden" name="ipv6_lan_statefululaaddr" id="ipv6_lan_statefululaaddr" size="40"/></td>
+						</tr>
+						<tr id="stateful_ula_prefix_tr" style="display: none">
+							<td width="180" style="padding:5px">_(ULA Prefix)_: </td>
+							<td style="padding:5px"><input name="ipv6_lan_statefululaprefix" id="ipv6_lan_statefululaprefix" size="20" onBlur="calStatefulULAAddr()"/>&nbsp;/48</td>
+						</tr>
+						<tr>
+							<td width="180" style="padding:5px">_(Subnet Number)_: </td>
+							<td style="padding:5px"><input name="ipv6_lan_statefulsubnet" id="ipv6_lan_statefulsubnet" size="5" onBlur="calStatefulULAAddr()"/></td>
+						</tr>
+
+						<tr>
+							<td width="180" style="padding:5px">_(Router Advertisement Lifetime)_: </td>
+							<td style="padding:5px"><input name="ipv6_lan_statelessadvlifetime2" id="ipv6_lan_statelessadvlifetime2" size="5"/>&nbsp;_(Minute(s))_&nbsp;(0 - 150)</td>
+						</tr>
+						<tr>
+							<td width="180" style="padding:5px">_(Address Lifetime)_: </td>
+							<td style="padding:5px"><input id="ipv6_lan_statefuladdrlifetime2" name="ipv6_lan_statefuladdrlifetime2" size="5"/>&nbsp;_(Minute(s))_&nbsp;(3 - 150)</td>
+						</tr>
+					</table>
+				</div>
+				<div class="stepWrapper_footer"></div>
+
+				<div class="stepWrapper_header"></div>
+				<div class="stepWrapper" >
+					<p><strong>3. _(Set the IPv6 LAN address range, below)_.</strong></p>
+					<table>
+						<tr>
+							<td width="180" style="padding:5px">_(LAN IPv6 Address Range)_:</td>
+							<td style="padding:5px">
+								<input id="ipv6_lan_statefulmin" name="ipv6_lan_statefulmin" size="5" value="2"/>&nbsp;&nbsp;&nbsp;&nbsp;
+								<input id="ipv6_lan_statefulmax" name="ipv6_lan_statefulmax" size="5" value="111"/>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<div class="stepWrapper_footer"></div>
+			</div>
+
+            <div id="delegated_lan" style="display:none">
+                <div class="stepWrapper_header"></div>
+			    <div class="stepWrapper">
+				    <p><strong id="advance_set"></strong><strong>. _(Advanced setting.)_</strong></p>
+			        <table>
+                        <tr>
+                            <td width="180" style="padding:5px">_(Delegated to LAN)_:</td>
+                            <td width="180"><input name="ipv6_lan_addresspd" id="ipv6_lan_addresspd_yes" type="radio" value="1" checked />
+							    <label for="ipv6_lan_addresspd_yes">_(Yes)_</label>
+						    </td>
+						    <td width="125"><input name="ipv6_lan_addresspd" id="ipv6_lan_addresspd_no" type="radio" value="0" />
+							    <label for="ipv6_lan_addresspd_no">_(No)_</label>
+						    </td>
+                        </tr>
+                    </table>
+                </div>
+			    <div class="stepWrapper_footer"></div>
+            </div>
+
+            <div class="stepWrapper_header"></div>
+			<div class="stepWrapper">
+				<p><strong id="apply_id"></strong><strong>. _(Click Apply to save changes.)_</strong></p>
+				<p id="SpanApply"></p>
+			</div>
+			<div class="stepWrapper_footer"></div>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	</form>
+	<div class="clear_left"></div>
+</div>
+
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(do_load);
+init();
+</SCRIPT>
+</body>
+</html>

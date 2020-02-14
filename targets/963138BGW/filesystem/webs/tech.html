@@ -1,0 +1,505 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>_(DSL WIRELESS Statistics)_</title>
+  <link href="css/basic.css" rel="stylesheet" type="text/css" />
+  <style type="text/css">
+    .dslTypeClass tr td{
+        font:18px/18px Verdana, Arial, Helvetica, sans-serif; color:#000;font-weight:bolder;padding-bottom:0px;
+    }
+    .dslTypeClass select{
+        font:14px/14px Verdana, Arial, Helvetica, sans-serif; color:#000; height:25px;
+    }
+    .dslTypeClass select option{
+        font:14px/14px Verdana, Arial, Helvetica, sans-serif; color:#000;
+    }
+  </style>
+  <SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript">
+  </SCRIPT>
+  <script language="JavaScript" src="js/nav.js">
+  </script>
+  <script language="JavaScript" src="js/util.js">
+  </script>
+  <script language="JavaScript" src="js/htmldecode.js"></script>
+  <script language="Javascript">
+    
+    var attenuation = '<%ejGetOther(dslinfo,attenu)%>';
+    var attenuation_temp;
+    var latest15min = '<%ejGetOther(dslinfo,15min)%>';
+    var latest15min_temp;
+    var latest1day = '<%ejGetOther(dslinfo,1day)%>';
+    var latest1day_temp;
+    var everbefore = '<%ejGetOther(dslinfo,ever)%>';
+    var everbefore_temp;
+    var berbitswap = '<%ejGetOther(dslinfo,bitswap)%>';
+    var berbitswap_temp;
+    var errorpackets = '<%ejGetOther(dslinfo,errpkt)%>';
+	var sessionKey='<%ejGetOther(sessionKey)%>';
+    var errorpackets_temp;
+
+    var bar = 0;
+    var cookieName = "refresh-tech";
+    var defAutoTime = 120;
+
+  function show_attenuation()
+  {
+	if(attenuation != "")
+	{
+		attenuation_temp = attenuation.split("|");
+
+		document.getElementById("Lau0").innerHTML = attenuation_temp[0];
+		document.getElementById("Lau1").innerHTML = attenuation_temp[1];
+		document.getElementById("Lau2").innerHTML = attenuation_temp[2];
+		document.getElementById("Lau3").innerHTML = attenuation_temp[3];
+		document.getElementById("Lad1").innerHTML = attenuation_temp[4];
+		document.getElementById("Lad2").innerHTML = attenuation_temp[5];
+		document.getElementById("Lad3").innerHTML = attenuation_temp[6];
+
+		document.getElementById("sau0").innerHTML = attenuation_temp[7];
+		document.getElementById("sau1").innerHTML = attenuation_temp[8];
+		document.getElementById("sau2").innerHTML = attenuation_temp[9];
+		document.getElementById("sau3").innerHTML = attenuation_temp[10];
+		document.getElementById("sad1").innerHTML = attenuation_temp[11];
+		document.getElementById("sad2").innerHTML = attenuation_temp[12];
+		document.getElementById("sad3").innerHTML = attenuation_temp[13];
+
+	}
+  }
+
+  function show_latest15min()
+  {
+	if(latest15min != "")
+	{
+		latest15min_temp = latest15min.split("|");
+
+		document.getElementById("fecds15min").innerHTML = latest15min_temp[0];
+			document.getElementById("fecus15min").innerHTML = latest15min_temp[1];
+
+			document.getElementById("crcds15min").innerHTML = latest15min_temp[2];
+			document.getElementById("crcus15min").innerHTML = latest15min_temp[3];
+
+			document.getElementById("esds15min").innerHTML = latest15min_temp[4];
+			document.getElementById("esus15min").innerHTML = latest15min_temp[5];
+
+			document.getElementById("sesds15min").innerHTML = latest15min_temp[6];
+			document.getElementById("sesus15min").innerHTML = latest15min_temp[7];
+
+			document.getElementById("uasds15min").innerHTML = latest15min_temp[8];
+			document.getElementById("uasus15min").innerHTML = latest15min_temp[9];
+
+			document.getElementById("losds15min").innerHTML = latest15min_temp[10];
+			document.getElementById("losus15min").innerHTML = latest15min_temp[11];
+
+			document.getElementById("lofds15min").innerHTML = latest15min_temp[12];
+			document.getElementById("lofus15min").innerHTML = latest15min_temp[13];
+
+			document.getElementById("lomds15min").innerHTML = latest15min_temp[14];
+			document.getElementById("lomus15min").innerHTML = latest15min_temp[15];
+
+	}
+  }
+
+    function show_latest1day()
+  {
+	if(latest1day != "")
+	{
+		latest1day_temp = latest1day.split("|");
+
+		document.getElementById("fecds1day").innerHTML = latest1day_temp[0];
+				  document.getElementById("fecus1day").innerHTML = latest1day_temp[1];
+
+				  document.getElementById("crcds1day").innerHTML = latest1day_temp[2];
+				  document.getElementById("crcus1day").innerHTML = latest1day_temp[3];
+
+				  document.getElementById("esds1day").innerHTML = latest1day_temp[4];
+				  document.getElementById("esus1day").innerHTML = latest1day_temp[5];
+
+				  document.getElementById("sesds1day").innerHTML = latest1day_temp[6];
+				  document.getElementById("sesus1day").innerHTML = latest1day_temp[7];
+
+				  document.getElementById("uasds1day").innerHTML = latest1day_temp[8];
+				  document.getElementById("uasus1day").innerHTML = latest1day_temp[9];
+
+				  document.getElementById("losds1day").innerHTML = latest1day_temp[10];
+				  document.getElementById("losus1day").innerHTML = latest1day_temp[11];
+
+				  document.getElementById("lofds1day").innerHTML = latest1day_temp[12];
+				  document.getElementById("lofus1day").innerHTML = latest1day_temp[13];
+
+				  document.getElementById("lomds1day").innerHTML = latest1day_temp[14];
+				  document.getElementById("lomus1day").innerHTML = latest1day_temp[15];
+
+	}
+  }
+
+   function show_everbefore()
+  {
+	if(everbefore != "")
+	{
+		everbefore_temp = everbefore.split("|");
+
+		document.getElementById("fecdseverbefore").innerHTML = everbefore_temp[0];
+				  document.getElementById("fecuseverbefore").innerHTML = everbefore_temp[1];
+
+				  document.getElementById("crcdseverbefore").innerHTML = everbefore_temp[2];
+				  document.getElementById("crcuseverbefore").innerHTML = everbefore_temp[3];
+
+				  document.getElementById("esdseverbefore").innerHTML = everbefore_temp[4];
+				  document.getElementById("esuseverbefore").innerHTML = everbefore_temp[5];
+
+				  document.getElementById("sesdseverbefore").innerHTML = everbefore_temp[6];
+				  document.getElementById("sesuseverbefore").innerHTML = everbefore_temp[7];
+
+				  document.getElementById("uasdseverbefore").innerHTML = everbefore_temp[8];
+				  document.getElementById("uasuseverbefore").innerHTML = everbefore_temp[9];
+
+				  document.getElementById("losdseverbefore").innerHTML = everbefore_temp[10];
+				  document.getElementById("losuseverbefore").innerHTML = everbefore_temp[11];
+
+				  document.getElementById("lofdseverbefore").innerHTML = everbefore_temp[12];
+				  document.getElementById("lofuseverbefore").innerHTML = everbefore_temp[13];
+
+				  document.getElementById("lomdseverbefore").innerHTML = everbefore_temp[14];
+				  document.getElementById("lomuseverbefore").innerHTML = everbefore_temp[15];
+
+	}
+  }
+
+  function show_berbitswap()
+  {
+		if(berbitswap != "")
+		{
+				berbitswap_temp = berbitswap.split("|");
+				document.getElementById("bitswap").innerHTML = berbitswap_temp[0]+"/"+berbitswap_temp[1];
+				  document.getElementById("ber").innerHTML = berbitswap_temp[2]+"/"+berbitswap_temp[3];
+		}
+
+		if(errorpackets != "")
+		{
+			 errorpackets_temp = errorpackets.split("|");
+			 document.getElementById("errorpackets").innerHTML = errorpackets_temp[0]+"/"+errorpackets_temp[2];
+		}
+
+  }
+
+
+  function do_load()
+  {
+    //Auto refresh time
+    var autoRefreshTime = getCookie(cookieName);
+    if ((autoRefreshTime == null)||(autoRefreshTime=="undefined"))
+    {
+        setCookie(cookieName, defAutoTime);
+        autoRefreshTime = defAutoTime;
+    }
+
+    document.getElementById("refreshTime").value = autoRefreshTime;
+    bar = setTimeout("do_reload()",autoRefreshTime*1000);
+
+    show_attenuation();
+    show_latest15min();
+    show_latest1day();
+    show_everbefore();
+    show_berbitswap();
+	side_nav("tech");
+	load_statis_header();
+  }
+
+var board_id=htmlDecodeStr('<%ejGet(boardID)%>');
+var dsl_type_old=htmlDecodeStr('<%ejGet(techLineid)%>');
+function load_statis_header()
+{
+	if( board_id == "V2000H" || board_id == "T2200H" )
+	{
+	    if(dsl_type_old == 0)
+                document.getElementById("statis_head").innerHTML = "DSL Statistics:&nbsp;&nbsp;<select id='dslType' name='dslType' onclick='selDslType();'><option value='0' selected>Line 1</option><option value='1'>Line 2</option></select>";
+            else
+                document.getElementById("statis_head").innerHTML = "DSL Statistics:&nbsp;&nbsp;<select id='dslType' name='dslType' onclick='selDslType();'><option value='0'>Line 1</option><option value='1' selected>Line 2</option></select>";  
+	}else{
+		document.getElementById("statis_head").innerHTML = "_(DSL Statistics)_";
+	}
+}
+
+function selDslType()
+{
+    var dsl_sel_value = document.getElementById("dslType").value;
+    if(dsl_sel_value == dsl_type_old)
+        return;
+    var lochead = 'tech.cgi?techLineid='+dsl_sel_value;
+    postSubmit(lochead);
+}
+
+function autoRefresh()
+{
+    var autoRefreshTime = parseInt(document.getElementById("refreshTime").value);
+    setCookie(cookieName, autoRefreshTime);
+    clearTimeout(bar);
+    bar = setTimeout("do_reload()",autoRefreshTime*1000);
+}
+
+function do_reload()
+{
+    window.location.reload();
+}
+
+function getCookie(NameOfCookie) {
+    if (document.cookie.length > 0) {
+        begin = document.cookie.indexOf(NameOfCookie+"=");
+        if (begin != -1) {
+            begin += NameOfCookie.length+1;
+            end = document.cookie.indexOf(";", begin);
+            if (end == -1) end = document.cookie.length;
+                return unescape(document.cookie.substring(begin, end));
+        }
+    }
+    return null;
+}
+
+function setCookie(NameOfCookie, value, expiredays)  {
+    var ExpireDate = new Date ();
+    if(expiredays != null)
+        ExpireDate.setTime(ExpireDate.getTime() + (expiredays * 24 * 3600 * 1000));
+    document.cookie = NameOfCookie + "=" + escape(value) +
+                     ((expiredays == null) ? "" : "; expires=" + ExpireDate.toGMTString());
+}
+
+function dom_load(){ do_load(); }
+
+  </script>
+</head>
+
+<body>
+<div id="wrapper">
+  <!-- TOP NAV -->
+  <%ejInclude(top_btn_nav5.html)%>
+  <!-- END TOP NAV -->
+  <!-- SIDE NAV -->
+  <%ejInclude(adv_left.html)%>
+  <!-- END SIDE NAV -->
+  <!-- MAIN CONTENT AREA -->
+  <div id="content_right">
+    <div id="content_right_header">
+    </div>
+    <div id="content_right_contentarea">
+       <h1 id="statis_head">_(DSL Statistics)_ </h1>
+        <table width="80%" border="0" align="center" cellpadding="0" cellspacing="0" style="margin:10px auto 0 auto;padding:0 0 5px 0;">
+            <tr>
+                <td align="right">
+                    <strong>_(Auto Refresh Every)_</strong>
+                    &nbsp;&nbsp;
+                    <select id="refreshTime" onchange="autoRefresh();">
+                        <option value="120" selected>120 _(Seconds)_</option>
+                        <option value="60">60 _(Seconds)_</option>
+                        <option value="30">30 _(Seconds)_</option>
+                        <option value="15">15 _(Seconds)_</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+      <table  width="80%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+			      <tr align="left">
+						<th align="left">_(VDSL Band Status)_</th>
+						<th align="left">_(U0)_</th>
+						<th align="left">_(U1)_</th>
+						<th align="left">_(U2)_</th>
+						<th align="left">_(U3)_</th>
+						<th align="left">_(D1)_</th>
+						<th align="left">_(D2)_</th>
+						<th align="left">_(D3)_</th>
+				  </tr>
+ <tr>
+  <td >_(Line Attenuation(db))_</td>
+  <td span id='Lau0'>_(N/A)_</td>
+  <td span id='Lau1'>_(N/A)_</td>
+  <td span id='Lau2'>_(N/A)_</td>
+  <td span id='Lau3'>_(N/A)_</td>
+  <td span id='Lad1'>_(N/A)_</td>
+  <td span id='Lad2'>_(N/A)_</td>
+  <td span id='Lad3'>_(N/A)_</td>
+ </tr>
+ <tr>
+  <td >_(Signal Attenuation(db))_</td>
+  <td span id='sau0'>_(N/A)_</td>
+  <td span id='sau1'>_(N/A)_</td>
+  <td span id='sau2'>_(N/A)_</td>
+  <td span id='sau3'>_(N/A)_</td>
+  <td span id='sad1'>_(N/A)_</td>
+  <td span id='sad2'>_(N/A)_</td>
+  <td span id='sad3'>_(N/A)_</td>
+ </tr>
+
+</table>
+
+<table  width="80%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;>
+			      <tr align="left">
+						<th align="left" width="40%"> _(Latest 15 minutes)_</th>
+						<th align="left">_(DS)_</th>
+						<th align="left">_(US)_</th>
+				  </tr>
+				  <tr align="left">
+						<td >_(FEC)_</td>
+						<td span id='fecds15min'>_(N/A)_</td>
+						<td span id='fecus15min'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(CRC)_</td>
+						<td span id='crcds15min'>_(N/A)_</td>
+						<td span id='crcus15min'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(ES)_</td>
+						<td span id='esds15min'>_(N/A)_</td>
+						<td span id='esus15min'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(SES)_</td>
+						<td span id='sesds15min'>_(N/A)_</td>
+						<td span id='sesus15min'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(UAS)_</td>
+						<td span id='uasds15min'>_(N/A)_</td>
+						<td span id='uasus15min'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(LOS)_</td>
+						<td span id='losds15min'>_(N/A)_</td>
+						<td span id='losus15min'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(LOF)_</td>
+						<td span id='lofds15min'>_(N/A)_</td>
+						<td span id='lofus15min'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(LOM)_</td>
+						<td span id='lomds15min'>_(N/A)_</td>
+						<td span id='lomus15min'>_(N/A)_</td>
+				  </tr>
+</table>
+
+<table  width="80%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;>
+			      <tr align="left">
+						<th align="left" width="40%"> _(Latest 1 Day)_</th>
+						<th align="left">_(DS)_</th>
+						<th align="left">_(US)_</th>
+				  </tr>
+				  <tr align="left">
+						<td >_(FEC)_</td>
+						<td span id='fecds1day'>_(N/A)_</td>
+						<td span id='fecus1day'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(CRC)_</td>
+						<td span id='crcds1day'>_(N/A)_</td>
+						<td span id='crcus1day'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(ES)_</td>
+						<td span id='esds1day'>_(N/A)_</td>
+						<td span id='esus1day'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(SES)_</td>
+						<td span id='sesds1day'>_(N/A)_</td>
+						<td span id='sesus1day'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(UAS)_</td>
+						<td span id='uasds1day'>_(N/A)_</td>
+						<td span id='uasus1day'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(LOS)_</td>
+						<td span id='losds1day'>_(N/A)_</td>
+						<td span id='losus1day'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(LOF)_</td>
+						<td span id='lofds1day'>_(N/A)_</td>
+						<td span id='lofus1day'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(LOM)_</td>
+						<td span id='lomds1day'>_(N/A)_</td>
+						<td span id='lomus1day'>_(N/A)_</td>
+				  </tr>
+</table>
+
+<table  width="80%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;>
+			      <tr align="left">
+						<th align="left" width="40%">_(Ever Before)_</th>
+						<th align="left">_(DS)_</th>
+						<th align="left">_(US)_</th>
+				  </tr>
+				   <tr align="left">
+						<td >_(FEC)_</td>
+						<td span id='fecdseverbefore'>_(N/A)_</td>
+						<td span id='fecuseverbefore'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(CRC)_</td>
+						<td span id='crcdseverbefore'>_(N/A)_</td>
+						<td span id='crcuseverbefore'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(ES)_</td>
+						<td span id='esdseverbefore'>_(N/A)_</td>
+						<td span id='esuseverbefore'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(SES)_</td>
+						<td span id='sesdseverbefore'>_(N/A)_</td>
+						<td span id='sesuseverbefore'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(UAS)_</td>
+						<td span id='uasdseverbefore'>_(N/A)_</td>
+						<td span id='uasuseverbefore'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(LOS)_</td>
+						<td span id='losdseverbefore'>_(N/A)_</td>
+						<td span id='losuseverbefore'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(LOF)_</td>
+						<td span id='lofdseverbefore'>_(N/A)_</td>
+						<td span id='lofuseverbefore'>_(N/A)_</td>
+				  </tr>
+				  <tr align="left">
+						<td >_(LOM)_</td>
+						<td span id='lomdseverbefore'>_(N/A)_</td>
+						<td span id='lomuseverbefore'>_(N/A)_</td>
+				  </tr>
+</table>
+
+<table  width="80%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;>
+			      <tr align="left">
+						<th align="left" width="40%">_(BITSWAP)_</th>
+						<th align="left" width="30%">_(BER)_</th>
+						<th align="left" width="">_(ERROR PACKETS)_</th>
+				  </tr>
+					<tr align="left">
+						<td span id='bitswap'>_(N/A)_</td>
+						<td span id='ber'>_(N/A)_</td>
+						<td span id='errorpackets'>_(N/A)_</td>
+				  </tr>
+</table>
+
+    </div>
+    <div id="content_right_footer">
+    </div>
+</div>
+<div class="clear_left">
+</div>
+<div id="footer">
+  &nbsp;
+</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

@@ -1,0 +1,1132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Status)_ - _(Internet Services)_ - _(Connection Status)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript" SRC="js/htmldecode.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<%ejInclude("ipv6_common.html")%>
+<script language="Javascript">
+var wanInfNamesPtm = '<%ejGetOther(wanInterfaces, PTM)%>';
+var wanInfNamesAtm = '<%ejGetOther(wanInterfaces, ATM)%>';
+var wanInfNames = '<%ejGetOther(wanInterfaces, all)%>';
+var uprate='<%ejGetOther(lineRate, 0, 0)%>';
+var downrate='<%ejGetOther(lineRate, 1, 0)%>';
+var phy_status='Disconnected';
+var isp_status='Disconnected';
+var usrname='';
+var ISP_prot='';
+var encaps='';
+var ip_addr='';
+var gw='';
+var dns1='';
+var dns2='';
+var mac_addr='_(N/A)_';
+var soft_ver=htmlDecodeStr('<%ejGet(sysVersion)%>');
+var redirect="modemstatus_home.html";
+var devinfo='<%ejGetOther(sysInfo,DevInfo)%>';
+var mod_num='';
+var serial_num='';
+var ISP_proto='';
+var ISP_status='Disconnected';
+var traffictype = '<%ejGetOther(trafficType, 0)%>';
+var dnsIfc='';
+var dslstatus = '<%ejGetOther(dslget, 2)%>' ;
+var dslsts_temp = dslstatus.split("|") ;
+var mytimeid;
+
+var glbWanL2IfName = htmlDecodeStr('<%ejGet(wanL2IfName)%>');
+var dns1_tmp = htmlDecodeStr('<%ejGetOther(sysInfo, dns1)%>');
+var dns2_tmp = htmlDecodeStr('<%ejGetOther(sysInfo, dns2)%>');
+var wanEthStatus_LinkStatus_tmp     = htmlDecodeStr('<%ejGet(wanEthStatus_LinkStatus)%>');
+var wanEthStatus_ISPStatus_tmp      = htmlDecodeStr('<%ejGet(wanEthStatus_ISPStatus)%>');
+var wanEthStatus_MACAddress_tmp     = htmlDecodeStr('<%ejGet(wanEthStatus_MACAddress)%>');
+var wanEthStatus_IPAddress_tmp      = htmlDecodeStr('<%ejGet(wanEthStatus_IPAddress)%>');
+var wanEthStatus_DNSServer_tmp      = htmlDecodeStr('<%ejGet(wanEthStatus_DNSServer)%>');
+var wanEthStatus_Portocol_tmp       = htmlDecodeStr('<%ejGet(wanEthStatus_Protocol)%>');
+var wanEthStatus_AddressingType_tmp = htmlDecodeStr('<%ejGet(wanEthStatus_AddressingType)%>');      
+var wanEthStatus_LeaseTimeRemaining_tmp = htmlDecodeStr('<%ejGet(wanEthStatus_LeaseTimeRemaining)%>');
+var wan_dnsIfc_tmp = htmlDecodeStr('<%ejGetOther(sysInfo, dnsIfcs)%>');
+var eth_wanInfNames='<%ejGetOther(wanInterfaces, ewan0)%>';
+var sfp_wanInfNames='<%ejGetOther(wanInterfaces, ewan1)%>';
+var eth_wanInfNamestmp=(glbWanL2IfName.indexOf('ewan1') != -1 ? eth_wanInfNames:sfp_wanInfNames);
+var hpna_sysinfo = '<%ejGetOther(hpna_sysinfo)%>';
+var total_waninfo = '<%ejGetOther(hpna_waninfo)%>';
+
+var loadFlag=0; //do not remove loadFlag, this is for auto-detect.
+var tag = 0;
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+/*
+ * Define the Waninfo Object
+ */
+function wanStatusCls()
+{
+    this.phy_stat   = 'Disconnected';
+    this.isp_stat   = 'Disconnected';
+    this.if_name    = '_(N/A)_';
+    this.mac        = '_(N/A)_';
+    this.downrate   = '_(N/A)_';
+    this.uprate     = '_(N/A)_';
+    this.ppp_user   = '_(N/A)_';
+    this.isp_protocol = '_(N/A)_';
+    this.encap        = '_(N/A)_';
+    this.ip           = '_(N/A)_';
+    this.LeaseTimeRemaining = '_(N/A)_';
+    this.dns1         = '_(N/A)_';
+    this.dns2         = '_(N/A)_';
+    this.used         = 'not_used';
+    this.getWanDslInfo  = getWanDslInfo;
+    this.getWanEthInfo  = getWanEthInfo;
+    this.getWanHpnaInfo = getWanHpnaInfo;
+}
+
+function getWanDslInfo()
+{
+    if (wanInfNames!="")
+    {
+        var wanNameTypes  = wanInfNames.split('|');
+        var nameType = wanNameTypes[0].split(':');
+        var wanEntryInfo=nameType[4].split('/');
+        var status='';
+        var dns='';
+        var mac_addrtmp='';
+        dnsIfc=htmlDecodeStr(nameType[1]);
+        ISP_proto=htmlDecodeStr(nameType[3]);
+        if(ISP_proto == "PPPoE" || ISP_proto == "PPPoA")
+        {
+            usrname=htmlDecodeStr(wanEntryInfo[0]);
+            status=htmlDecodeStr(wanEntryInfo[7]);
+            mac_addrtmp=htmlDecodeStr(wanEntryInfo[8]);
+
+			if(mac_addrtmp != "") {
+		var mac_array=mac_addrtmp.split('-');
+		mac_addr=mac_array[0]+':'+mac_array[1]+':'+mac_array[2]+':'+mac_array[3]+':'+mac_array[4]+':'+mac_array[5];
+			}
+
+			encaps=htmlDecodeStr(wanEntryInfo[9]);
+            if(status == "Connected")
+            {
+                ip_addr=htmlDecodeStr(wanEntryInfo[10]);
+                if (!isValidIpAddress(ip_addr) )
+                {
+		    status = "Connecting";
+                }
+            }
+            gw=htmlDecodeStr(wanEntryInfo[11]);
+            dns1=dns1_tmp;
+            dns2=dns2_tmp;
+        }
+        else if(ISP_proto == "Bridge")
+        {
+            ISP_proto = "Transparent Bridging";
+            status=htmlDecodeStr(nameType[7]);
+			encaps=htmlDecodeStr(nameType[4]);
+			dns1="";
+			dns2="";
+        }
+        else
+        {
+            var dhcptype=htmlDecodeStr(wanEntryInfo[0]);
+            status=htmlDecodeStr(wanEntryInfo[7]);
+            mac_addrtmp=htmlDecodeStr(wanEntryInfo[8]);
+
+			if(mac_addrtmp != "") {
+		var mac_array=mac_addrtmp.split('-');
+		mac_addr=mac_array[0]+':'+mac_array[1]+':'+mac_array[2]+':'+mac_array[3]+':'+mac_array[4]+':'+mac_array[5];
+			}
+
+			encaps=htmlDecodeStr(wanEntryInfo[9]);
+            if(status == "Connected")
+            {
+                ip_addr=htmlDecodeStr(wanEntryInfo[1]);
+                if (!isValidIpAddress(ip_addr) )
+                {
+		    status = "Connecting";
+                }
+            }
+            gw=htmlDecodeStr(wanEntryInfo[3]);
+	    this.LeaseTimeRemaining = htmlDecodeStr(wanEntryInfo[14]);
+            dns1=dns1_tmp;
+            dns2=dns2_tmp;
+        
+            if(dhcptype == "0")
+                ISP_proto="1483 via DHCP";
+            else
+                ISP_proto="1483 via Static IP";
+        }
+        if(status=="Connecting")
+            ISP_status="Connecting";
+        else if(status=="Connected")
+            ISP_status="Connected";
+        else
+            ISP_status="Disconnected";
+    }
+
+    if(dslstatus == "")
+    {
+        phy_status="Disconnected";
+    }
+    else
+    {
+        if (dslsts_temp[0] == "Up" || downrate != '0')
+        {
+            phy_status="Connected";
+        }
+        else if (dslsts_temp[0] == "EstablishingLink" )
+        {
+            phy_status="Connecting";
+        }
+        else
+        {
+           phy_status="Disconnected";
+        }
+    }
+    if(devinfo !='')
+    {
+        var devinfo_array  = devinfo.split('|');
+        mod_num=devinfo_array[0];
+        serial_num=devinfo_array[1];
+    }
+
+    if(phy_status != "Connected")
+    {
+        ISP_status = "Disconnected" ;
+    }
+
+    if(ISP_status == "Connected")
+    {
+
+        document.getElementById("ISP_status2").className="status_text";
+    }
+    else if(ISP_status == "Connecting" )
+    {
+        document.getElementById("ISP_status2").className="status_text_y";
+    }
+    else
+    {
+        document.getElementById("ISP_status2").className="status_text_r";
+    }
+
+    if(phy_status == "Connected")
+    {
+        document.getElementById("ISP_status1").className="status_text";
+    }
+    else if(phy_status == "Connecting")
+    {
+        document.getElementById("ISP_status1").className="status_text_y";
+    }
+    else
+    {
+        document.getElementById("ISP_status1").className="status_text_r";
+    }
+
+    if(phy_status == "")
+        phy_status="_(N/A)_";
+    if(uprate == "")
+        uprate="_(N/A)_";
+    if(downrate == "")
+        downrate="_(N/A)_";
+    if(usrname == "")
+        usrname="_(N/A)_";
+    if(ip_addr == "")
+        ip_addr="_(N/A)_";
+
+    if(gw == "")
+        gw="_(N/A)_";
+    if(dns1 == "&nbsp" || dns1=="")
+        dns1="_(N/A)_";
+    if(dns2 == "&nbsp" || dns2=="")
+        dns2="_(N/A)_";
+
+    this.phy_stat   = phy_status;
+    this.isp_stat   = ISP_status;
+    this.if_name    = dnsIfc;
+    this.mac        = mac_addr;
+    this.downrate   = downrate + "Kbps";
+    this.uprate     = uprate + "Kbps";
+    this.ppp_user   = usrname;
+    this.isp_protocol = ISP_proto;
+    this.encap        = encaps;
+    this.ip           = ip_addr;
+
+    if (status == "Connected")
+    {
+        this.dns1     = dns1;
+        this.dns2     = dns2;
+    }
+    //check_auto();
+}
+
+function alert_t(obj)
+{
+    alert("if_name="+obj.if_name+", linkStatus="+obj.phy_stat+", isp_stat="+obj.isp_stat+", mac="+obj.mac+", dns1="+obj.dns1 + ", proto="+obj.isp_protocol);
+}
+
+function getWanEthInfo()
+{
+    var   wanEthStatus_LinkStatus     = wanEthStatus_LinkStatus_tmp;
+    var   wanEthStatus_ISPStatus      = wanEthStatus_ISPStatus_tmp;
+    var   wanEthStatus_MACAddress     = wanEthStatus_MACAddress_tmp;
+    var   wanEthStatus_IPAddress      = wanEthStatus_IPAddress_tmp;
+    var   wanEthStatus_DNSServer      = wanEthStatus_DNSServer_tmp;
+    var   wanEthStatus_Portocol       = wanEthStatus_Portocol_tmp;
+    var   wanEthStatus_AddressingType = wanEthStatus_AddressingType_tmp;      
+    var   wanEthStatus_LeaseTimeRemaining = wanEthStatus_LeaseTimeRemaining_tmp;
+    
+    var wan_dns1 = dns1_tmp; if ( wan_dns1 == "&nbsp" ) wan_dns1 = "_(N/A)_";
+    var wan_dns2 = dns2_tmp;  if ( wan_dns2 == "&nbsp" || wan_dns2 == "0.0.0.0") wan_dns2 = "_(N/A)_";
+    var wan_dnsIfc = wan_dnsIfc_tmp; if (wan_dnsIfc == '&nbsp') wan_dnsIfc = '';
+  
+    if ( wan_dnsIfc == '' && wan_dns1 != '' )
+    {
+	wanEthStatus_DNSServer = wan_dns1+","+wan_dns2;
+    }
+
+    if (wanEthStatus_LinkStatus=="Up"){
+        this.phy_stat = "Connected";
+    }
+    else{
+        this.phy_stat = "Disconnected";
+    }
+
+    // ISP Status
+    if (this.phy_stat != "Connected"){
+        this.isp_stat = "Disconnected";
+    }
+    else if (wanEthStatus_ISPStatus=="Connected"){
+        this.isp_stat = "Connected";
+    }
+    else if (wanEthStatus_Portocol == "Bridge" &&
+             wanEthStatus_LinkStatus == "Up") {
+        // When in wan Bridge mode, if the wan l2 is up, the ISP should be CONNECTED
+        this.isp_stat = "Connected";
+    }
+    else if (wanEthStatus_Portocol == "IPoW" &&
+                wanEthStatus_IPAddress != null &&
+                isValidIpAddress(wanEthStatus_IPAddress) == true &&
+                wanEthStatus_LinkStatus == "Up"){
+        // When in wan dhcp mode, plug out eth link, and plug in eth link back,
+        // the wan l2 shows Up, and the wan l3 shows disabled. And the l3 is Up
+        // actully.
+        this.isp_stat = "Connected";
+    }
+    else if (wanEthStatus_ISPStatus == "Connecting"){
+        this.isp_stat = "Connecting";
+    }
+    else{
+        this.isp_stat = "Disconnected";
+    }
+
+    this.dns1           = wan_dns1;
+    this.dns2           = wan_dns2;
+    this.if_name        = glbWanL2IfName.indexOf('ewan1') != -1 ? "ewan1":"ewan0";
+    this.mac            = wanEthStatus_MACAddress;
+    this.ip             = wanEthStatus_IPAddress;
+    this.LeaseTimeRemaining = wanEthStatus_LeaseTimeRemaining;
+    if (wanEthStatus_Portocol == "IPoW"){
+        if (wanEthStatus_AddressingType == "DHCP")
+            this.isp_protocol = "1483 via DHCP";
+        else
+            this.isp_protocol = "1483 via Static IP";
+    }
+    else if (wanEthStatus_Portocol == "PPPoE")
+    {
+
+    	this.isp_protocol = wanEthStatus_Portocol;
+    	var eth_info=eth_wanInfNamestmp.split('|')[0].split(':');
+        if (eth_info[2] != undefined)
+            this.ppp_user=htmlDecodeStr(eth_info[2]);
+    	
+    }
+    else {
+		if (wanEthStatus_Portocol == "Bridge") {
+			this.isp_protocol = "Transparent Bridging";
+			this.ip = "_(N/A)_";
+			this.dns1 = "_(N/A)_";
+			this.dns2 = "_(N/A)_";
+		}
+        else
+            this.isp_protocol = wanEthStatus_Portocol;
+    }
+
+    //alert_t(this);
+}
+
+function getWanHpnaInfo(index)
+{
+    //hpna_sysinfo = 'Error|eth4,50,200';
+    var sys_detail= hpna_sysinfo.split('|');
+
+    if (sys_detail[0] == "Up")
+        this.phy_stat = "Connected"
+    else if(sys_detail[0] == "Initializing")
+        this.phy_stat = "Connecting"
+    else
+        this.phy_stat = "Disconnected"
+
+    this.if_name = "eth" + (index + 5);
+    
+    //total_waninfo = 'eth5,11:22:33:44:55:66,192.168.100.200,255.255.255.0,192.168.100.1,202.198.64.51,102.102.102.51,104,Connecting,DHCP|';
+    var wan_info = total_waninfo.split('|');
+
+    if (wan_info[0] == '')
+        return;
+
+    for (i = 0; i < wan_info.length - 1; i++)
+    {
+        wan_info_detail = wan_info[i].split(',');
+
+        if (this.if_name == wan_info_detail[0])
+        {
+            this.if_name    = wan_info_detail[0];
+            this.mac        = wan_info_detail[1];
+            this.ip         = wan_info_detail[2];
+            this.dns1       = wan_info_detail[5];
+            this.dns2       = wan_info_detail[6];
+
+
+            if (this.phy_stat != "Connected"){
+                this.isp_stat = "Disconnected";
+            }
+            else if ( wan_info_detail[8] == "Connected"){
+                this.isp_stat = "Connected";
+            }
+            else if ( wan_info_detail[8] == "Connecting"){
+                this.isp_stat = "Connecting";
+            }
+            else {
+                this.isp_stat = "Disconnected";
+            }
+
+            if (wan_info_detail[9] == "DHCP")
+                this.isp_protocol = "1483 via DHCP";
+            else
+                this.isp_protocol = "1483 via Static IP";
+
+            return;
+        }
+    }
+}
+/*
+ * input:   size   the value is 6
+ *
+ * return:  the obj_arr[0]     is wanDsl
+ *          the obj_arr[1]     is wanEth
+ *          the obj_arr[2]~[5] is wanHpna
+ */
+function CycleObjAry(size)
+{
+    var Obj_arr = new Array();
+    for (var i=0; i<size; i++)
+    {
+        var newObj = new wanStatusCls();
+        Obj_arr[i] = newObj;
+    }
+
+    return Obj_arr;
+}
+
+function initWanDslStatus(wanDslStatusObj)
+{
+    wanDslStatusObj.getWanDslInfo();
+}
+
+function initWanEthStatus(wanEthStatusObj)
+{
+    wanEthStatusObj.getWanEthInfo();
+}
+
+function initWanHpnaStatus(wanStatus_arr)
+{
+
+    for (var index=0; index < 4; index++)
+    {
+        wanStatus_arr[index+2].getWanHpnaInfo(index);
+    }
+}
+
+function initWanStatus(wanStatus_arr)
+{
+    initWanDslStatus(wanStatus_arr[0]);
+    initWanEthStatus(wanStatus_arr[1]);
+    initWanHpnaStatus(wanStatus_arr);
+}
+
+function getUsedWan(wanStatus_arr)
+{
+    var used_index;
+    for (var i=0; i < 6; i++)
+    {
+        if (wanStatus_arr[i].if_name == glbWanL2IfName)
+        {
+            used_index = i;
+            wanStatus_arr[used_index].used = "used";
+            break;
+        }
+        used_index = 0;
+    }
+
+    // used_index value:    = 0    wan conn is    dsl
+    //                      = 1                   eth
+    //                      > 1                   hpna
+    // now we onlu show eth5 status. if the wan is hpna wan whose index is 2.
+    if (used_index > 1)
+    {
+        used_index = 2
+    }
+    //wanStatus_arr[used_index].used = "used";
+    return used_index;
+
+/*
+    //  i value:            = 0    wan conn is    dsl
+    //                      = 1                   eth
+    //                      > 1                   hpna
+    // if we find any wan is connected , then return
+    for (var i=0; i < 6; i++)
+    {
+        if (wanStatus_arr[i].isp_stat == "CONNECTED" && (wanStatus_arr[i].if_name == glbWanL2IfName)
+        {
+            wanStatus_arr[i].used = "used";
+            return i;
+        }
+    }
+
+    // when we don't get any wan connected, then we check
+    // if there is a Wan is connecting. If we find anyone, return;
+    for (var i=0; i < 6; i++)
+    {
+        if (wanStatus_arr[i].isp_stat == "CONNECTING" && (wanStatus_arr[i].if_name == glbWanL2IfName)
+        {
+            wanStatus_arr[i].used = "used";
+            return i;
+        }
+    }
+
+    // when we don't get any wan connected or connecting,
+    wanStatus_arr[0].used = "used";
+    return 0;
+    */
+}
+
+function setValueToGUI(wanStatusObj)
+{
+    //get sysinfo
+    if(devinfo !='')
+    {
+        var devinfo_array  = devinfo.split('|');
+        mod_num=devinfo_array[0];
+        serial_num=devinfo_array[1];
+    }
+
+    //get wan conn info
+    if (wanStatusObj.isp_stat == "Connected")
+    {
+        document.getElementById("ISP_status2").className="status_text";
+   }
+   else if(wanStatusObj.isp_stat == "Connecting" )
+   {
+      document.getElementById("ISP_status2").className="status_text_y";
+   }
+   else
+   {
+      document.getElementById("ISP_status2").className="status_text_r";
+   }
+
+   if (wanStatusObj.phy_stat == "Connected")
+   {
+      document.getElementById("ISP_status1").className="status_text";
+   }
+   else if (wanStatusObj.phy_stat == "Connecting")
+   {
+      document.getElementById("ISP_status1").className="status_text_y";
+   }
+   else
+   {
+      document.getElementById("ISP_status1").className="status_text_r";
+   }
+
+
+   var lease_time_str = "_(N/A)_";
+   if(wanStatusObj.isp_protocol == "1483 via DHCP" && parseInt( wanStatusObj.LeaseTimeRemaining)>0){
+	lease_time_str = "";
+        var time_num = parseInt( wanStatusObj.LeaseTimeRemaining);
+        if(parseInt(time_num/86400))//days
+                lease_time_str = lease_time_str + parseInt(time_num/86400) + "D ";
+        time_num = parseInt(time_num%86400);
+        if(parseInt(time_num/3600))//hours
+                lease_time_str = lease_time_str + parseInt(time_num/3600) + "H ";
+        time_num = parseInt(time_num%3600);
+        if(parseInt(time_num/60))//mins
+                lease_time_str = lease_time_str + parseInt(time_num/60) + "M ";
+        time_num = parseInt(time_num%60);//secs
+        lease_time_str = lease_time_str + time_num + "S";
+   }
+
+   var button_str='';
+   if (wanStatusObj.isp_stat != "Connected" || wanStatusObj.phy_stat != "Connected")
+   {
+       button_str = ' <input type="button" onclick="" value="_(Release/Renew)_" id="btn_release_renew"></input>';
+   }
+   else
+   {
+       if(wanStatusObj.isp_protocol == "1483 via DHCP")
+           button_str = ' <input type="button" onclick="javascript:{doDhcpReleaseRenew()}" value="_(Release/Renew)_" id="btn_release_renew"></input>';
+   }
+   if(wanStatusObj.ip == "_(N/A)_")
+       document.getElementById("mod_ip").innerHTML = wanStatusObj.ip + button_str;
+   else if(wanStatusObj.phy_stat != "Connected" ||
+		wanStatusObj.isp_stat != "Connected")
+	{
+       document.getElementById("mod_ip").innerHTML = "_(N/A)_" + button_str;
+	}
+   else
+       document.getElementById("mod_ip").innerHTML="<strong>" + wanStatusObj.ip + "</strong>" + button_str;
+
+   if(lease_time_str == "_(N/A)_")
+	document.getElementById("lease_time_remaining").innerHTML=lease_time_str;
+   else
+	document.getElementById("lease_time_remaining").innerHTML="<strong>" + lease_time_str + "</strong>";
+
+    var phy_status_replace = "_(Connected)_";
+	var isp_status_replace = "_(Connected)_";
+	if(wanStatusObj.phy_stat=="Disconnected"){
+		phy_status_replace = "_(Disconnected)_";
+	}else if(wanStatusObj.phy_stat=="Connecting"){
+		phy_status_replace = "_(Connecting)_";
+	}
+
+	if(wanStatusObj.isp_stat=="Disconnected"){
+		isp_status_replace = "_(Disconnected)_";
+	}else if(wanStatusObj.isp_stat=="Connecting"){
+		isp_status_replace = "_(Connecting)_";
+	}
+   document.getElementById("ISP_status1").innerHTML=phy_status_replace;
+   document.getElementById("ISP_status2").innerHTML=isp_status_replace;
+   document.getElementById("firmware_ver").innerHTML="<strong>" + soft_ver + "</strong>";
+   document.getElementById("mod_num").innerHTML=mod_num;
+   if(serial_num == "N/A")
+   document.getElementById("serial_num").innerHTML="_(N/A)_";
+   else
+   document.getElementById("serial_num").innerHTML=serial_num;
+   document.getElementById("mac_addr").innerHTML=wanStatusObj.mac;
+   document.getElementById("uprate").innerHTML=wanStatusObj.uprate;
+   document.getElementById("downrate").innerHTML=wanStatusObj.downrate;
+   document.getElementById("username").innerHTML=wanStatusObj.ppp_user;
+   document.getElementById("ISP_proto").innerHTML=wanStatusObj.isp_protocol;
+   document.getElementById("atm_encap").innerHTML=wanStatusObj.encap;
+   if(wanStatusObj.isp_stat == "Connected")
+   {
+       document.getElementById("dnspri").innerHTML=wanStatusObj.dns1;
+       document.getElementById("dnssec").innerHTML=wanStatusObj.dns2;
+//don't remove this code, this is for auto-detect
+	if(wanStatusObj.isp_stat=="Connected" && parent.realpage!= null && parent.realpage.autoFlag==1) window.parent.location.replace("wizard_wl.html");
+//
+   }else{
+       document.getElementById("dnspri").innerHTML='_(N/A)_';
+       document.getElementById("dnssec").innerHTML='_(N/A)_';
+   }
+
+}
+
+function do_load(val)
+{
+
+	//highlight the button after user click on it
+	side_nav("home");
+
+	//show ipv6 info
+	if (tag == 1 && val != 0)
+	{
+		var all_info = val.split('+');
+		var i = 0;
+		var wan_ipenabled = htmlDecodeStr(all_info[i++]);
+		var wan_staticaddr = switchCase(htmlDecodeStr(all_info[i++]));
+        var wan_ipaddrtype = switchCase(htmlDecodeStr(all_info[i++]));
+		var wan_pppenabled = htmlDecodeStr(all_info[i++]);
+		var wan_pppaddr = switchCase(htmlDecodeStr(all_info[i++]));
+        var wan_pppaddrtype = switchCase(htmlDecodeStr(all_info[i++]));
+		var ipv6_llaaddr = switchCase(htmlDecodeStr(all_info[i++]));
+
+		var ipv6_ulaaddr = switchCase(htmlDecodeStr(all_info[i++]));
+		var ipv6_dnstype = htmlDecodeStr(all_info[i++]);
+		var ipv6_dnsstatic = switchCase(htmlDecodeStr(all_info[i++]));
+		var ipv6_ifname = htmlDecodeStr(all_info[i++]);
+		var ipv6_ipifname = htmlDecodeStr(all_info[i++]);
+
+		var ipv6_ipdns = switchCase(htmlDecodeStr(all_info[i++]));
+		var ipv6_pppifname = htmlDecodeStr(all_info[i++]);
+		var ipv6_pppdns = switchCase(htmlDecodeStr(all_info[i++]));
+		var ipv6_ipsiteprefix = switchCase(htmlDecodeStr(all_info[i++]));
+		var ipv6_pppsiteprefix = switchCase(htmlDecodeStr(all_info[i++]));
+
+		var ipv6_ipconnstatus = htmlDecodeStr(all_info[i++]);
+		var ipv6_pppconnstatus = htmlDecodeStr(all_info[i++]);
+		var wan_iplla = switchCase(htmlDecodeStr(all_info[i++]));
+		var wan_ppplla = switchCase(htmlDecodeStr(all_info[i++]));
+		var lan_ipv6ulasupport = htmlDecodeStr(all_info[i++]);
+
+		var ipv6_wanaddr = "_(N/A)_";
+		var ipv6_prefix = "_(N/A)_";
+		var ipv6_status = "_(N/A)_";
+		var ipv6_wlaaddr = "_(N/A)_";
+        var button_str='';
+
+		if (wan_ipenabled == 1) {
+			ipv6_status = ipv6_ipconnstatus;
+			if( ipv6_status == "Connected" ) {
+				ipv6_wanaddr = wan_staticaddr;
+                if (wan_ipaddrtype == "dhcp")
+	                button_str = ' <input type="button" onclick="javascript:{doIpv6Release()}" value="_(Release/Renew)_" id="btn_ipv6_release"></input>';
+				ipv6_prefix = ipv6_ipsiteprefix + button_str;
+			}
+			ipv6_wlaaddr = wan_iplla;
+		}
+		else if (wan_pppenabled == 1) {
+			ipv6_status = ipv6_pppconnstatus;
+			if( ipv6_status == "Connected" ) {
+				ipv6_wanaddr = wan_pppaddr;
+                if (wan_pppaddrtype == "dhcp")
+                    button_str = ' <input type="button" onclick="javascript:{doIpv6Release()}" value="_(Release/Renew)_" id="btn_ipv6_release"></input>';
+				ipv6_prefix = ipv6_pppsiteprefix + button_str;
+			}
+			ipv6_wlaaddr = wan_ppplla;
+		}
+
+		var a_ipv6_dns = "";
+		if (ipv6_dnstype == "Static")
+		{
+			a_ipv6_dns = ipv6_dnsstatic.split(",");
+		}
+		else
+		{
+			if (ipv6_ifname == ipv6_ipifname)
+			{
+				a_ipv6_dns = ipv6_ipdns.split(",");
+			}
+			else
+			{
+				a_ipv6_dns = ipv6_pppdns.split(",");
+			}
+		}
+
+	   if((trim(ipv6_ulaaddr) == "") || (lan_ipv6ulasupport == 0))
+	        ipv6_ulaaddr = "_(N/A)_";
+
+	   if(trim(ipv6_llaaddr) == "")
+	        ipv6_wlaaddr = "_(N/A)_";
+
+		document.getElementById("ipv6_wanaddr").innerHTML = ipv6_wanaddr;
+		document.getElementById("ipv6_llaaddr").innerHTML = ipv6_llaaddr;
+		document.getElementById("ipv6_ulaaddr").innerHTML = ipv6_ulaaddr;
+	var lan_enable = htmlDecodeStr('<%ejGetOther(ipv6_parameter, lan_enable)%>');
+	   if(lan_enable=='0')
+	   document.getElementById("ipv6_ulaaddr").innerHTML = "_(N/A)_";
+		if(trim(ipv6_wlaaddr) == "")
+			ipv6_wlaaddr = "_(N/A)_";
+		document.getElementById("ipv6_wlaaddr").innerHTML = ipv6_wlaaddr;
+		document.getElementById("ipv6_prefix").innerHTML = ipv6_prefix;
+
+        var ipv6_status_show = ipv6_status;
+        if(ipv6_status_show == "Connected")
+            ipv6_status_show = "_(Connected)_";
+        else if(ipv6_status_show == "Connecting")
+            ipv6_status_show = "_(Connecting)_";
+        else if(ipv6_status_show == "Disconnected")
+            ipv6_status_show = "_(Disconnected)_";
+        
+		document.getElementById("ipv6_status").innerHTML = ipv6_status_show;
+
+		if (a_ipv6_dns[0])
+		{
+			if(trim(a_ipv6_dns[0]) == "")
+				a_ipv6_dns[0]="_(N/A)_";
+
+			document.getElementById("ipv6_dns1").innerHTML = a_ipv6_dns[0];
+		}
+
+		if (a_ipv6_dns[1])
+		{
+			   if(trim(a_ipv6_dns[1]) == "")
+				a_ipv6_dns[1]="_(N/A)_";
+
+			document.getElementById("ipv6_dns2").innerHTML = a_ipv6_dns[1];
+		}
+		if(document.getElementById("ipv6_status").innerHTML=="_(N/A)_")
+		    {
+				document.getElementById("ipv6_dns1").innerHTML = "_(N/A)_";
+				document.getElementById("ipv6_dns2").innerHTML = "_(N/A)_";
+			}
+			
+      /*IPV4 information*/
+      glbWanL2IfName = htmlDecodeStr(all_info[i++]);
+      wanInfNames = all_info[i++];
+      wanInfNamesPtm = all_info[i++];
+      wanInfNamesAtm = all_info[i++];
+      dns1_tmp = htmlDecodeStr(all_info[i++]);
+      dns2_tmp = htmlDecodeStr(all_info[i++]);
+      wanEthStatus_LinkStatus_tmp = htmlDecodeStr(all_info[i++]);
+      wanEthStatus_ISPStatus_tmp  = htmlDecodeStr(all_info[i++]);
+      wanEthStatus_MACAddress_tmp = htmlDecodeStr(all_info[i++]);
+      wanEthStatus_IPAddress_tmp  = htmlDecodeStr(all_info[i++]);
+      wanEthStatus_DNSServer_tmp  = htmlDecodeStr(all_info[i++]);
+      wanEthStatus_Portocol_tmp   = htmlDecodeStr(all_info[i++]);
+      wanEthStatus_AddressingType_tmp = htmlDecodeStr(all_info[i++]);      
+      wanEthStatus_LeaseTimeRemaining_tmp = htmlDecodeStr(all_info[i++]);
+      wan_dnsIfc_tmp = htmlDecodeStr(all_info[i++]);
+      eth_wanInfNamestmp = all_info[i++];
+      hpna_sysinfo = all_info[i++];
+      total_waninfo = all_info[i++];
+      uprate = all_info[i++];
+      downrate = all_info[i++];
+      soft_ver = htmlDecodeStr(all_info[i++]);
+      devinfo = all_info[i++];
+      traffictype = all_info[i++];
+      dslstatus = all_info[i++];
+      dslsts_temp = dslstatus.split("|") ;
+      phy_status='Disconnected';
+      isp_status='Disconnected';
+      usrname='';
+      ISP_prot='';
+      encaps='';
+      ip_addr='';
+      gw='';
+      dns1='';
+      dns2='';
+      mac_addr='_(N/A)_';
+      mod_num='';
+      serial_num='';
+      ISP_proto='';
+      ISP_status='Disconnected';
+      dnsIfc='';
+	}
+	/*IPV4 information*/
+	 var wanStatus_arr = CycleObjAry(6);
+    var used = 0;
+    
+    if (glbWanL2IfName.indexOf('/') != -1)
+    {
+        var tmp_var = glbWanL2IfName.split('/');
+        glbWanL2IfName = tmp_var[0];
+    }
+    if(glbWanL2IfName.indexOf("ptm") != -1) wanInfNames = wanInfNamesPtm;
+    if(glbWanL2IfName.indexOf("atm") != -1) wanInfNames = wanInfNamesAtm; 
+    if(glbWanL2IfName == "ewan") glbWanL2IfName = 'ewan0';
+    initWanStatus(wanStatus_arr);
+    used = getUsedWan(wanStatus_arr);
+    // now, we just check the dsl, ewan0, and eth5, whose index is 0,1,2 
+    if (used > 2)
+        used = 0;
+
+    setValueToGUI(wanStatus_arr[used]);
+
+    setTimeout("http_refresh()", 3000);
+}
+
+function http_refresh()
+{
+	if(xmlhttp != null)
+	{
+		//SW-Bug #127719
+		var curTime = new Date();
+		curTime = curTime.getTime();
+		xmlhttp.open("GET","./modemstatus_home_refresh.html?time="+curTime,true);
+		xmlhttp.onreadystatechange =function()
+		{
+			if(xmlhttp.readyState == 4)
+			{
+				var statusval = xmlhttp.responseText;
+				// If GUI is locked, return it to avoid parameters undefined error.
+				if(statusval.indexOf("Another management entity is currently configuring this unit")!=-1){
+					http_refresh();
+				}else{
+					tag = 1;
+					do_load(statusval);
+				}
+			}
+		}
+	xmlhttp.send(null);
+	}
+}
+
+function doDhcpReleaseRenew ()
+{
+  var xml_request;
+  var loc = 'DhcpReleaseRenew.cmd' ;
+  try
+  {
+    if (window.ActiveXObject)
+      {
+        for (var i = 5; i > -1; i--)
+          {
+            try
+            {
+              if (i == 2)
+                {
+
+                  xml_request = new ActiveXObject ("Microsoft.XMLHTTP");
+                }
+              else
+                {
+
+                  xml_request =
+                    new ActiveXObject ("Msxml2.XMLHTTP." + i + ".0");
+                }
+
+              break;
+            }
+            catch (e)
+            {
+              xml_request = false;
+            }
+          }
+      }
+    else if (window.XMLHttpRequest)
+      {
+        xml_request = new XMLHttpRequest ();
+      }
+  }
+
+  catch (e)
+  {
+    xml_request = false;
+  }
+
+  loc += '?sessionKey=' + sessionKey;
+  xml_request.open("POST", loc, false);
+  xml_request.send(null);
+  window.setTimeout ("do_reload()", 10 * 1000);
+}
+
+function doIpv6Release()
+{
+  var xml_request;
+  var loc = 'Dhcpv6ReleaseRenew.cmd' ;
+  try
+  {
+    if (window.ActiveXObject)
+      {
+        for (var i = 5; i > -1; i--)
+          {
+            try
+            {
+              if (i == 2)
+                {
+
+                  xml_request = new ActiveXObject ("Microsoft.XMLHTTP");
+                }
+              else
+                {
+
+                  xml_request =
+                    new ActiveXObject ("Msxml2.XMLHTTP." + i + ".0");
+                }
+
+              break;
+            }
+            catch (e)
+            {
+              xml_request = false;
+            }
+          }
+      }
+    else if (window.XMLHttpRequest)
+      {
+        xml_request = new XMLHttpRequest ();
+      }
+  }
+
+  catch (e)
+  {
+    xml_request = false;
+  }
+
+  loc += '?sessionKey=' + sessionKey;
+  xml_request.open("POST", loc, false);
+  xml_request.send(null);
+  window.setTimeout ("do_reload()", 10 * 1000);
+}
+
+function do_apply(toggle)
+{
+    var loc = 'togglewan.cmd' ;
+    loc +='?toggle='+toggle;
+    loc +='&traffictype='+traffictype;
+    loc +='&dnsIfc='+dnsIfc;
+    loc +='&redirect='+redirect;
+    if(toggle == "1")
+        document.getElementById('connect_btn').disabled=true;
+    else
+    {
+        alert("_(You are about to disconnect from the Internet.)_");
+        document.getElementById('disconnect_btn').disabled=true;
+    }
+
+    //var code = 'location="' + loc + '"';
+    //eval(code);
+    postSubmit(loc);
+}
+
+function check_auto() {
+    mytimeid = window.setTimeout("do_reload()", 30*1000);
+
+}
+
+function do_reload()
+{
+    window.location.reload(true);
+}
+
+function dom_load(){ do_load(0); }
+
+</script>
+</head>
+
+<body onload="loadFlag=1">
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="modemstatus_home">_(Connection Status)_ </h1>
+
+				<table width="80%" border="0" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+				<tbody>
+                  <tr align="center">
+                    <th width="237"><div align="left"><strong>_(Parameter)_</strong></div></th>
+                    <th width="183"><div align="left"><strong>_(Status)_</strong></div></th>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(Broadband)_:</div>
+                    </td>
+                    <td><div align="left"><span class="status_text" id='ISP_status1'>_(Connected)_</span></div>
+                    </td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(Internet Service Provider (ISP))_:</div>
+                    </td>
+                    <td><div align="left"><span class="status_text" id='ISP_status2'>_(Connected)_</span></div>
+                    </td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(Firmware Version)_:</div>
+                    </td>
+                    <td><div align="left"><strong><span id='firmware_ver'></span></strong></div>
+                    </td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(Model Number)_:</div>
+                    </td>
+                    <td><div align="left"><span id='mod_num'></span></div>
+                    </td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(Serial Number)_:</div></td>
+                    <td><div align="left"><span id='serial_num'></span></div></td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(WAN MAC Address)_:</div></td>
+                    <td><div align="left"><span id='mac_addr'>_(N/A)_</span></div></td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(Downstream Rate)_:</div></td>
+                    <td><div align="left"><span id='downrate'>_(N/A)_</span></div></td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(Upstream Rate)_:</div></td>
+                    <td><div align="left"><span id='uprate'>_(N/A)_</span></div></td>
+                  </tr>
+                  <tr align="center" style="display:none">
+                    <td><div align="left">_(PPP User Name)_:</div></td>
+                    <td><div align="left"><span id='username'>_(N/A)_</span></div></td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(ISP Protocol)_</div></td>
+                    <td><div align="left"><span id='ISP_proto'>_(N/A)_</span></div></td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(Encapsulation)_:</div></td>
+                    <td><div align="left"><span id='atm_encap'>_(N/A)_</span></div></td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(Modem IP Address)_:</div></td>
+                    <td><div align="left"><span id='mod_ip'></span></div></td>
+		 </tr>
+		 <tr align="center">
+                    <td><div align="left">_(Lease Time Remaining)_:</div></td>
+                    <td><div align="left"><span id='lease_time_remaining'></span></div></td>
+		 </tr>
+
+                  <!--tr>
+                    <td><div align="left">ISP Gateway Address: </td>
+                    <td><div align="left"><span id='gw_ip'>N/A</span></td>
+                  </tr-->
+                  <tr align="center">
+                    <td><div align="left">_(DNS Address)_ #1:</div></td>
+                    <td><div align="left"><span id='dnspri'>_(N/A)_</span></div></td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(DNS Address)_ #2:</div></td>
+                    <td><div align="left"><span id='dnssec'>_(N/A)_</span></div></td>
+                  </tr>
+
+                  <tr align="center">
+					<td><div align="left">_(IPv6 Prefix of Delegated)_:</div></td>
+					<td style="word-break:break-all;"><div align="left"><span id="ipv6_prefix">_(N/A)_</span></div></td>
+				  </tr>
+				  <tr align="center">
+					<td><div align="left">_(IPv6 WAN Status)_:</div></td>
+					<td  style="word-break:break-all;"><div align="left"><span id="ipv6_status">_(N/A)_</span></div></td>
+				  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(IPv6 WAN Address)_:</div></td>
+                    <td  style="word-break:break-all;"><div align="left"><span id='ipv6_wanaddr'>_(N/A)_</span></div></td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(IPv6 WAN Link Local Address)_:</div></td>
+                    <td style="word-break:break-all;"><div align="left"><span id='ipv6_wlaaddr'>_(N/A)_</span></div></td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(IPv6 LAN Link Local Address)_:</div></td>
+                    <td style="word-break:break-all;"><div align="left"><span id='ipv6_llaaddr'>_(N/A)_</span></div></td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(IPv6 Unique Local Address)_:</div></td>
+                    <td style="word-break:break-all;"><div align="left"><span id='ipv6_ulaaddr'>_(N/A)_</span></div></td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(IPv6 DNS Address 1)_:</div></td>
+                    <td style="word-break:break-all;"><div align="left"><span id='ipv6_dns1'>_(N/A)_</span></div></td>
+                  </tr>
+                  <tr align="center">
+                    <td><div align="left">_(IPv6 DNS Address 2)_:</div></td>
+                    <td style="word-break:break-all;"><div align="left"><span id='ipv6_dns2'>_(N/A)_</span></div></td>
+                  </tr>
+                </table>
+				<p>&nbsp;</p>
+                </tbody>
+                </table>
+                <!--p>&nbsp;</p-->
+			<p></p>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

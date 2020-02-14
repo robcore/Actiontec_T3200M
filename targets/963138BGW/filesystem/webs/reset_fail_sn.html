@@ -1,0 +1,27 @@
+<html>
+<head>
+<script language="JavaScript" src="js/functions.js" type="text/javascript"></script>
+<script language="Javascript">
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function do_load(){
+
+    value=location.href.split("msg=");
+    if (value[1]==null) {
+        window.top.location.href="reset_fail_sn.html?msg=err";
+    } else {
+        alert("_(The default admin password is incorrect. You must enter the correct default admin password.)_");
+        var loc = 'passreset.cgi?inputUserName=none&nothankyou=1';
+        loc += '&sessionKey=' + sessionKey;
+		postSubmit(loc);
+    }
+}
+
+</script>
+</head>
+
+<body onLoad="do_load()">
+
+</body>
+</html>

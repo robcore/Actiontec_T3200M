@@ -1,0 +1,172 @@
+#
+# This file replaces the entries added by actiontec in entityInfoArray in eid.c
+# (See also eid_bcm_mgmt.txt and cms_eid.h)
+#
+# Fields not set here are initialized to zero or NULL.
+# All field values must be on a single line
+#
+
+BEGIN
+  eid         = EID_AEI_RTD
+  accessBit   = NDA_ACCESS_RTD
+  name        = rtd
+  path        = /bin/rtd
+  flags       = EIF_MDM|EIF_LAUNCH_ON_BOOT|EIF_MESSAGING_CAPABLE|EIF_DESKTOP_LINUX_CAPABLE
+END
+
+BEGIN
+  eid         = EID_TR143_DLD
+  name        = tr143-dld
+  path        = /bin/tr143
+  flags       = EIF_MESSAGING_CAPABLE
+END
+
+BEGIN
+  eid         = EID_TR143_UPLD
+  name        = tr143-upld
+  path        = /bin/tr143
+  flags       = EIF_MESSAGING_CAPABLE
+END
+
+BEGIN
+  eid         = EID_TR143_ECHO
+  name        = tr143-echo
+  path        = /bin/tr143
+  flags       = EIF_MESSAGING_CAPABLE
+END
+
+BEGIN
+  eid         = EID_MYNETWORK
+  name        = mynetwork
+  path        = /bin/mynetwork
+  flags       = EIF_MESSAGING_CAPABLE|EIF_LAUNCH_ON_BOOT|EIF_DESKTOP_LINUX_CAPABLE
+END
+
+BEGIN
+eid         = EID_SCKIPIOCTL
+name        = sckipioCtl
+path        = /bin/sckipioCtl
+flags       = EIF_MESSAGING_CAPABLE
+END
+
+
+BEGIN
+  eid         = EID_INHPNA
+  name        = inhpna
+  path        = /bin/inhpna
+  runArgs     = "-i eth4 -b br0"
+  flags       = EIF_LAUNCH_ON_BOOT | EIF_MESSAGING_CAPABLE
+END
+
+BEGIN
+  eid         = EID_NETPERD
+  name        = netperd
+  path        = /bin/netperd
+  runArgs     = "-i br0 -p 900"
+  flags       = EIF_LAUNCH_ON_BOOT | EIF_MESSAGING_CAPABLE
+END
+
+BEGIN
+  eid         = EID_HPNA_NODESTATS
+  name        = hpna_nodestats
+  path        = /bin/node_stats
+  flags       = EIF_MESSAGING_CAPABLE
+END
+
+BEGIN
+  eid         = EID_NSLOOKUP
+  name        = nslookup
+  path        = /bin/nslookup
+  flags       = EIF_MESSAGING_CAPABLE
+END
+
+BEGIN
+  eid         = EID_TRACEROUTE
+  name        = traceroute
+  path        = /usr/bin/traceroute
+  flags       = EIF_MESSAGING_CAPABLE | EIF_MULTIPLE_INSTANCES
+END
+
+BEGIN
+  eid         = EID_HTTPSD
+  accessBit   = NDA_ACCESS_HTTPD
+  name        = httpd
+  path        = /bin/httpd
+  runArgs     = -s
+  flags       = EIF_MDM|EIF_SERVER|EIF_SERVER_TCP|EIF_MESSAGING_CAPABLE|EIF_DESKTOP_LINUX_CAPABLE|EIF_IPV6
+  backLog     = 3
+  port        = HTTPD_PORT_SSL
+END
+
+BEGIN
+  eid         = EID_LEDCTL
+  name        = ledctl
+  path        = /bin/ledctl
+  flags       = EIF_MESSAGING_CAPABLE
+END
+
+BEGIN
+  eid         = EID_PING6
+  name        = ping6
+  path        = /bin/ping6
+  flags       = EIF_MESSAGING_CAPABLE | EIF_MULTIPLE_INSTANCES
+END
+
+BEGIN
+  eid         = EID_TRACEROUTE6
+  name        = traceroute6
+  path        = /usr/bin/traceroute6
+  flags       = EIF_MESSAGING_CAPABLE | EIF_MULTIPLE_INSTANCES
+END
+
+BEGIN
+  eid         = EID_CPULOGD
+  name        = cpulogd
+  path        = /sbin/cpulogd
+END
+
+BEGIN
+  eid         = EID_STUND
+  name        = stund
+  path        = /bin/stund
+  flags       = EIF_MESSAGING_CAPABLE|EIF_LAUNCH_ON_BOOT|EIF_DESKTOP_LINUX_CAPABLE
+END
+
+BEGIN
+  eid         = EID_DETECT_WAN_SERVICE
+  name        = detectWANService
+  path        = /bin/detectWANService
+  flags       = EIF_MESSAGING_CAPABLE|EIF_MULTIPLE_INSTANCES
+END
+
+BEGIN
+  eid         = EID_CLI
+  name        = cli
+  flags       = EIF_MESSAGING_CAPABLE|EIF_DESKTOP_LINUX_CAPABLE
+END
+BEGIN
+  eid         = EID_WGET
+  name        = wget
+  flags       = EIF_MESSAGING_CAPABLE|EIF_DESKTOP_LINUX_CAPABLE
+END
+
+BEGIN
+  eid         = EID_STATISTICS_COLLECT
+  name        = stscollect
+  path        = /bin/stscollect
+  flags       = EIF_MDM|EIF_MESSAGING_CAPABLE|EIF_LAUNCH_ON_BOOT
+END
+
+BEGIN
+  eid         = EID_WIFI_NEIGHBOR_DIAG
+  name        = wlneighbor
+  path        = /bin/wlneighbor
+  flags       = EIF_MDM|EIF_MESSAGING_CAPABLE
+END
+
+BEGIN
+  eid         = EID_TR69_MONITOR
+  name        = tr69_monitor
+  path        = /bin/tr69_monitor
+  flags       = EIF_MESSAGING_CAPABLE|EIF_LAUNCH_ON_BOOT
+END

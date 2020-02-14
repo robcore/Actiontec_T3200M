@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Thank you.)_</title>
+<script language="JavaScript" src="js/nav.js"></script>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript">
+function do_load()
+{
+  var redirect= "<%ejGet(currentPage)%>";
+  if(redirect == "advancedsetup_wanipaddress.html" ||
+	 redirect=="quicksetup.html" ||
+	 redirect=="advancedsetup_broadbandsettings.html" ||
+	 redirect=="advancedsetup_ptmsettings.html" ||
+	 redirect=="modemstatus_home.html" ||
+	 redirect=="advancedsetup_dslsettings.html" ||
+     redirect=="utilities_restoredefaultsettings.html"
+     )
+  {
+      setTimeout("do_retry()", 15000);
+  }
+  else
+    setTimeout("do_retry()", 5000);
+}
+
+function do_replace()
+{
+    var retryTime;
+    var retryCount;
+
+    location.href = "<%ejGet(currentPage)%>";
+
+    retryCount = parseInt(document.forms[0].retry_count.value);
+    retryTime = 5000 + (5000 * retryCount);
+    setTimeout("do_retry()", retryTime);
+
+    retryCount++;
+    document.forms[0].retry_count.value = retryCount;
+}
+
+function do_retry()
+{
+    do_replace();
+}
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+<body>
+<div id="wrapper">
+	<%ejInclude(top_btn_nav.html)%>
+	<div id="content_left">
+        <%ejInclude(connect_left.html)%>
+	</div>
+	<!-- END SIDE NAV -->
+
+	<div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="thankyou">_(Thank You.)_</h1>
+			<form>
+				<input name="retry_count" type="hidden" value="0" />
+				<p>_(You must wait while the new settings are applied to the modem.)_</p>
+				<p>_(After new settings are applied, we'll take you back to the page where the selection was made.)_ </p>
+			</form>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

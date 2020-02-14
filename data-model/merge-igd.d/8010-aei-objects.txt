@@ -1,0 +1,29 @@
+#
+# Add the AEI objects in as the
+# last children objects of InternetGatewayDevice.
+#
+# See 0000-README.txt for more details
+#
+
+addLastChildObjToObj cms-dm-aei-features.xml InternetGatewayDevice.
+addLastChildObjToObj cms-dm-aei-assia-agent.xml InternetGatewayDevice.
+addLastChildObjToObj cms-dm-aei-cpumemorystatus.xml InternetGatewayDevice.DeviceInfo.
+addLastChildObjToObj cms-dm-aei-upgrade.xml InternetGatewayDevice.DeviceInfo.
+addLastChildObjToObj cms-dm-aei-tcpdump.xml InternetGatewayDevice.DeviceInfo.
+addLastChildObjToObj cms-dm-aei-alg.xml InternetGatewayDevice.LANDevice.{i}.
+addLastChildObjToObj cms-dm-aei-abs.xml InternetGatewayDevice.LANDevice.{i}.
+addLastChildObjToObj cms-dm-aei-dhcpstaticaddress.xml InternetGatewayDevice.LANDevice.{i}.LANHostConfigManagement. 
+addLastChildObjToObj cms-dm-aei-remoteaccess.xml InternetGatewayDevice.UserInterface.
+addLastChildObjToObj cms-dm-aei-qosqueuestats.xml InternetGatewayDevice.QueueManagement.
+addLastChildObjToObj cms-dm-aei-wlan181.xml InternetGatewayDevice.Device.
+addLastChildObjToObj cms-dm-aei-ipv6lanhosts.xml InternetGatewayDevice.LANDevice.{i}.Hosts.
+addLastChildObjToObj cms-dm-tr181-moca.xml InternetGatewayDevice.Device.
+addLastChildObjToObj cms-dm-aei-tr69monitor.xml InternetGatewayDevice.
+addLastChildObjToObj cms-dm-aei-mynetworkcfg.xml InternetGatewayDevice.X_BROADCOM_COM_AppCfg.
+addLastChildObjToObj cms-dm-aei-dhcpdcfg.xml InternetGatewayDevice.X_BROADCOM_COM_AppCfg.
+addLastChildObjToObj cms-dm-aei-wlmngrcfg.xml InternetGatewayDevice.X_BROADCOM_COM_AppCfg.
+
+addLastChildObjToObj cms-dm-aei-ipv6configmanagement.xml InternetGatewayDevice.LANDevice.{i}.
+addObjAboveObj cms-dm-aei-wlanfeatures.xml InternetGatewayDevice.LANDevice.{i}.WLANConfiguration.{i}.X_BROADCOM_COM_WlanAdapter.
+addObjAboveObj cms-dm-aei-wlanstatistics.xml InternetGatewayDevice.LANDevice.{i}.WLANConfiguration.{i}.X_BROADCOM_COM_WlanAdapter.
+addObjAboveObj cms-dm-aei-parentcontrol.xml InternetGatewayDevice.X_BROADCOM_COM_UrlFilterCfg.

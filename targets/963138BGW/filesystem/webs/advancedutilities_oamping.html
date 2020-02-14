@@ -1,0 +1,254 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(OAM Ping Test )_</title>
+<link href="../css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="../js/functions.js" TYPE="text/javascript"></SCRIPT></head>
+<script language="JavaScript" src="../js/nav.js"></script>
+<script language="Javascript">
+var test_result="_(N/A)_";
+var diagCount = new Array();
+var tempStr = "<%ejGetOther(diagInfo,diagCount)%>";
+var sessionKey='<%ejGetOther(sessionKey)%>';
+function do_load(form)
+{
+		side_nav("advancedutilities_oamping");
+        var diagtype = '<%ejGetOther(diagInfo, diagType)%>';
+        var index = 0;
+        VciVpiShow();
+        if(tempStr=="")
+            tempStr="0,0,0,0";
+        diagCount = tempStr.split(",");
+
+        if(diagtype == 'f5_end')
+        {
+            test_result= "<%ejGetOther(diagnostic , 4)%>";
+            index = 0 ;
+        }
+        else if(diagtype == 'f5_seg')
+        {
+            test_result= "<%ejGetOther(diagnostic , 3)%>";
+            index = 1 ;
+        }
+        else if(diagtype == 'f4_end')
+        {
+            test_result= "<%ejGetOther(diagnostic , 16)%>";
+            index = 2 ;
+        }
+        else if(diagtype == 'f4_seg')
+        {
+            test_result= "<%ejGetOther(diagnostic , 15)%>";
+            index = 3 ;
+        }
+
+        if(tempStr == "" ||(diagCount[0]=='c' &&diagCount[1]=='c' &&diagCount[2]=='c' &&diagCount[3]=='c' ) || diagtype == '' )
+        {
+            document.getElementById('test_result_id').className="smallprint";
+            document.getElementById('test_result_id').innerHTML = "_(N/A)_";
+            form.test_type.selectedIndex = 0;
+
+            diagCount[0] = 0 ;
+            diagCount[1] = 0 ;
+            diagCount[2] = 0 ;
+            diagCount[3] = 0 ;
+        document.getElementById('f5_end_result').innerHTML = diagCount[0];
+        document.getElementById('f5_seg_result').innerHTML = diagCount[1];
+        document.getElementById('f4_end_result').innerHTML = diagCount[2];
+        document.getElementById('f4_seg_result').innerHTML = diagCount[3];
+       }
+        else
+        {
+           if (diagtype == 'f5_seg' || diagtype == 'f4_seg'){
+                if(test_result == "SUCCESS")
+                {
+                    if(diagtype == 'f5_seg')
+                    diagCount[1]++;
+                    if(diagtype == 'f4_seg')
+                    diagCount[3]++;
+               }
+                }else {
+                if(test_result == "SUCCESS")
+                {
+                    if(diagtype == 'f5_end')
+                    diagCount[0]++;
+                    if(diagtype == 'f4_end')
+                    diagCount[2]++;
+              }
+            }
+           form.test_type.selectedIndex = index;
+
+           if(test_result == "FAILURE"){
+                document.getElementById('test_result_id').className="notconnected";
+                document.getElementById('test_result_id').innerHTML = "<strong>_(FAIL)_</strong>";
+           }
+           else if(test_result == "SUCCESS")
+           {
+                document.getElementById('test_result_id').className="connected";
+                document.getElementById('test_result_id').innerHTML = "<strong>_(PASS)_</strong>";
+           }
+           else
+           {
+                document.getElementById('test_result_id').className="smallprint";
+                document.getElementById('test_result_id').innerHTML = "_(N/A)_";
+           }
+
+        }
+        document.getElementById('f5_end_result').innerHTML = diagCount[0];
+        document.getElementById('f5_seg_result').innerHTML = diagCount[1];
+        document.getElementById('f4_end_result').innerHTML = diagCount[2];
+        document.getElementById('f4_seg_result').innerHTML = diagCount[3];
+}
+function VciVpiShow()
+{
+
+ var layer2Info;
+ var dslstatus = '<%ejGetOther(dslget)%>' ;
+ var dslsts_temp = dslstatus.split("|") ;
+    if( dslsts_temp[1] == "ATM")
+        layer2Info = '<%ejGetOther(layer2Info,ATM )%>';
+    if(layer2Info)
+    {
+ var    l2info=layer2Info.split('|');
+        document.getElementById('atmVpi').classnName="smallprint"
+        document.getElementById('atmVci').classnName="smallprint"
+        document.getElementById('atmVpi').innerHTML = l2info[2];
+        document.getElementById('atmVci').innerHTML = l2info[3];
+     }
+
+}
+function ModemTest(form)
+{
+
+        var loc = '../advancedutilities_oamping.cgi?nothankyou=1&diagType=' ;
+        document.getElementById('test_result_id').className="connecting";
+        document.getElementById('test_result_id').innerHTML = "<strong>_(TESTING)_</strong>"
+        loc += form.test_type.value + '&diagCount=' + diagCount ;
+        //var code = 'location="' + loc + '"' ;
+
+        loc += '&sessionKey=' + sessionKey;
+
+        //eval(code);
+        postSubmit(loc);
+}
+
+function ClearData(form)
+{
+    var loc = '../advancedutilities_oamping.cgi?nothankyou=1&diagCount=' ;
+    diagCount[0]='c';
+    diagCount[1]='c';
+    diagCount[2]='c';
+    diagCount[3]='c';
+    //var code = 'location="' + loc + diagCount + '"' ;
+
+    loc += '&sessionKey=' + sessionKey;
+
+    //eval(code);
+    postSubmit(loc);
+}
+
+function dom_load(){ do_load(document.forms[0]); }
+
+</script>
+</head>
+<body>
+
+<div id="wrapper">
+    <!-- TOP NAV -->
+	<%ejInclude(top_btn_nav.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="advancedutilities_systemlog">_(OAM Ping Test)_ </h1>
+			<p>_(OAM Ping Test checks the ATM layer connection to the network. During the test, an operation, administration, and maintenance packet is sent to confirm connectivity of the assigned PVC. If the network is not configured to support OAM ping tests, the test will fail. Ensure the network is configured for OAM ping support before running this test.)_</p>
+			<form>
+			<table class="defaultstyle" style="margin-top: 10px;" border="0" cellpadding="10" cellspacing="0" width="85%">
+				<tbody>
+                <tr style="text-align: center;" width="200">
+					<th width="150">&nbsp;</th>
+					<th  style="text-align: center;" width="100"><strong>_(VPI)_</strong></th>
+					<th  style="text-align: center;" width="100"><strong>_(VCI)_</strong></th>
+					<th width="150">&nbsp;</th>
+				</tr>
+				<tr style="text-align: center;" width="200">
+					<th width="150">&nbsp;</th>
+                    <td  style="text-align: center;" id="atmVpi" width="100">0</td>
+                    <td  style="text-align: center;" id="atmVci" width="100">35</td>
+					<th width="150">&nbsp;</th>
+				</tr>
+			</tbody>
+            </table>
+			<p>&nbsp;</p>
+			<table border="0" cellpadding="10" cellspacing="0">
+				<tbody>
+                    <tr>
+					<p>
+                    <strong>1. _(Select OAM test type below)_: </strong>
+                    </p>
+                    </tr>
+                    <tr>
+                    <td width="30">_(SSID)_: </td>
+                    <td>
+						<label>
+						<select name="test_type" id="test_type">
+							<option value="f5_end">_(F5 End)_</option>
+							<option value="f5_seg">_(F5 Segment)_</option>
+							<option value="f4_end">_(F4 End)_</option>
+							<option value="f4_seg">_(F4 Segment)_</option>
+						</select>
+						</label>
+				</td>
+				</tr>
+			</tbody>
+			</table>
+			<p>&nbsp;</p>
+			<p><strong>2. _(Select test)_ </strong>
+			</p>
+			<p><a class="button1" onclick="ModemTest(document.forms[0])" ><span>_(Test)_</span></a></p>
+			<table class="defaultstyle" style="margin-top: 10px;" border="0" cellpadding="10" cellspacing="0" width="85%">
+				<tbody>
+                <tr>
+					<p align="center" ><strong>_(OAM Ping Results)_:</strong> </p>
+                </tr>
+                <tr>
+					<td style="text-align: left;" width="200" >_(OAM Ping Results)_:</td>
+                    <td> <span class="connected" id="test_result_id"> </span></td>
+                </tr>
+			</tbody></table>
+			<table class="defaultstyle" style="margin-top: 10px;" border="0" cellpadding="10" cellspacing="0" width="85%">
+				<tbody>
+				<tr>
+					<th  width="20%">_(Near End F4 LoopBack Count)_ </th>
+					<th  width="20%">_(Near End F5 LoopBack Count)_ </th>
+					<th  width="20%">_(Far End F4 LoopBack Count)_ </th>
+					<th  width="20%">_(Far End F5 LoopBack Count)_ </th>
+					<th  width="20%">_(EDIT)_ </th>
+				</tr>
+                <tr>
+                    <td width="20%" align="center" id="f4_end_result">0</td>
+					<td width="20%" align="center" id="f5_seg_result">0</td>
+					<td width="20%" align="center" id="f4_seg_result">0</td>
+					<td width="20%" align="center" id="f5_end_result">0</td>
+					<td width="20%" align="center"><a href="#"  class="button1" type="button" onClick="ClearData(document.forms[0])" style="text-decoration:none;"><span>_(Remove)_</span></a></td>
+                    </tr>
+			</tbody></table>
+			</form>
+			<p></p>
+			<div class="clear_left"></div>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<script language="javascript">
+var foobar = new domFunction(dom_load);
+</script>
+</body>
+</html>

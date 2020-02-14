@@ -1,0 +1,781 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>_(Advanced Setup)_ - _(QoS Settings)_ - _(IPv6 QoS)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="javascript" src="js/functions.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<%ejInclude("ipv6_common.html")%>
+<script language="javascript">
+
+var ipv6_qosenable = htmlDecodeStr("<%ejGetOther(ipv6_parameter, qos_enable)%>");
+var ipv6_qoslist = "<%ejGetOther(ipv6_qoslist, 0)%>";
+var rules = ipv6_qoslist.split('|');
+var apply_num = 4;
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function do_load() {
+    side_nav("ipv6_qossettings");
+
+	on_qos_defineip();
+
+    document.forms[0].sessionKey.value = sessionKey;
+    document.getElementById("sessionKey") = sessionKey;
+	var qosinterface_up = document.getElementById("qosinterface_up");
+	var qosinterface_down = document.getElementById("qosinterface_down");
+
+	qosinterface_up.onclick = qosinterfaceUp;
+	qosinterface_down.onclick = qosinterfaceDown;
+
+	qosinterfaceUp();
+
+    if (ipv6_qosenable == 1)
+    {
+	document.getElementById("qos_on").checked = true;
+	showhideElements(false);
+    }
+    else
+    {
+	document.getElementById("qos_off").checked = true;
+	showhideElements(true);
+    }
+
+	var sel = document.getElementById("qospriority");
+	sel.options.length = 0;
+	
+	sel.options[0]= new Option("_(Priority)_ 1", "33", false, false);
+	sel.options[1]= new Option("_(Priority)_ 2", "34", false, false);
+	sel.options[2]= new Option("_(Priority)_ 3", "35", false, false);
+	sel.options[3]= new Option("_(Priority)_ 4", "36", false, false);
+	sel.options[4]= new Option("_(Priority)_ 5", "37", false, false);
+	sel.options[5]= new Option("_(Priority)_ 6", "38", false, false);
+	sel.options[6]= new Option("_(Priority)_ 7", "39", false, false);
+	sel.options[7]= new Option("_(Priority)_ 8", "40", false, false);
+    //draw_clients_table();
+    draw_qoslist();
+
+}
+
+function qosinterfaceUp()
+{
+	var ingress_interface_table = document.getElementById("ingress_interface_table");
+
+	ingress_interface_table.style.display = "block";
+}
+
+function qosinterfaceDown()
+{
+	var ingress_interface_table = document.getElementById("ingress_interface_table");
+
+	ingress_interface_table.style.display = "none";
+}
+
+function showhideElements(state)
+{
+	document.getElementById("qosinterface_up").disabled = state;
+	document.getElementById("qosinterface_down").disabled = state;
+
+	//document.getElementById("qostype").disabled = state;
+
+	document.getElementById("qosclassname").disabled = state;
+	document.getElementById("qosdscp").disabled = state;
+	document.getElementById("qospriority").disabled = state;
+}
+
+function trimnumber(val)
+{
+  var num = parseInt(val, 10);
+  return num;
+}
+
+
+var m_dscp = new Object();
+m_dscp["56"] = "AF13";		m_dscp["48"] = "AF12";		m_dscp["40"] = "AF11";		m_dscp["32"] = "CS1";
+m_dscp["88"] = "AF23";		m_dscp["80"] = "AF22";		m_dscp["72"] = "AF21";		m_dscp["64"] = "CS2";
+m_dscp["120"] = "AF33";		m_dscp["112"] = "AF32";		m_dscp["104"] = "AF31";		m_dscp["96"] = "CS3";
+m_dscp["152"] = "AF43";		m_dscp["144"] = "AF42";		m_dscp["136"] = "AF41";		m_dscp["128"] = "CS4";
+m_dscp["184"] = "EF";		m_dscp["160"] = "CS5";		m_dscp["192"] = "CS6";		m_dscp["224"] = "CS7";
+
+//classkey;name;
+//2;t1;37;2;136;192.168.10.1;255.255.255.0;10000;20000;192.168.20.1;255.255.255.0;30000;40000;|';
+function draw_qoslist()
+{
+	table = document.getElementById("tbList");
+	var queuekey;
+    var myindex = 0;
+    if (rules != '')
+    {
+	var m_list = new Object();
+	var m_max = 1;
+
+		for(i=0; i<rules.length-1; i++){
+			//content[0]: name, content[1]: priority, content[2]: Classification, content[3]: Direction, content[4]: Edit
+			var content = new Array();
+			var temp;
+			details=rules[i].split('/');
+			var tmpDetails = htmlDecodeStr(details[1]);
+			if (tmpDetails.length > 16) {
+				temp = tmpDetails.substring(0,16);
+				temp += "<br>"
+				temp += tmpDetails.substring(16);
+				content[0] = temp;
+			} else {
+				content[0] = tmpDetails; //name
+			}
+
+			switch (details[2]) {
+				case "33": temp = "_(Priority)_ 1"; break;
+				case "34": temp = "_(Priority)_ 2"; break;
+				case "35": temp = "_(Priority)_ 3"; break;
+				case "36": temp = "_(Priority)_ 4"; break;
+				case "37": temp = "_(Priority)_ 5"; break;
+				case "38": temp = "_(Priority)_ 6"; break;
+				case "39": temp = "_(Priority)_ 7"; break;
+				case "40": temp = "_(Priority)_ 8"; break;
+				default: temp = ""; continue;
+			}
+			content[1] = temp; //priority
+			content[2] = "";
+			//Traffic Class mark
+			if(details[4] != "" && details[4] != "-1" && details[4] != "0")
+			{
+				var ttt = m_dscp[details[4]];
+
+				if(ttt != undefined)
+					content[2] = "_(TC)_:" + ttt + " "; //Traffic Class
+				else
+					content[2] = "_(TC)_:_(auto)_ ";
+			}
+
+			//source ip
+			if (details[5] != "" && details[6] != "0.0.0.0") {
+				var src_prefix = "";
+				var src_ip = "";
+				src_ip = switchCase(details[5]);
+				if(details[6] != "")
+				{
+					src_prefix = "/" + details[6];
+					if((src_ip.length+src_prefix.length) > 37)
+						src_prefix = " /" + details[6];
+				}
+				if(src_ip.length>30)
+					content[2] += "_(SrcIP)_: " + switchCase(details[5]) + src_prefix + " "; //source IP
+				else
+					content[2] += "_(SrcIP)_:" + switchCase(details[5]) + src_prefix + " "; //source IP
+			}
+
+			//Cope source port range.
+			if (details[7] != "-1" && details[7] != "0")
+				content[2] += "_(SrcPort)_:" + details[7];
+
+			if(details[8] != "-1" && details[8] != "0")
+				content[2] += ":" + details[8] + " ";
+
+			//dest ip
+			if (details[9] != "" && details[10] != "0.0.0.0") {
+				var dest_prefix = "";
+				var dest_ip = "";
+				dest_ip = switchCase(details[9]);
+				if(details[10] != "")
+				{
+					dest_prefix = "/" + details[10];
+					if((dest_ip.length+dest_prefix.length) > 37)
+						dest_prefix = " /" + details[10];
+				}
+				if(dest_ip.length>29)
+					content[2] += "_(DestIP)_: " + switchCase(details[9]) + dest_prefix + " "; //dest IP
+				else
+					content[2] += "_(DestIP)_:" + switchCase(details[9]) + dest_prefix + " "; //dest IP
+			}
+
+			//Cope destination port range.
+			if (details[11] != "-1" && details[11] != "0")
+				content[2] += "_(DestPort)_:" + details[11];
+
+			if(details[12] != "-1" && details[12] != "0")
+				content[2] += ":" + details[12] + " ";
+
+			//qos direction
+			/*
+			queuekey = trimnumber(details[2]);
+			if(queuekey >= 41)
+				content[3] = "_(Downstream)_";
+			else
+				content[3] = "_(Upstream)_";
+			*/
+
+			if(details[13] == "LAN")
+				content[3] = "_(Upstream)_ _(LAN)_";
+			else if(details[13] == "Local")
+				content[3] = "_(Upstream)_ _(Local)_";
+			else if(details[13] == "WAN")
+				content[3] = "_(Downstream)_";
+
+			//edit
+			var a_idx = details[3].split('.');
+			var idx = a_idx[a_idx.length-1];
+			var btn_remove = "btn_remove_"+idx;
+			content[4] = '<a style="text-decoration:none;" class="button1" id="'+btn_remove+'" onClick="RemoveQos(\'' + idx + '\')"><span>_(Remove)_</span></a>';
+
+			//appendTableRow(table, "center", content);
+			m_list[idx] = content;
+			m_max = Math.max(m_max, idx);
+		} //end of for
+
+		for (var i=1; i<=m_max; i++)
+		{
+			if (m_list[i])
+				appendTableRow(table, "center", m_list[i]);
+		}
+    }
+    else
+    {
+		var blank = "_(No Entries Defined)_";
+		appendTableEmptyRow(table, "center", "7", blank);
+    }
+}
+
+
+//enable or disable qos
+function on_qos()
+{
+	var form = document.forms[0];
+    //enable qos
+    if(form.qosenable[0].checked == true)
+    {
+		showhideElements(false);
+    }
+    //disable qos
+    if(form.qosenable[1].checked == true)
+    {
+		showhideElements(true);
+    }
+}
+
+//determine whether user check "define IP address", if so, then show the hidden blocks accordingly
+function on_qos_defineip()
+{
+    var form = document.forms[0];
+    if(form.QoSDefineIP[0].checked == true)
+    {
+	document.getElementById("custom_qos").style.display = "";
+	document.getElementById("custom_qos_defineip").style.display = "none";
+	drawApplyNum(5);
+    }
+    else if(form.QoSDefineIP[1].checked == true)
+    {
+	document.getElementById("custom_qos").style.display = "";
+	document.getElementById("custom_qos_defineip").style.display = "";
+	drawApplyNum(7);
+    }
+    else
+	drawApplyNum(7);
+
+	document.getElementById("qosclassname").disabled = false;
+	document.getElementById("qosdscp").disabled = false;
+	document.getElementById("qospriority").disabled = false;
+}
+
+function drawApplyNum(num)
+{
+	document.getElementById("apply_num").innerHTML = "<strong>" + num + "</strong>";
+}
+
+function checkField()
+{
+	if(document.getElementById("qos_off").checked)
+		return true;
+
+	var form = document.forms[0];
+
+	/*
+	if(form.qostype.value == "custom")
+	{
+	*/
+		//rule name can't be blank
+		var ruleName = trim(form.qosclassname.value);
+		if(ruleName == '') {
+			tips = "_(The QoS Name is invalid)_.";
+			pop_up(tips, 0);
+			return false;
+		}else{
+			if(hasSpecialChar(ruleName)) {
+				tips = "_(The QoS Name is invalid)_.";
+				pop_up(tips, 0);
+				return false;
+			}
+
+			//check whether the rule already exists
+			if (rules != '')
+			{
+				for(i=0; i<rules.length-1; i++)
+				{
+					var details = rules[i].split('/');
+					if (details[1] == ruleName)
+					{
+						tips = "_(The rule name already exists. You must enter a unique rule name)_.";
+						pop_up(tips,0);
+						return false;
+					}
+				}
+			} // end of if (rules != '')
+		}
+
+		//check whether customize ip address
+		if(form.QoSDefineIP[1].checked == true) //customer defined ip address
+		{
+			// ----------------------------source address part
+			var srcip = form.srcip.value;
+			var dstip = form.dstip.value;
+
+			if ((dstip == "") && (srcip == "")) {
+				tips = "_(Source IP Address and Destination IP Address cannot be both empty for this option)_.";
+				pop_up(tips, 0);
+				return false;
+			}
+
+			if (srcip != "") {
+				if(!isipv6(srcip)){
+					tips = "_(The IP Address is invalid)_.";
+					pop_up(tips, 0);
+					return false;
+				}
+				if(srcip.lastIndexOf("::") == (srcip.length - 2)) {
+					if (form.srcmask.value == ""){
+						tips = "_(The Source Prefix Length is invalid)_.";
+						pop_up(tips, 0);
+						return false;
+					}
+				}
+			}
+
+			// source subnet mask
+			if (form.srcmask.value != ""){
+				if(!isValidIPv6AddrLen(form.srcmask.value)){
+					tips = "_(The Source Prefix Length is invalid)_.";
+					pop_up(tips, 0);
+					return false;
+				}
+			}
+
+			// source port
+			if (form.srcpt1.value != "" && form.srcpt2.value != ""){
+				if(!isValidPort(form.srcpt1.value) || !isValidPort(form.srcpt2.value)){
+					tips = "_(The Source Port is invalid)_.";
+					pop_up(tips, 0);
+					return false;
+				}
+				if(parseInt(form.srcpt1.value) > parseInt(form.srcpt2.value)) {
+					tips = '_(Source Port Range)_ [' + form.srcpt1.value + '-' + form.srcpt2.value + '] _(is invalid)_.';
+					pop_up(tips, 0);
+					return false;
+				}
+			}
+			else if (form.srcpt1.value != "") {
+				if(!isValidPort(form.srcpt1.value)){
+					tips = "_(The Source Port is invalid)_.";
+					pop_up(tips, 0);
+					return false;
+				}
+			}
+
+			// ----------------------------dest address part
+			if (dstip != "")
+			{
+				if(!isipv6(dstip))
+				{
+					tips = "_(The IP Address is invalid)_.";
+					pop_up(tips, 0);
+					return false;
+				}
+				if(dstip.lastIndexOf("::") == (dstip.length - 2)) {
+					if (form.dstmask.value == ""){
+						tips = "_(The Destination Prefix Length is invalid)_.";
+						pop_up(tips, 0);
+						return false;
+					}
+				}
+			}
+
+			// destination subnet mask
+			if (form.dstmask.value != "")
+			{
+				if(!isValidIPv6AddrLen(form.dstmask.value))
+				{
+					tips = "_(The Destination Prefix Length is invalid)_.";
+					pop_up(tips, 0);
+					return false;
+				}
+			}
+
+			// destination port
+			if (form.dstpt1.value != "" && form.dstpt2.value != "")
+			{
+				if(!isValidPort(form.dstpt1.value) || !isValidPort(form.dstpt2.value))
+				{
+					tips = "_(The Destination Port is invalid)_.";
+					pop_up(tips, 0);
+					return false;
+				}
+				if(parseInt(form.dstpt1.value) > parseInt(form.dstpt2.value)) {
+					tips = '_(Destination Port Range)_ [' + form.dstpt1.value + '-' + form.dstpt2.value + '] _(is invalid)_.';
+					pop_up(tips, 0);
+					return false;
+				}
+			}
+            else if (form.dstpt1.value != "")
+            {
+				if(!isValidPort(form.dstpt1.value))
+				{
+					tips = "_(The Destination Port is invalid)_.";
+					pop_up(tips, 0);
+					return false;
+				}
+			}
+		} //end of if(QoSDefineIP[1].checked == true)
+	//}
+	return true;
+}
+
+//call back function for apply button
+function do_apply()
+{
+	if (!checkField())	return;
+
+	var form = document.forms[0];
+
+	if (document.getElementById("qosinterface_up").checked == true)
+	{
+		var ingress_interface = document.getElementById("ingress_interface");
+
+		form.ipv6_qosinterface.value = ingress_interface.value;	//upstream
+
+		/*
+		form.ipv6_qospriority.value = parseInt(form.qospriority.value) + 33;
+		if(form.ipv6_qospriority.value == 37)
+			form.ipv6_qospriority.value = 40;
+		*/
+	}
+	else
+	{
+		form.ipv6_qosinterface.value = "WAN";	//downstream
+
+		/*
+		form.ipv6_qospriority.value = parseInt(form.qospriority.value) + 36 + 4;
+		*/
+	}
+
+	form.ipv6_qospriority.value = parseInt(form.qospriority.value);
+
+	form.ipv6_qosclassname.value = form.qosclassname.value;
+	form.ipv6_qosdscp.value = form.qosdscp.value;
+
+	if(form.QoSDefineIP[1].checked == true) //customer defined ip address
+	{
+		form.ipv6_srcip.value = form.srcip.value;
+		form.ipv6_srcmask.value = form.srcmask.value;
+		form.ipv6_srcpt1.value = form.srcpt1.value;
+		form.ipv6_srcpt2.value = form.srcpt2.value;
+
+		form.ipv6_dstip.value = form.dstip.value;
+		form.ipv6_dstmask.value = form.dstmask.value;
+		form.ipv6_dstpt1.value = form.dstpt1.value;
+		form.ipv6_dstpt2.value = form.dstpt2.value;
+		if (trim(form.ipv6_srcpt1.value) == "")	form.ipv6_srcpt1.value = -1;
+		if (trim(form.ipv6_srcpt2.value) == "")	form.ipv6_srcpt2.value = -1;
+		if (trim(form.ipv6_dstpt1.value) == "")	form.ipv6_dstpt1.value = -1;
+		if (trim(form.ipv6_dstpt2.value) == "")	form.ipv6_dstpt2.value = -1;
+	}
+	else
+	{
+		form.ipv6_srcip.value = "-1";	//check this field,if empty then do not set source ip info into datamodel.
+	}
+
+	//form.ipv6_qostype.value = form.qostype.value;
+
+	if(form.qosenable[0].checked == true)
+		form.ipv6_qosenable.value = 1;
+	else
+		form.ipv6_qosenable.value = 0;
+
+	document.form1.submit();
+}
+
+
+function RemoveQos(idx)
+{
+	document.form1.ipv6_qosrmidx.value = idx;
+	document.form1.submit();
+}
+
+
+function do_remove(idx) {
+    var lochead = 'qoscls.cmd?';
+    var loc = 'action=del';
+    var rmLst = "";
+    for (i=0; i<idx; i++)
+	rmLst += "0,";
+    rmLst += "1,";
+    loc += '&rmLst=' + rmLst;
+    loc += '&sessionKey=' + sessionKey;
+    loc += '&needthankyou=advancedsetup_qossettings.html';
+    lochead+=loc;
+    var code = 'location="' + lochead + '"';
+    eval(code);
+}
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+	<!-- TOP NAV -->
+	<%ejInclude(top_btn_nav5.html)%>
+	<!-- END TOP NAV -->
+	<!-- SIDE NAV -->
+	<%ejInclude(adv_left.html)%>
+	<!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+	<div id="content_right">
+		<!-- PAGE HEADER-->
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+            <h1 class="advancedsetup_qossettings">_(IPv6 QoS Settings)_</h1>
+            <p>_(IP QoS prioritizes traffic types (such as VoIP) before standard data traffic. Traffic shaping your network with QoS can increase application performance and prevent your network from becoming overloaded)_. </p>
+		<!-- END PAGE HEADER -->
+		<form name="form1" method="POST" action="ipv6_qossettings.cgi">
+
+			<input type="hidden" name="ipv6_qosenable" value="">
+			<input type="hidden" name="ipv6_qosinterface" value="">
+
+			<input type="hidden" name="ipv6_qosclassname" value="">
+			<input type="hidden" name="ipv6_qosdscp" value="">
+			<input type="hidden" name="ipv6_qospriority" value="">
+			<input type="hidden" name="ipv6_qostype" value="custom">
+
+			<input type="hidden" name="ipv6_srcip" value="">
+			<input type="hidden" name="ipv6_srcmask" value="">
+			<input type="hidden" name="ipv6_srcpt1" value="">
+			<input type="hidden" name="ipv6_srcpt2" value="">
+
+			<input type="hidden" name="ipv6_dstip" value="">
+			<input type="hidden" name="ipv6_dstmask" value="">
+			<input type="hidden" name="ipv6_dstpt1" value="">
+			<input type="hidden" name="ipv6_dstpt2" value="">
+
+			<input type="hidden" name="ipv6_qosrmidx" value="-1">
+			<input type="hidden" name="sessionKey" value="">
+
+			<div class="stepWrapper_header"></div>
+		 <div class="stepWrapper">
+                <p><strong>1. _(Set the QoS state)_. </strong> </p>
+                <table>
+                    <tr>
+                        <td width="150"><label for="qosenable">_(QoS)_:</label></td>
+                        <td width="150"><label>
+                            <input type="radio" name="qosenable" id="qos_on" onclick="on_qos();" value="1"/>
+                            _(Enable)_</label></td>
+                        <td><label>
+                            <input type="radio" name="qosenable" id="qos_off" onclick="on_qos();" value="0"/>
+                            _(Disable)_</label></td>
+                    </tr>
+                </table>
+                </div>
+			<div class="stepWrapper_footer"></div>
+
+			<!-- select QoS direction-->
+			<div class="stepWrapper_header"></div>
+                <div class="stepWrapper">
+                <p><strong>2. _(Set the QoS direction)_.</strong></p>
+                <table>
+                    <tr>
+                        <td width="150"><label for="qosinterface">_(QoS Direction)_:</label></td>
+                        <td width="150"><label>
+                            <input type="radio" name="qosinterface" id="qosinterface_up" value="text"/ checked>
+                            _(Upstream)_</label></td>
+                        <td><label>
+                            <input type="radio" name="qosinterface" id="qosinterface_down" value="text"/>
+                            _(Downstream)_</label></td>
+                    </tr>
+                </table>
+                <table id="ingress_interface_table">
+                   <tr>
+		               <td width="150"><label for="ingress_interface">_(Ingress Interface)_:</label></td>
+		               <td width="150"><select id="ingress_interface">
+								<option value="LAN">_(LAN)_&nbsp;&nbsp;</option>
+								<option value="Local">_(Local)_&nbsp;&nbsp;</option>
+		                    </select>
+		               </td>
+		            </tr>
+                </table>
+                </div>
+			<div class="stepWrapper_footer"></div>
+
+			<!--custom QoS type with default all IP address-->
+			<div id="custom_qos" style="display: none">
+				<div class="stepWrapper_header"></div>
+		        <div class="stepWrapper">
+					<p><strong>3. _(Set the QoS parameters below)_.</strong></p>
+				<table>
+				<tr>
+		                    <td width="150"><label for="qosclassname">_(Rule Name)_:</label></td>
+		                    <td><input type="text" id="qosclassname" name="qosclassname" size="35" maxlength="32"/></td>
+		                </tr>
+						<tr>
+							<td width="150"><label for="qosdscp">_(Mark Traffic Class)_:</label></td>
+							<td><select size="1" name="qosdscp" id="qosdscp">
+									<option value="-1" selected> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+											                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+											                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+											                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+											                     </option>
+									<option value="56"> _(AF13)_(001110) </option>
+									<option value="48"> _(AF12)_(001100) </option>
+									<option value="40"> _(AF11)_(001010) </option>
+									<option value="32"> _(CS1)_(001000) </option>
+									<option value="88"> _(AF23)_(010110) </option>
+									<option value="80"> _(AF22)_(010100) </option>
+									<option value="72"> _(AF21)_(010010) </option>
+									<option value="64"> _(CS2)_(010000) </option>
+									<option value="120"> _(AF33)_(011110)</option>
+									<option value="112"> _(AF32)_(011100)</option>
+									<option value="104"> _(AF31)_(011010)</option>
+									<option value="96"> _(CS3)_(011000)</option>
+									<option value="152"> _(AF43)_(100110)</option>
+									<option value="144"> _(AF42)_(100100)</option>
+									<option value="136"> _(AF41)_(100010)</option>
+									<option value="128"> _(CS4)_(100000)</option>
+									<option value="184"> _(EF)_(101110)</option>
+									<option value="160"> _(CS5)_(101000)</option>
+									<option value="192"> _(CS6)_(110000)</option>
+									<option value="224"> _(CS7)_(111000)</option>
+								</select>
+							</td>
+						</tr>
+		                <tr>
+		                    <td width="150"><label for="qospriority">_(Queue Priority)_:</label></td>
+		                    <td><select name="qospriority" id="qospriority" style="display: block; width: 120px">
+						<option value="33">_(Priority)_ 1&nbsp;&nbsp;</option>
+		                            <option value="34">_(Priority)_ 2&nbsp;&nbsp;</option>
+		                            <option value="35">_(Priority)_ 3&nbsp;&nbsp;</option>
+		                            <option value="36">_(Priority)_ 4&nbsp;&nbsp;</option>
+		                            <option value="37">_(Priority)_ 5&nbsp;&nbsp;</option>
+		                            <option value="38">_(Priority)_ 6&nbsp;&nbsp;</option>
+		                            <option value="39">_(Priority)_ 7&nbsp;&nbsp;</option>
+		                            <option value="40">_(Priority)_ 8&nbsp;&nbsp;</option>
+		                        </select>
+		                    </td>
+		                </tr>
+				</table>
+		        </div>
+				<div class="stepWrapper_footer"></div>
+
+				<div class="stepWrapper_header"></div>
+				<div class="stepWrapper">
+	                <p><strong>4. _(Set the IP tag)_.</strong></p>
+	                <table>
+	                    <tr>
+	                        <td width="150"><label for="QoSDefineIP">_(IP Tag)_:</label></td>
+	                        <td width="150"><label>
+	                            <input type="radio" name="QoSDefineIP" id="QoSDefineIP_all" onclick="on_qos_defineip();" value="text"/ checked>
+	                            _(All IP Address)_</label>
+							</td>
+	                        <td><label>
+	                            <input type="radio" name="QoSDefineIP" id="QoSDefineIP_defined" onclick="on_qos_defineip();" value="text"/>
+	                            _(Define IP Address)_</label>
+							</td>
+	                    </tr>
+	                </table>
+				</div>
+				<div class="stepWrapper_footer"></div>
+			</div>
+
+			<!-- custom qos & define IP address -->
+			<div id="custom_qos_defineip" style="display: none">
+			    <div class="stepWrapper_header"></div>
+			    <div class="stepWrapper">
+				<p><strong>5. _(Select Source IP/Prefix information)_.</strong></p>
+				<table>
+					<tr>
+						<td width="150" id="src_title"><label for="srcip">_(Source IP/Prefix)_:</label></td>
+						<td><input ID="qo15" name="srcip" size="35"  type="text" class="textinput" value="" maxlength="100" onclick="text_hightlight(qo15)"></td>
+						</tr>
+					    <tr id="s_mask" name="s_mask">
+						<td width="150"><label for="srcmask">_(Source Prefix Length)_:</label></td>
+						<td><input ID="qo21" name="srcmask" type="text" value="" size="8" maxlength="5"  onclick="text_hightlight(qo21)"></td>
+						</tr>
+					    <tr id="s_port" name="s_port">
+						<td width="150" id="qo16"><label for="srcpt1">_(Source Port Range)_:</label></td>
+						<td><input ID="srcpt1" name="srcpt1" size="8"  type="text" value="" maxlength="5"  onclick="text_hightlight(srcpt1)">
+								_(to)_
+								<input ID="srcpt2" name="srcpt2" size="8"  type="text" value="" maxlength="5"  onclick="text_hightlight(srcpt2)">
+							</td>
+						</tr>
+				</table>
+				</div>
+			    <div class="stepWrapper_footer"></div>
+
+			    <div class="stepWrapper_header"></div>
+			    <div class="stepWrapper">
+				<p><strong>6. _(Select Destination IP/Prefix information)_.</strong></p>
+				<table>
+						<tr id="d_ip" name="d_ip">
+						<td width="150"><label for="dstip">_(Destination IP/Prefix)_:</label></td>
+						<td><input ID="qo24" name="dstip" size="35"  type="text" value="" maxlength="100"  onclick="text_hightlight(qo24)"></td>
+						</tr>
+						<tr id="d_mask" name="d_mask">
+						<td width="150"><label for="dstmask">_(Destination Prefix Length)_:</label></td>
+						<td><input ID="qo30" name="dstmask" type="text"  size="8" value="" maxlength="5" onclick="text_hightlight(qo30)"></td>
+						</tr>
+						<tr id="d_port" name="d_port">
+						<td width="150"><label for="dstpt1">_(Destination Port Range)_:</label></td>
+						<td><input ID="qo26" name="dstpt1" size="8" type="text" value="" maxlength="5"  onclick="text_hightlight(qo26)">
+								_(to)_
+								<input ID="qo28" name="dstpt2" size="8 "type="text" value="" maxlength="5"  onclick="text_hightlight(qo28)"></td>
+							</tr>
+				</table>
+			    </div>
+			    <div class="stepWrapper_footer"></div>
+			</div>
+
+			<!-- apply button -->
+			<div id="custom_qos_apply" style="display: block">
+			    <div class="stepWrapper_header"></div>
+			    <div class="stepWrapper">
+				<p><span id="apply_num"><strong>3</strong></span><strong>. _(Click Apply to save changes.)_ </strong></p>
+				<p><a class="button1" onclick="do_apply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+				<br/>
+			    </div>
+			    <div class="stepWrapper_footer"></div>
+			</div>
+
+			<!-- QoS Rule List -->
+			<div class="stepWrapper_header"></div>
+	            <div class="stepWrapper">
+	            <p><center><strong>_(QoS Rule List)_</center></p>
+	            <table id="tbList" style="margin-left:30px;" class="defaultstyle">
+	                <tr>
+	                    <th>_(Name)_</th>
+	                    <th>_(Priority)_</th>
+	                    <th>_(IP Tag)_</th>
+	                    <th>_(Direction)_</th>
+	                    <th>_(Edit)_</th>
+	                </tr>
+	            </table>
+	            </div>
+		    <div class="stepWrapper_footer"></div>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+</form>
+</div>
+
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(do_load);
+</SCRIPT>
+</body>
+</html>

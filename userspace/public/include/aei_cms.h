@@ -1,0 +1,39 @@
+#ifndef __AEI_CMS_H__
+#define __AEI_CMS_H__
+
+#if defined(GPL_CODE_WP) && defined(GPL_CODE_DHCP_LEASE)
+#define AEI_OPT60_VENDOR_ID     "VENDOR_ID"
+#define AEI_OPT60_PRODUCT_TYPE  "PRODUCT_TYPE"
+#define AEI_OPT60_SOFTWARE_VER  "VERSION"
+#define AEI_OPT60_PROTOCOL_VER  "PROTOCOL"
+#define AEI_OPT60_WP_STRING     "ACTIONTEC_WP"
+#if defined(GPL_CODE_WP_AUTO_CONFIG)
+#define AEI_OPT60_WP_CAP  "CAPABILITY"
+#endif
+
+#define AEI_WP_VENDOR_ID_LEN    32
+#define AEI_WP_PRODUCT_TYPE_LEN 32
+#define AEI_WP_FIRMWARE_LEN     32
+#define AEI_WP_PROTOCOL_LEN     32 
+#if defined(GPL_CODE_WP_AUTO_CONFIG)
+#define AEI_WP_CAP_LEN     32
+#endif
+
+#endif
+
+#ifdef GPL_CODE_DUAL_IMAGE_CONFIG
+#define AEI_IMAGE1  "image1"
+#define AEI_IMAGE2  "image2"
+#endif
+
+/* Internal IP Address Net:  10.101.101.0
+ * Subnet Mask: 255.255.255.0
+ * Broadcast IP: 10.101.101.255
+ * Available IP: 10.101.101.1 ~ 10.101.101.254
+ */
+#define AEI_DEF_BR10_IP "10.101.101.100/255.255.255.0/::10.101.101.100"
+#define AEI_DEF_BR11_IP "10.101.101.101/255.255.255.0/::10.101.101.101"
+#define AEI_DEF_CAPTIVE_IP "10.101.101.102/255.255.255.0"
+#define AEI_REDIRECT_IP_NETMASK "255.255.255.0"
+
+#endif /* __AEI_CMS_H__ */

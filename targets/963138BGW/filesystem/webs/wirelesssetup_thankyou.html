@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>_(Thank You.)_</title>
+  <script language="JavaScript" src="js/nav.js"></script>
+  <link href="css/basic2.css" rel="stylesheet" type="text/css" />
+  <SCRIPT LANGUAGE="JavaScript">
+
+  function http_refresh()
+  {
+      var xmlhttp_wifi;
+      if(window.XMLHttpRequest)
+      {
+          xmlhttp_wifi = new XMLHttpRequest();
+      }
+      else if(window.ActiveXObject) //IE
+      {
+        try
+        {
+            xmlhttp_wifi = new ActiveXObject("Msxml2.XMLHTTP"); //new IE
+        }
+        catch(e)
+        {
+            xmlhttp_wifi = new ActiveXObject("Microsoft.XMLHTTP"); //old IE
+        }
+      }
+
+      if(!xmlhttp_wifi)
+      {
+          window.alert("_(Your broswer not support XMLHttpRequest!)_");
+      }
+
+      if(xmlhttp_wifi)
+      {
+          var curTime = new Date();
+          curTime = curTime.getTime();
+          xmlhttp_wifi.open("GET","./wirelesssetup_thankyou_refresh.html?time="+curTime,true);
+          xmlhttp_wifi.onreadystatechange =function()
+          {
+              if(xmlhttp_wifi.readyState == 4)
+              {
+                  var statusval = xmlhttp_wifi.responseText;
+                  if(statusval != "completed")
+                  {
+                      do_load();
+                  }
+                  else
+                  {
+                      do_redirect();
+                  }
+              }
+          }
+          xmlhttp_wifi.send(null);
+      }
+  }
+
+  function do_load()
+  {
+      setTimeout("http_refresh()", 3000);
+  }
+
+  function do_redirect()
+  {
+      location.href= "<%ejGet(currentPage)%>";
+  }
+
+  function dom_load(){ do_load(); }
+  var foobar = new domFunction(dom_load);
+  </SCRIPT>
+</head>
+
+<body>
+<div id="wrapper">
+  <!-- TOP NAV -->
+  <%ejInclude(top_btn_nav3.html)%>
+  <!-- END TOP NAV -->
+  <!-- SIDE NAV -->
+  <%ejInclude(wireless_left.html)%>
+  <!-- END SIDE NAV -->
+  <!-- MAIN CONTENT AREA -->
+  <div id="content_right">
+    <div id="content_right_header">
+    </div>
+    <div id="content_right_contentarea">
+    <h1 class="thankyou">_(Thank You.)_ </h1>
+      <form name="mainform" action="wirelesssetup_basicsettings.wl" method="POST">
+        <p>_(You must wait while the new settings are applied to the modem.)_</p>
+        <p>_(After new settings are applied, we'll take you back to the page where the selection was made.)_ </p>
+      </form>
+    </div>
+    <div id="content_right_footer">
+    </div>
+  </div>
+  <div class="clear_left">
+  </div>
+  <div id="footer">&nbsp;</div>
+</div>
+</body>
+</html>

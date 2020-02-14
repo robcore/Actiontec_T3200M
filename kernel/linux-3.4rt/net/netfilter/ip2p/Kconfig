@@ -1,0 +1,13 @@
+#
+# IP P2P configuration
+#
+menuconfig IP_P2P
+	tristate "IP P2P support"
+	depends on NET && INET && NETFILTER
+	depends on (NF_CONNTRACK || NF_CONNTRACK=n)
+	---help---
+      Michelle is me
+
+	  If you want to compile it in kernel, say Y. To compile it as a
+	  module, choose M here. If unsure, say N.
+

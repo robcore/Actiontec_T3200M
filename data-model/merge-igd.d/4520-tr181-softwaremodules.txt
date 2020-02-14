@@ -1,0 +1,8 @@
+#
+# Add the TR181 software modules objects to the InternetGatewayDevice.Device. tree.
+#
+# See 0000-README.txt for more details
+#
+
+addLastChildObjToObj cms-dm-tr181-softwaremodules.xml InternetGatewayDevice.Device.
+

@@ -1,0 +1,250 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Remote)_ - _(Remote Telnet)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var dummy_passwd = "k#5/n(t@d#a" ;
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+var telnetUserName = htmlDecodeStr("<%ejGet(remTelUser)%>");
+
+function configstate()
+{
+    if( (document.getElementById("local_telnet_disabled").checked == true) && (document.getElementById("remote_management_disabled").checked == true) )
+    {
+	document.getElementById("admin_user_name").disabled = true;
+	document.getElementById("admin_password").disabled = true;
+	document.getElementById("remote_management_timeout").disabled = true;
+    }
+    else{
+	document.getElementById("admin_user_name").disabled = false;
+	document.getElementById("admin_password").disabled = false;
+	document.getElementById("remote_management_timeout").disabled = false;
+   }
+}
+
+function do_load()
+{
+    //highlight the button after user click on it
+    side_nav("advancedsetup_remotetelnet");
+    var remtel= htmlDecodeStr("<%ejGet(serCtlTelnet)%>");
+    var remtelTimeout= htmlDecodeStr("<%ejGet(remTelTimeout)%>");
+
+    htmlDecode();
+    if ( remtel == "1" || remtel == "3") {
+        document.getElementById("remote_management_enabled").checked = true;
+        document.getElementById("remote_management_disabled").checked = false;
+    } else {
+        document.getElementById("remote_management_enabled").checked = false;
+        document.getElementById("remote_management_disabled").checked = true;
+    }
+
+    if ( remtel == "2" || remtel == "3") {
+        document.getElementById("local_telnet_enabled").checked = true;
+        document.getElementById("local_telnet_disabled").checked = false;
+    } else {
+        document.getElementById("local_telnet_enabled").checked = false;
+        document.getElementById("local_telnet_disabled").checked = true;
+    }
+
+
+    document.getElementById("admin_password").value = dummy_passwd;
+    document.getElementById("admin_user_name").value = telnetUserName;
+
+    var timeSel = document.getElementById("remote_management_timeout");
+    for (var i=0; i<timeSel.length; i++) {
+	if (timeSel.options[i].value == remtelTimeout) {
+	    timeSel.options[i].selected = true;
+	    break;
+	}
+    }
+    if (i == timeSel.length)
+	timeSel.options[0].selected = true;
+
+    configstate();
+
+    //highlight the button after user click on it
+    //side_nav("advancedsetup_remotetelnet");
+}
+function passwordshow()
+{
+	if(document.getElementById("admin_password").value == ""){
+		document.getElementById("admin_password").type="text" ;
+		document.getElementById("admin_password").focus();
+	}
+}
+
+function do_apply()
+{
+   var lochead='advancedsetup_remotetelnet.cgi?';
+   var loc="";
+   var form = document.fapply;
+
+    if ( document.getElementById("remote_management_enabled").checked == true && document.getElementById("local_telnet_enabled").checked == true) {
+        document.fapply.elements[0].value = "3";
+    } else if ( document.getElementById("remote_management_enabled").checked == true && document.getElementById("local_telnet_enabled").checked == false) {
+        document.fapply.elements[0].value = "1";
+    }else if ( document.getElementById("remote_management_enabled").checked == false && document.getElementById("local_telnet_enabled").checked == true) {
+        document.fapply.elements[0].value = "2";
+    }else if ( document.getElementById("remote_management_enabled").checked == false && document.getElementById("local_telnet_enabled").checked == false) {
+        document.fapply.elements[0].value = "0";
+    }
+
+    if ( document.getElementById("admin_password").value == dummy_passwd ) {
+        document.fapply.elements[4].value = "0";
+    } else {
+        document.fapply.elements[4].value = "1";
+        document.fapply.elements[2].value = document.getElementById("admin_password").value;
+    }
+
+       new_username = document.getElementById("admin_user_name").value;
+       new_password = document.getElementById("admin_password").value;
+
+       if(hasHTMLTags(new_username)){
+           alert("_(The username is invalid. You must enter a valid username.)_");
+           return ;
+       }
+       if(hasHTMLTags(new_password)){
+           alert("_(The password is invalid. You must enter a valid password.)_");
+           return ;
+       }
+
+       if ( new_password.length < 1 ) {
+           alert("_(Password should not be left blank.)_");
+           return;
+       }
+       if ( new_password.length > 15 ) {
+           alert("_(The password should cannot be longer than 15 characters.)_");
+           return;
+       }
+       if ( new_password.indexOf(' ') != -1 ) {
+           alert("_(The password cannot contain a space.)_");
+           return;
+       }
+
+       if ( new_username.length < 1 ) {
+           alert("_(The username cannot be left blank.)_");
+           return;
+       }
+       if ( new_username.length > 15 ) {
+           alert("_(Username cannot be longer than 15 characters.)_");
+           return;
+       }
+       if (new_username.search("[^A-Za-z0-9\-.]") != -1)
+       {
+           alert("_(The username is invalid. You must enter a valid username.)_");
+	   return;
+       }
+       if (isValidName(new_username) == false)
+           return;
+    document.fapply.elements[1].value = document.getElementById("admin_user_name").value;
+    document.fapply.elements[2].value = document.getElementById("admin_password").value;
+    document.getElementById("admin_password").type = "password";
+
+    document.fapply.elements[3].value = document.getElementById("remote_management_timeout").value;
+    //disable get mothod
+    //get format :http://192.168.1.254/advancedsetup_remotetelnet.cgi?serCtlTelnet=3&remTelUser=admin&remTelPass=k%235%2Fn%28t%40d%23a
+    //&remTelTimeout=1800&remTelPassChanged=0&nothankyou=0
+    //document.fapply.submit();
+
+    //enable post method
+   for (var i = 0; i < form.elements.length; i++)
+   {
+      if (form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+      {
+         if (i != 0)
+            loc += "&";
+
+         loc += form.elements[i].name;
+         loc += "=";
+         loc+=newEncodeUrl(form.elements[i].value);
+      }
+   }
+   //loc +='&sessionKey='
+   //loc +=sessionKey;
+
+   loc = encrypt_query(loc, key);
+   lochead += loc;
+   postSubmit(lochead);
+}
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <form name="fapply" action="advancedsetup_remotetelnet.cgi" method="GET">
+        <input type="hidden" name="serCtlTelnet" value="1">
+        <input type="hidden" name="remTelUser" value="">
+        <input type="hidden" name="remTelPass" value="">
+        <input type="hidden" name="remTelTimeout" value="0">
+        <input type="hidden" name="remTelPassChanged" value="0">
+        <input type="hidden" name="sessionKey" value='<%ejGetOther(sessionKey)%>' >
+        <input type="hidden" name="nothankyou" value="0">
+    </form>
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="advancedsetup_remotemgmt">_(Remote Telnet)_ </h1>
+				<form>
+				<p><em>_(Remote Telnet provides access to the modem remotely via telnet.)_</em></p>
+				<p><strong>1. _(Set the remote telnet state below.)_</strong></p>
+				  <p>&nbsp;&nbsp;&nbsp;&nbsp;_(Remote Telnet)_:<strong>
+	      <input name="remote_management" id="remote_management_enabled" type="radio" value="remote_management_enabled" onClick="configstate();" />
+                      </strong>_(Enable)_<strong>
+										<input name="remote_management" type="radio" id="remote_management_disabled" value="remote_management_disabled" checked="" onClick="configstate();" />
+                    </strong>_(Disable)_</p>
+			<p>&nbsp;&nbsp;&nbsp;&nbsp;_(Local Telnet)_:&nbsp;&nbsp;<strong>
+              <input name="local_telnet" id="local_telnet_enabled" type="radio" value="local_telnet_enabled" onClick="configstate();" />
+                      </strong>_(Enable)_<strong>
+                                                                                <input name="local_telnet" type="radio" id="local_telnet_disabled" value="local_telnet_disabled" checked="" onClick="configstate();" />
+                    </strong>_(Disable)_</p>
+                                        <div id="telnet_userpass" style="display:none">
+					<p><strong>2. _(Enter the telnet username and password below.)_</strong></p>
+					<p>&nbsp;&nbsp;&nbsp;&nbsp;_(Telnet Username)_:<strong>
+						<input name="admin_user_name" id="admin_user_name" type="text" style="height:18px;"/>
+                    </strong></p>
+					<p>&nbsp;&nbsp;&nbsp;&nbsp;_(Telnet Password)_:&nbsp;&nbsp; <strong>
+						<input type="password" name="admin_password" id="admin_password" style="height:18px;"/>
+                    </strong></p>
+                                        </div>
+					<p><strong>2. _(Set the idle disconnect time below.)_</strong></p>
+					<p>&nbsp;&nbsp;&nbsp;&nbsp;_(Idle Disconnect After)_:
+		<select name="remote_management_timeout" id="remote_management_timeout">
+			<option value="1800">_(30 Minutes)_</option>
+			<option value="43200">_(12 Hours)_</option>
+			<option value="86400">_(1 Day)_</option>
+			<option value="604800">_(7 Days)_</option>
+		</select>
+                    </p>
+					<p><strong>3. _(Click Apply to save changes.)_ </strong></p>
+					<p><a class="button1" onclick="do_apply()" id="btn_apply"><span>_(Apply)_</span></a></p>
+				</form>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

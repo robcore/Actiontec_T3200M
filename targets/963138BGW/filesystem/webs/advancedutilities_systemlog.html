@@ -1,0 +1,231 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Status)_ - _(System Monitor)_ - _(System Log)_</title>
+<link href="../css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="../js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="../js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var CookieName1 = "Refresh";
+var CookieName2 = "Mode";
+var defaultvalue = "60";
+var mytimeid;
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function getCookie(NameOfCookie) {
+    if (document.cookie.length > 0) {
+        begin = document.cookie.indexOf(NameOfCookie+"=");
+        if (begin != -1) {
+            begin += NameOfCookie.length+1;
+            end = document.cookie.indexOf(";", begin);
+            if (end == -1) end = document.cookie.length;
+                return unescape(document.cookie.substring(begin, end));
+        }
+    }
+    return null;
+}
+
+function setCookie(NameOfCookie, value, expiredays)  {
+    var ExpireDate = new Date ();
+    ExpireDate.setTime(ExpireDate.getTime() + (expiredays * 24 * 3600 * 1000));
+    document.cookie = NameOfCookie + "=" + escape(value) +
+                     ((expiredays == null) ? "" : "; expires=" + ExpireDate.toGMTString());
+}
+
+function check_type(form1) {
+    var type;
+
+    if (form1.refresh_type[0].checked)
+        type = form1.refresh_type[0].value;
+    else
+        type = form1.refresh_type[1].value;
+
+    setCookie(CookieName2, type);
+    do_reload();
+
+    return type;
+}
+
+function check_auto(form1) {
+    var intestr;
+    var checkmode = getCookie(CookieName2);
+    var fwlogenabled = htmlDecodeStr('<%ejGet(fwLogEnabled)%>');
+    if(fwlogenabled == '1')
+        form1.fwlog[0].checked = true;
+    else
+	  form1.fwlog[1].checked = true;
+    if ((checkmode == null)||(checkmode=="undefined")) {
+        checkmode = "auto";
+        setCookie(CookieName2, checkmode);
+    }
+
+    if(checkmode=="manual") {
+        form1.refresh_type[1].checked = true;
+        return;
+    }
+    else {
+        form1.refresh_type[0].checked = true;
+    }
+
+    intestr = getCookie(CookieName1);
+    if ((intestr == null)||(intestr=="undefined")) {
+        setCookie(CookieName1, defaultvalue);
+        intestr = defaultvalue;
+    }
+
+    switch (intestr) {
+        case "10":
+            form1.interval.selectedIndex=0;
+            break;
+        case "20":
+            form1.interval.selectedIndex=1;
+            break;
+        case "30":
+            form1.interval.selectedIndex=2;
+            break;
+        case "60":
+            form1.interval.selectedIndex=3;
+            break;
+        default:
+            form1.interval.selectedIndex=0;
+            break;
+    }
+    var interval = parseInt(intestr);
+    mytimeid = window.setTimeout("do_reload()",interval*1000);
+}
+
+function SetTime(form1) {
+    if (form1.refresh_type[0].checked)
+    {
+        var interstr = form1.interval.options[form1.interval.selectedIndex].value;
+        var interval = parseInt(interstr);
+
+        window.clearTimeout(mytimeid);
+        setCookie(CookieName1, interval);
+        mytimeid = window.setTimeout("do_reload()", interval*1000);
+    }
+}
+
+function manual_refresh(form1) {
+    if (form1.refresh_type[0].checked)
+        return;
+    window.location.reload();
+}
+
+function do_reload() {
+    window.location.reload();
+}
+
+function do_load()
+{
+	side_nav("advancedutilities_systemlog");
+    check_auto(document.myform);
+}
+
+function do_logsave(form) {
+   var loc = 'syslog.foo';
+   var code = 'location="' + loc + '"';
+   eval(code);
+}
+
+function do_apply()
+{
+    var lochead='advancedutilities_systemlog.cgi?';
+    var loc = 'fwLogEnabled=';
+    var form = document.myform;
+    if( form.fwlog[0].checked )
+    {
+        loc += '1';
+    }
+    else
+    {
+        loc += '0';
+    }
+    loc += '&logStatus='+htmlDecodeStr('<%ejGet(logStatus)%>');
+    loc += '&logLevel='+htmlDecodeStr('<%ejGet(logLevel)%>');
+    loc += '&logDisplay='+htmlDecodeStr('<%ejGet(logDisplay)%>');
+    loc += '&logMode='+htmlDecodeStr('<%ejGet(logMode)%>');
+    loc += '&logIpAddress='+htmlDecodeStr('<%ejGet(logIpAddress)%>');
+    loc += '&logPort='+htmlDecodeStr('<%ejGet(logPort)%>');
+    //loc += '&needthankyou=advancedutilities_systemlog.html';
+    loc += '&sessionKey=' + sessionKey;
+    lochead+=loc;
+    //var code = 'location="' + lochead + '"';
+    //eval(code);
+    postSubmit(lochead);
+}
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="advancedutilities_systemlog">_(System Log)_</h1>
+			<form id="myform" name="myform">
+				<p><strong>1. _(Set the Firewall Log state.)_</strong></p>
+				<table width="50%" border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td width="48%">&nbsp;&nbsp;&nbsp;_(Display firewall logs)_: </td>
+                    <td width="23%"><input name="fwlog" id="fwlog_on" type="radio" value="Enable" checked="checked" /> _(Enable)_</td>
+                    <td width="29%"><input name="fwlog" id="fwlog_off" type="radio" value="Disable" /> _(Disable)_</td>
+                  </tr>
+                </table>
+				<p><strong>2. _(Click Apply to save changes.)_</strong></p>
+				<p><a class="button1" onclick="do_apply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+		<table width="85%" border="0" cellpadding="0" cellspacing="0" class="systemlog">
+		  <tr align="center">
+		  <!--   <th width="12%">DATE</th>-->
+		    <th width="27%">_(TIME)_</th>
+		    <th width="12%">_(SYSTEM)_</th>
+		    <th width="61%">_(ACTION)_</th>
+		  </tr>
+                    <%ejInsert("syslog")%>
+		</table>
+		<p>&nbsp;</p>
+		<table border="0" cellspacing="0" cellpadding="0">
+		  <tr>
+		    <td><input name="refresh_type" id="refresh_type_auto" type="radio" value="auto" checked="checked" onClick="check_type(document.myform)" /></td>
+		    <td>_(Auto Refresh Every)_</td>
+		    <td>
+		      <select name="interval" id="interval" size=1 onChange="SetTime(document.myform)">
+			<option value=10>10 _(Sec)_</option>
+			<option value=20 selected>20 _(Sec)_</option>
+			<option value=30>30 _(Sec)_</option>
+			<option value=60>1 _(Minute)_</option>
+		      </select></td>
+		    <td><input name="refresh_type" id="refresh_type_manual" type="radio"  value="manual" onClick="check_type(document.myform)" /></td>
+		    <td>_(Manual Refresh)_</td>
+		    <td><a class="button1" onclick="javascript:manual_refresh(document.myform)" id="btn_refresh"><span>_(Refresh)_</span></a></td>
+		  </tr>
+		</table>
+			<p>&nbsp;</p>
+			<p><a class="button1" onclick="do_logsave();" id="btn_save"><span>_(Save Log As)_</span></a></p>
+			</form>
+			<div class="clear_left"></div>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<script language="javascript">
+var foobar = new domFunction(dom_load);
+</script>
+</body>
+</html>

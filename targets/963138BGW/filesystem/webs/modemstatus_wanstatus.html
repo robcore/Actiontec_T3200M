@@ -1,0 +1,1741 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="javascript" src="js/functions.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script type="text/javascript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var wanInfNamesDsl = '<%ejGetOther(wanInterfaces, all)%>';
+var wanInfNamesEwan = '<%ejGetOther(wanInterfaces, ewan0)%>';
+var wanEthLinkStatus = '<%ejGetOther(wanEthLinkStatus)%>';
+var wanPhy = htmlDecodeStr('<%ejGetOther(physical_wan, all)%>');
+var uprate = '<%ejGetOther(lineRate, 0, 0)%>';
+var downrate = '<%ejGetOther(lineRate, 1, 0)%>';
+var phy_status = 'Disconnected';
+var isp_status = 'Disconnected';
+var usrname = '';
+var ISP_prot = '';
+var dns1 = '';
+var dns2 = '';
+var soft_ver = htmlDecodeStr('<%ejGet(sysVersion)%>');
+var ISP_status = 'Disconnected';
+var board_id=htmlDecodeStr('<%ejGet(boardID)%>');
+var dslstatus = '<%ejGetOther(dslget)%>';
+var dslsts_temp = dslstatus.split("|") ;
+
+var adslRetr = htmlDecodeStr('<%ejGet(adslRetr)%>');
+var adslLprs = htmlDecodeStr('<%ejGet(adslLprs)%>');
+var adslLoss = htmlDecodeStr('<%ejGet(adslLoss)%>');
+var adslRetrLom = htmlDecodeStr('<%ejGet(adslRetrLom)%>');
+var adslInitErr = htmlDecodeStr('<%ejGet(adslInitErr)%>');
+var adslUAS = htmlDecodeStr('<%ejGet(adslUAS)%>');
+var chType = htmlDecodeStr('<%ejGet(chType)%>');
+var modem_uptime = '<%ejGetOther(sysInfo, modem_uptime)%>';
+var stat_packets = '<%ejGetOther(boardbandPacketsInfo)%>'.split("|");
+var sessionInfo = '<%ejGetOther(sessinfo)%>';
+var temp = sessionInfo.split("|") ;
+var clear_info;
+var clear_temp;
+var sesTimeRec;
+var pppClearRecv;
+var pppClearSend;
+var upTimeRec;
+var dsl1ClearTime;
+var dsl2ClearTime;
+var board_id=htmlDecodeStr('<%ejGet(boardID)%>');
+
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+var tag = 0;
+var dslcontype = '';
+
+var pppconstatus = '<%ejGetOther(PppConnStatus)%>';
+var pppLcpIpcpinfo = '<%ejGetOther(PppLcpIpcpinfo)%>';
+var layer2Infoatm = '<%ejGetOther(layer2Info,ATM )%>';
+var layer2Infoptm = '<%ejGetOther(layer2Info,PTM )%>';
+var dslLineTemp1;
+var dslLineTemp2;
+var bonding = '<%ejGetOther(isDslBondingEnabled)%>';
+var currentport='<%ejGetOther(dslcurport)%>';
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function gup( name )
+{
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  var regex = new RegExp( regexS );
+  var results = regex.exec( window.location.href );
+  if( results == null )
+    return "";
+  else
+    return results[1];
+}
+
+var dslLineStr = gup ("bondingLineNum");
+var dslLine = parseInt('<%ejGet(bondingLineNum)%>')+1;
+
+function clearTimeInc()
+{
+    var pppstatus_temp = pppconstatus.split("|");
+
+    sesTimeRec = temp[1];
+    upTimeRec = modem_uptime;
+    pppClearRecv = pppstatus_temp[0];
+    pppClearSend = pppstatus_temp[1];
+    if (dslLine == 1)
+         dsl1ClearTime = dslsts_temp[7];
+    else if (dslLine == 2)
+         dsl2ClearTime = dslsts_temp[7];
+
+
+}
+
+function changeStyle(num, item, delim)
+{
+    if (num == 0)
+	document.getElementById(item).className = "blacktext";
+    else if (num > 0 && num < delim)
+	document.getElementById(item).className = "blacktext";
+    else
+	document.getElementById(item).className = "blacktext";
+
+    return num;
+}
+
+function retrainLast24H(time, num)
+{
+    var count = num;
+
+    if (time >= 86400)
+	count = 0;
+    else
+	count = num;
+
+    count = changeStyle(count, "retains_num_last24H", 3);
+
+    return count;
+}
+
+function time_to_str(time)
+{
+    var days = 0, hours = 0, minutes = 0, seconds = 0;
+    var time_str;
+
+    while (time > 86400)
+    {
+        days++;
+        time = time - 86400;
+    }
+
+    while (time > 3600)
+    {
+        hours++;
+        time = time - 3600;
+    }
+
+    while (time > 60)
+    {
+        minutes++;
+        time = time - 60;
+    }
+
+    seconds = time;
+    time_str = days+" _(Days)_, " + hours + "_(H)_:" + minutes + "_(M)_:" + seconds + "_(S)_";
+    return time_str;
+}
+function session_info()
+{
+    if (sessionInfo)
+    {
+        var session_time_str;
+        var sessionTmp = 0;
+        var ses_temp;
+        var t;
+
+        ses_temp = parseInt(sesTimeRec, 10);
+        t = parseInt(temp[1], 10);
+
+        if (ses_temp <= t)
+            sessionTmp = t - ses_temp;
+        else
+            sessionTmp = t;
+
+        session_time_str = time_to_str(sessionTmp);
+        document.getElementById("session_time").innerHTML = session_time_str;
+    }else{
+        document.getElementById("session_time").innerHTML = "0 _(Days)_, 00_(H)_:00_(M)_:00_(S)_";
+	}
+}
+
+function show_ppp_lcp_ipcp_status()
+{
+    var pppLcpIpcp_temp;
+
+    pppLcpIpcp_temp = pppLcpIpcpinfo.split("|") ;
+
+    if (pppLcpIpcp_temp[0] == "Down")
+    {
+        document.getElementById("lcp_status").className = "status_text_r";
+        document.getElementById("lcp_status").innerHTML = "_(DOWN)_";
+    }
+    else
+    {
+        document.getElementById("lcp_status").className = "status_text";
+        document.getElementById("lcp_status").innerHTML = "_(UP)_";
+    }
+
+    if (pppLcpIpcp_temp[1] == "Down")
+    {
+        document.getElementById("ipcp_status").className = "status_text_r";
+        document.getElementById("ipcp_status").innerHTML = "_(DOWN)_";
+    }
+    else
+    {
+        document.getElementById("ipcp_status").className = "status_text";
+        document.getElementById("ipcp_status").innerHTML = "_(UP)_";
+    }
+
+    if (pppLcpIpcp_temp[0] == "Up" && pppLcpIpcp_temp[1] == "Up")
+    {
+        document.getElementById("pppoe_auth").className = "blacktext";
+        document.getElementById("pppoe_auth").innerHTML = "0";
+    }
+    else
+    {
+	var num = changeStyle(pppLcpIpcp_temp[2], "pppoe_auth", 4);
+	document.getElementById("pppoe_auth").innerHTML = num;
+    }
+}
+
+function show_ppp_status()
+{
+    var pppstatus_temp = pppconstatus.split("|");
+    var uptime;
+    var dec_modem_uptime;
+
+    var upTimeTemp = parseInt(upTimeRec, 10);
+    var modemUPTemp = parseInt(modem_uptime, 10);
+
+    if (upTimeTemp <= modemUPTemp)
+        dec_modem_uptime = modemUPTemp - upTimeTemp;
+    else
+        dec_modem_uptime = modemUPTemp;
+
+    uptime = time_to_str(dec_modem_uptime)  ;
+
+    var t1 , t2;
+    t1 = parseInt(pppstatus_temp[0], 10);
+    t2 = parseInt(pppClearRecv, 10);
+
+    if (t1 >= t2)
+       document.getElementById("Packet_rece").innerHTML = t1 - t2 ;
+    else
+       document.getElementById("Packet_rece").innerHTML = pppstatus_temp[0];
+
+    t1 = parseInt(pppstatus_temp[1], 10);
+    t2 = parseInt(pppClearSend, 10);
+
+    if (t1 >= t2)
+        document.getElementById("Packet_sent").innerHTML = t1 - t2;
+    else
+        document.getElementById("Packet_sent").innerHTML = pppstatus_temp[1];
+
+    document.getElementById("modem_uptime").innerHTML = uptime;
+
+    if ( bonding == '1' )
+        document.getElementById("ppp_mode").innerHTML = "Bonded";
+    else
+        document.getElementById("ppp_mode").innerHTML = "Unbonded";
+}
+
+function show_dsl_status()
+{
+    var Mode = "MULTIMODE";
+    var Nego_Mode = "Not Trained";
+    var link_table_id = document.getElementById("link_table");
+    var tran_table_id = document.getElementById("transport_table");
+    var chan_table_id = document.getElementById("channel_table");
+    var level_table_id = document.getElementById("levels_table");
+    var newTR;
+    var newTR1;
+    var newTR2;
+    var newTR3;
+    var newTR4;
+    var newTR5;
+    var newTR6;
+    var newTR7;
+    var newTDa;
+    var newTDb;
+
+
+    if (tag != 1)
+        newTR = tran_table_id.insertRow(1);
+    else
+    {
+        tran_table_id.deleteRow(1);
+        newTR = tran_table_id.insertRow(1);
+    }
+
+     if (dslstatus != "")
+     {
+	 if((dslsts_temp[0] == "Up") && (wanInfNamesDsl != "")) {
+	         //document.getElementById("adslRetr").innerHTML = adslRetr;
+	         document.getElementById("adslLprs").innerHTML = adslLprs;
+	         document.getElementById("adslLoss").innerHTML = adslLoss;
+	         document.getElementById("adslRetrLom").innerHTML = adslRetrLom;
+	         document.getElementById("adslInitErr").innerHTML = adslInitErr;
+	         document.getElementById("adslUAS").innerHTML = adslUAS;
+
+	         if (chType == '0')
+	         {
+	             document.getElementById("chType").innerHTML =  '_(Interleaved)_';
+	         }
+	         else
+	         {
+	             document.getElementById("chType").innerHTML =  '_(FastChannel)_';
+	         }
+
+	         var rxPacket = stat_packets[0];
+	         var rxPacketErr = stat_packets[1];
+	         var txPacket = stat_packets[2];
+	         var txPacketErr =stat_packets[3];
+	         document.getElementById("txPacket").innerHTML = txPacket;
+	         document.getElementById("rxPacket").innerHTML = rxPacket;
+	         document.getElementById("txPacketErr").innerHTML = txPacketErr;
+	         document.getElementById("rxPacketErr").innerHTML = rxPacketErr;
+	 }
+
+		 if((dslsts_temp[6] != undefined) && (dslsts_temp[0] == "Up")) {
+			document.getElementById("retains_num").innerHTML = changeStyle(dslsts_temp[6], "retains_num", 7);
+		 }
+		 if((dslsts_temp[6] != undefined) && (dslsts_temp[7] != undefined) && (dslsts_temp[0] == "Up"))
+			document.getElementById("retains_num_last24H").innerHTML = dslsts_temp[21];
+
+         if (dslsts_temp[0] == "Up")
+         {
+             var l2infoatm = layer2Infoatm.split('|');
+             var l2infoptm = layer2Infoptm.split('|');
+
+             var dsl_time_str;
+             var dsl_time_temp = 0;
+
+			 if(dslsts_temp[7] != undefined)
+		dsl_time_temp = parseInt(dslsts_temp[7], 10);
+
+             if (dslLine == 1) {
+                 var t1, t2;
+                 t1 = parseInt(dslsts_temp[7] ,10);
+                 t2 = parseInt(dsl1ClearTime ,10);
+
+                 if (t1 >= t2)
+                     dsl_time_temp = t1 - t2;
+
+             } else if (dslLine == 2) {
+                 var t1, t2;
+                 t1 = parseInt(dslsts_temp[7] ,10);
+                 t2 = parseInt(dsl2ClearTime ,10);
+
+                 if (t1 >= t2)
+                     dsl_time_temp = t1 - t2;
+             }
+
+             dsl_time_str = time_to_str(dsl_time_temp);
+
+		var up_power = 0;
+		var down_power = 0;
+
+		if(dslsts_temp[17] != undefined) {
+             up_power = parseInt(dslsts_temp[17].split('/')[0]);
+             down_power = parseInt(dslsts_temp[17].split('/')[1]);
+             if (up_power != 0) up_power = (up_power / 10);
+             if (down_power != 0) down_power = (down_power / 10);
+		}
+
+		   if(dslsts_temp[2] != undefined)
+		document.getElementById("speed_d").innerHTML = dslsts_temp[2];
+		   if(dslsts_temp[3] != undefined)
+		document.getElementById("speed_u").innerHTML = dslsts_temp[3];
+
+		   if(dslsts_temp[19] != undefined)
+		document.getElementById("a_speed_d").innerHTML = dslsts_temp[19];
+		   if(dslsts_temp[20] != undefined)
+		document.getElementById("a_speed_u").innerHTML = dslsts_temp[20];
+
+		   document.getElementById("retains_time").innerHTML = dsl_time_str ;
+		   document.getElementById("up_power").innerHTML =  up_power;
+           document.getElementById("down_power").innerHTML =  down_power;
+//           document.getElementById("retains_num").innerHTML = changeStyle(dslsts_temp[6], "retains_num", 7);
+//           document.getElementById("retains_num_last24H").innerHTML = retrainLast24H(dslsts_temp[7], dslsts_temp[6]);
+			if(dslsts_temp[8] != undefined)
+             document.getElementById("Near_endCRC").innerHTML = dslsts_temp[8].split('/')[0];
+			if(dslsts_temp[9] != undefined)
+             document.getElementById("Far_endCRC").innerHTML = dslsts_temp[9].split('/')[0];
+			if(dslsts_temp[10] != undefined)
+             document.getElementById("Near_endCRC_cnt").innerHTML = dslsts_temp[10].split('/')[0];
+			if(dslsts_temp[11] != undefined)
+             document.getElementById("Far_endCRC_cnt" ).innerHTML = dslsts_temp[11].split('/')[0];
+			if(dslsts_temp[12] != undefined)
+             document.getElementById("Near_endRS").innerHTML = dslsts_temp[12].split('/')[0];
+			if(dslsts_temp[13] != undefined)
+             document.getElementById("Far_endRS").innerHTML = dslsts_temp[13].split('/')[0];
+			if(dslsts_temp[14] != undefined)
+             document.getElementById("Near_endFEC").innerHTML = dslsts_temp[14].split('/')[0];
+			if(dslsts_temp[15] != undefined)
+             document.getElementById("Far_endFEC").innerHTML = dslsts_temp[15].split('/')[0];
+			if(dslsts_temp[16] != undefined) {
+             document.getElementById("discard_pkt_up").innerHTML = dslsts_temp[16].split('/')[0];
+             document.getElementById("discard_pkt_down").innerHTML = dslsts_temp[16].split('/')[1];
+		    }
+			if(dslsts_temp[4] != undefined) {
+             document.getElementById("snr_margin").innerHTML = dslsts_temp[4].split('/')[0];
+             document.getElementById("snr_margin_u").innerHTML = dslsts_temp[4].split('/')[1];
+			}
+			if(dslsts_temp[5] != undefined) {
+             document.getElementById("attenuation").innerHTML = dslsts_temp[5].split('/')[0];
+             document.getElementById("attenuation_u").innerHTML = dslsts_temp[5].split('/')[1];
+			}
+
+             if (dslsts_temp[1] == "ATM")
+             {
+                 if (tag == 1)
+                 {
+                     if (dslcontype == "ATM")
+                     {
+                         tran_table_id.deleteRow(2);
+                         tran_table_id.deleteRow(2);
+                     }
+                     else if (dslcontype == "PTM")
+                     {
+                         tran_table_id.deleteRow(2);
+                         tran_table_id.deleteRow(2);
+                         //tran_table_id.deleteRow(2);
+                         //tran_table_id.deleteRow(3);
+                     }
+                     else if (dslcontype == "DISCON")
+                     {
+                         tran_table_id.deleteRow(2);
+                         tran_table_id.deleteRow(2);
+                         //tran_table_id.deleteRow(3);
+                         //tran_table_id.deleteRow(3);
+                     }
+
+                     link_table_id.deleteRow(1);
+                     link_table_id.deleteRow(1);
+                 }
+
+                 newTR1 = tran_table_id.insertRow(2);
+                 newTR2 = link_table_id.insertRow(1);
+                 newTR3 = link_table_id.insertRow(2);
+                 newTR4 = tran_table_id.insertRow(3);
+
+                 newTR.insertCell(0).innerHTML = ' _(VPI)_: ';
+                 newTR.insertCell(1).innerHTML = '<span id="vpi">0</span>';
+                 newTR1.insertCell(0).innerHTML = ' _(VCI)_: ';
+                 newTR1.insertCell(1).innerHTML = '<span id="vci">32</span> ';
+                 newTR2.insertCell(0).innerHTML = ' _(Broadband Mode Setting)_: ';
+                 newTR2.insertCell(1).innerHTML = '<span id="dsl_mode">_(MULTIMODE)_</span>';
+                 newTR3.insertCell(0).innerHTML = ' _(Broadband Negotiated Mode)_: ';
+                 newTR3.insertCell(1).innerHTML = '<span id="nego_mode">MULTIMODE</span>';
+                 dslcontype = "ATM";
+
+                 //vpi
+                 document.getElementById("vpi").innerHTML = l2infoatm[2];
+                 //vci
+                 document.getElementById("vci").innerHTML = l2infoatm[3];
+
+                 //QOS
+                 newTR4.insertCell(0).innerHTML = ' ATM QoS class: ';
+                 newTR4.insertCell(1).innerHTML = '<span id="qos_class">UBR</span>';
+                 document.getElementById("qos_class").innerHTML = l2infoatm[4];
+                 //document.getElementById("mtu_size").innerHTML = l2infoatm[15];
+
+                 //dsl Modem
+                 l2infoatm[11] = htmlDecodeStr(l2infoatm[11]);
+                 if (l2infoatm[11] == "ADSL_Modulation_All")
+                     Mode = "MULTIMODE";
+                 else if(l2infoatm[11] == "ADSL_G.dmt")
+                     Mode = "G.DMT";
+                 else if(l2infoatm[11] == "ADSL_ANSI_T1.413")
+                     Mode = "T1.413";
+                 else if(l2infoatm[11] == "ADSL_G.dmt.bis")
+                     Mode = "ADSL2";
+                 else if(l2infoatm[11] == "ADSL_G.lite")
+                     Mode = "G.Lite";
+                 else if(l2infoatm[11] == "ADSL_2plus")
+                     Mode = "ADSL2+";
+                 else if(l2infoatm[11] == "8A")
+                     Mode = "VDSL2 - 8A";
+                 else if(l2infoatm[11] == "8B")
+                     Mode = "VDSL2 - 8B";
+				 else if(l2infoatm[11] == "8C")
+                     Mode = "VDSL2 - 8C";
+				 else if(l2infoatm[11] == "8D")
+                     Mode = "VDSL2 - 8D";
+                 else if(l2infoatm[11] == "12A")
+                     Mode = "VDSL2 - 12A";
+                 else if(l2infoatm[11] == "12B")
+                     Mode = "VDSL2 - 12B";
+                 else if(l2infoatm[11] == "17A")
+                     Mode = "VDSL2 - 17A";
+
+                 document.getElementById("dsl_mode").innerHTML = Mode;
+
+               if (dslsts_temp[0] == "Up")
+               {
+                   if (dslsts_temp[18] == "ADSL_G.dmt")
+                       Nego_Mode = "G.DMT";
+                   else if(dslsts_temp[18] == "ADSL_ANSI_T1.413")
+                       Nego_Mode = "T1.413";
+                   else if(dslsts_temp[18] == "ADSL_G.dmt.bis")
+                       Nego_Mode = "ADSL2";
+                   else if(dslsts_temp[18] == "ADSL_G.lite")
+                       Nego_Mode = "G.Lite";
+                   else if(dslsts_temp[18] == "ADSL_2plus")
+                       Nego_Mode = "ADSL2+";
+                   else  if (dslsts_temp[18] == "8a")
+                       Nego_Mode = "VDSL2 - 8A";
+                   else if(dslsts_temp[18] == "8b")
+                       Nego_Mode = "VDSL2 - 8B";
+				   else if(dslsts_temp[18] == "8c")
+                       Nego_Mode = "VDSL2 - 8C";
+				   else if(dslsts_temp[18] == "8d")
+                       Nego_Mode = "VDSL2 - 8D";
+                   else if(dslsts_temp[18] == "12a")
+                       Nego_Mode = "VDSL2 - 12A";
+                   else if(dslsts_temp[18] == "12b")
+                       Nego_Mode = "VDSL2 - 12B";
+                   else if(dslsts_temp[18] == "17a")
+                       Nego_Mode = "VDSL2 - 17A";
+                   else
+                       Nego_Mode = "MULTIMODE";;
+                }
+                else
+                    Nego_Mode = "Not Trained";
+
+                document.getElementById("nego_mode").innerHTML = Nego_Mode;
+            }
+            else if (dslsts_temp[1] == "PTM")
+            {
+                if (tag == 1)
+                {
+                    if (dslcontype == "PTM")
+                    {
+                        tran_table_id.deleteRow(2);
+                        tran_table_id.deleteRow(2);
+                        //tran_table_id.deleteRow(2);
+                        //tran_table_id.deleteRow(3);
+                    }
+                    else if (dslcontype == "ATM")
+                    {
+                        tran_table_id.deleteRow(2);
+                        tran_table_id.deleteRow(2);
+                    }
+                    else if (dslcontype == "DISCON")
+                    {
+                        tran_table_id.deleteRow(2);
+                        tran_table_id.deleteRow(2);
+                        //tran_table_id.deleteRow(3);
+                        //tran_table_id.deleteRow(3);
+                    }
+
+                    link_table_id.deleteRow(1);
+                    link_table_id.deleteRow(1);
+               }
+
+               newTR1 = tran_table_id.insertRow(2);
+               //newTR2 = tran_table_id.insertRow(4);
+               newTR3 = link_table_id.insertRow(1);
+               newTR4 = link_table_id.insertRow(2);
+
+               newTR.insertCell(0).innerHTML = ' _(VPI)_: ';
+               newTR.insertCell(1).innerHTML = " <span id='vpi'>_(N/A)_</span> ";
+               newTR1.insertCell(0).innerHTML = ' _(VCI)_: ';
+               newTR1.insertCell(1).innerHTML = '<span id="vci">_(N/A)_</span> ';
+               //newTR2.insertCell(0).innerHTML = ' VLAN: ';
+               //newTR2.insertCell(1).innerHTML = '<span id="vlan">PTM201</span>';
+
+               newTR3.insertCell(0).innerHTML = ' _(Broadband Mode Setting)_: ';
+               newTR3.insertCell(1).innerHTML = '<span id="dsl_mode">_(MULTIMODE)_</span>';
+               newTR4.insertCell(0).innerHTML = ' _(Broadband Negotiated Mode)_: ' ;
+               newTR4.insertCell(1).innerHTML = '<span id="nego_mode">_(MULTIMODE)_</span>';
+               //document.getElementById("vlan").innerHTML  = "PTM&nbsp;" + l2infoptm[8];
+
+               //ptm qos
+               newTR6 = tran_table_id.insertRow(3);
+               newTR6.insertCell(0).innerHTML = 'ATM QoS class: ';
+               newTR6.insertCell(1).innerHTML = '<span id="atm_qos_status">_(N/A)_</span> ';
+
+               //newTR7 = tran_table_id.insertRow(4);
+               //newTR7.insertCell(0).innerHTML = 'PTM VLAN QoS: ';
+               //newTR7.insertCell(1).innerHTML = '<span id="ptm_vlan_qos">0</span> ';
+
+               //document.getElementById("ptm_vlan_qos").innerHTML  = l2infoptm[9];
+               //document.getElementById("mtu_size").innerHTML = l2infoptm[12];
+               dslcontype = "PTM";
+
+               l2infoptm[7] = htmlDecodeStr(l2infoptm[7]);
+               if (l2infoptm[7] == "ADSL_Modulation_All")
+                   Mode = "MULTIMODE";
+               else if(l2infoptm[7]  == "ADSL_G.dmt")
+                   Mode = "G.DMT";
+               else if(l2infoptm[7]  == "ADSL_ANSI_T1.413")
+                   Mode = "T1.413";
+               else if(l2infoptm[7]  == "ADSL_G.dmt.bis")
+                   Mode = "ADSL2";
+               else if(l2infoptm[7]  == "ADSL_G.lite")
+                   Mode = "G.Lite";
+               else if(l2infoptm[7]  == "ADSL_2plus")
+                   Mode = "ADSL2+";
+               else if(l2infoptm[7]  == "8A")
+                   Mode = "VDSL2 - 8A";
+               else if(l2infoptm[7]  == "8B")
+                   Mode = "VDSL2 - 8B";
+			   else if(l2infoptm[7]  == "8C")
+                   Mode = "VDSL2 - 8C";
+			   else if(l2infoptm[7]  == "8D")
+                   Mode = "VDSL2 - 8D";
+               else if(l2infoptm[7]  == "12A")
+                   Mode = "VDSL2 - 12A";
+               else if(l2infoptm[7]  == "12B")
+                   Mode = "VDSL2 - 12B";
+               else if(l2infoptm[7]  == "17A")
+                   Mode = "VDSL2 - 17A";
+
+               document.getElementById("dsl_mode").innerHTML  = Mode;
+
+               if (dslsts_temp[0] == "Up")
+               {
+                   if (dslsts_temp[18] == "ADSL_G.dmt")
+                       Nego_Mode = "G.DMT";
+                   else if(dslsts_temp[18] == "ADSL_ANSI_T1.413")
+                       Nego_Mode = "T1.413";
+                   else if(dslsts_temp[18] == "ADSL_G.dmt.bis")
+                       Nego_Mode = "ADSL2";
+                   else if(dslsts_temp[18] == "ADSL_G.lite")
+                       Nego_Mode = "G.Lite";
+                   else if(dslsts_temp[18] == "ADSL_2plus")
+                       Nego_Mode = "ADSL2+";
+                   else  if (dslsts_temp[18] == "8a")
+                       Nego_Mode = "VDSL2 - 8A";
+                   else if(dslsts_temp[18] == "8b")
+                       Nego_Mode = "VDSL2 - 8B";
+				   else if(dslsts_temp[18] == "8c")
+                       Nego_Mode = "VDSL2 - 8C";
+				   else if(dslsts_temp[18] == "8d")
+                       Nego_Mode = "VDSL2 - 8D";
+                   else if(dslsts_temp[18] == "12a")
+                       Nego_Mode = "VDSL2 - 12A";
+                   else if(dslsts_temp[18] == "12b")
+                       Nego_Mode = "VDSL2 - 12B";
+                   else if(dslsts_temp[18] == "17a")
+                       Nego_Mode = "VDSL2 - 17A";
+                   else
+                       Nego_Mode = "MULTIMODE";;
+                }
+                else
+                    Nego_Mode = "Not Trained";
+                document.getElementById("nego_mode").innerHTML = Nego_Mode;
+
+                /*
+                //port
+                newTR.insertCell(0).innerHTML = 'PORT: ';
+                newTR.insertCell(1).innerHTML = '<span id="port">0</span> ';
+                document.getElementById("port").innerHTML = l2info[1];
+                //ptm qos
+                newTR6 = table_id.insertRow(11);
+                newTR6.insertCell(0).innerHTML = 'PTM QoS status: ';
+                newTR6.insertCell(1).innerHTML = '<span id="qos_status">DISABLED</span> ';
+
+                newTR7 = table_id.insertRow(12);
+                newTR7.insertCell(0).innerHTML = 'QoS High  priority : ';
+                newTR7.insertCell(1).innerHTML = '<span id="qos_pri_high"></span> ';
+
+                newTR2 = table_id.insertRow(8);
+                newTR2.insertCell(0).innerHTML = 'QoS Normal priority: ';
+                newTR2.insertCell(1).innerHTML = '<span id="qos_pri_nor"></span> ';
+
+                if (l2info[2] == "1")
+                    document.getElementById("qos_pri_high").innerHTML = "Enabled";
+                else
+                    document.getElementById("qos_pri_high").innerHTML = "Disabled";
+
+                if (l2info[3] == "1")
+                    document.getElementById("qos_pri_nor").innerHTML = "Enabled";
+                else
+                    document.getElementById("qos_pri_nor").innerHTML = "Disabled";
+
+                if (l2info[4] == "1")
+                    document.getElementById("qos_status").innerHTML = "Enabled";
+                else
+                    document.getElementById("qos_status").innerHTML = "Disabled";
+                */
+            }
+        }
+        else
+        {
+            if (tag == 1)
+            {
+                if (dslcontype == "DISCON")
+                {
+                    tran_table_id.deleteRow(2);
+                    tran_table_id.deleteRow(2);
+                    //tran_table_id.deleteRow(3);
+                    //tran_table_id.deleteRow(3);
+                }
+                else if (dslcontype == "ATM")
+                {
+                    tran_table_id.deleteRow(2);
+                    tran_table_id.deleteRow(2);
+                }
+                else if (dslcontype == "PTM")
+                {
+                    tran_table_id.deleteRow(2);
+                    tran_table_id.deleteRow(2);
+                    //tran_table_id.deleteRow(2);
+                    //tran_table_id.deleteRow(3);
+                }
+
+                link_table_id.deleteRow(1);
+                link_table_id.deleteRow(1);
+            }
+
+            newTR1 = tran_table_id.insertRow(2);
+            //newTR2 = tran_table_id.insertRow(4);
+            newTR3 = link_table_id.insertRow(1);
+            newTR4 = link_table_id.insertRow(2);
+
+            newTR.insertCell(0).innerHTML = ' _(VPI)_: ';
+            newTR.insertCell(1).innerHTML = " <span id='vpi'>_(N/A)_</span> ";
+            newTR1.insertCell(0).innerHTML = ' _(VCI)_: ';
+            newTR1.insertCell(1).innerHTML = '<span id="vci">_(N/A)_</span> ';
+            //newTR2.insertCell(0).innerHTML = ' VLAN: ';
+            //newTR2.insertCell(1).innerHTML = '<span id="vlan">_(N/A)_</span>';
+            newTR3.insertCell(0).innerHTML = ' _(Broadband Mode Setting)_: ';
+            newTR3.insertCell(1).innerHTML = '<span id="dsl_mode">_(MULTIMODE)_</span>';
+            newTR4.insertCell(0).innerHTML = ' _(Broadband Negotiated Mode)_: ';
+            newTR4.insertCell(1).innerHTML = '<span id="nego_mode">_(Not Trained)_</span>';
+            newTR6 = tran_table_id.insertRow(3);
+            newTR6.insertCell(0).innerHTML = 'ATM QoS class: ';
+            newTR6.insertCell(1).innerHTML = '<span id="atm_qos_status">_(N/A)_</span> ';
+            //newTR7 = tran_table_id.insertRow(5);
+            //newTR7.insertCell(0).innerHTML = 'PTM VLAN QoS: ';
+            //newTR7.insertCell(1).innerHTML = '<span id="ptm_vlan_qos">0</span> ';
+            dslcontype = "DISCON";
+
+            document.getElementById("retains_time").innerHTML = "0 _(Days)_, 0_(H)_:0_(M)_:0_(S)_" ;
+            setTransportStatusDef();
+            setChannelStatusDef();
+            setLevelsStatusDef();
+        }
+    }else{
+        setTransportStatusDef();
+        setBroadbandStatusDef();
+        setChannelStatusDef();
+        setLevelsStatusDef();
+    }
+}
+function setBroadbandStatusDef(){
+		document.getElementById("retains_time").innerHTML = "0 _(Days)_, 0_(H)_:0_(M)_:0_(S)_" ;
+		document.getElementById("retains_num").innerHTML = "_(N/A)_";
+		document.getElementById("retains_num_last24H").innerHTML = "_(N/A)_";
+		document.getElementById("adslLprs").innerHTML = "_(N/A)_";
+		document.getElementById("adslLoss").innerHTML = "_(N/A)_";
+		document.getElementById("adslRetrLom").innerHTML = "_(N/A)_";
+		document.getElementById("adslInitErr").innerHTML = "_(N/A)_";
+		document.getElementById("adslUAS").innerHTML = "_(N/A)_";
+}
+function setChannelStatusDef(){
+		//Channel -> Status
+		document.getElementById("Near_endCRC").innerHTML = "_(N/A)_";
+		document.getElementById("Far_endCRC").innerHTML = "_(N/A)_";
+		document.getElementById("Near_endCRC_cnt").innerHTML = "_(N/A)_";
+		document.getElementById("Far_endCRC_cnt" ).innerHTML = "_(N/A)_";
+		document.getElementById("Near_endRS").innerHTML = "_(N/A)_";
+		document.getElementById("Far_endRS").innerHTML = "_(N/A)_";
+		document.getElementById("Near_endFEC").innerHTML = "_(N/A)_";
+		document.getElementById("Far_endFEC").innerHTML = "_(N/A)_";
+}
+function setLevelsStatusDef(){
+		//levels->Downstream->Upstream
+		document.getElementById("speed_d").innerHTML = "0";
+		document.getElementById("speed_u").innerHTML = "0";
+		document.getElementById("a_speed_d").innerHTML = "0";
+		document.getElementById("a_speed_u").innerHTML = "0";
+		document.getElementById("snr_margin").innerHTML = "0";
+		document.getElementById("snr_margin_u").innerHTML = "0";
+		document.getElementById("attenuation").innerHTML = "0";
+		document.getElementById("attenuation_u").innerHTML = "0";
+		document.getElementById("down_power").innerHTML = "0";
+		document.getElementById("up_power").innerHTML = "0";
+}
+function setTransportStatusDef(){
+		//document.getElementById("mtu_size").innerHTML = "_(N/A)_";
+		document.getElementById("txPacket").innerHTML = "_(N/A)_";
+		document.getElementById("rxPacket").innerHTML = "_(N/A)_";
+		document.getElementById("txPacketErr").innerHTML = "_(N/A)_";
+		document.getElementById("rxPacketErr").innerHTML = "_(N/A)_";
+		document.getElementById("discard_pkt_up").innerHTML = "_(N/A)_";
+		document.getElementById("discard_pkt_down").innerHTML = "_(N/A)_";
+}
+
+function do_load(val)
+{
+   var line1Info = '<%ejGetOther(dslLinkBondRate, 0)%>';
+   var line2Info = '<%ejGetOther(dslLinkBondRate, 1)%>';
+   if (tag == 1)
+   {
+      if (val != 0)
+      {
+         wanInfNamesDsl = '';
+         uprate = '';
+         downrate = '';
+         phy_status = 'Disconnected';
+         isp_status = 'Disconnected';
+         usrname = '';
+         ISP_prot = '';
+         dns1 = '';
+         dns2 = '';
+         soft_ver = '';
+         ISP_status = 'Disconnected';
+         dslstatus = '' ;
+         dslsts_temp = '';
+         adslRetr = '';
+         adslLprs = '';
+         adslLoss = '';
+         adslRetrLom = '';
+         adslInitErr = '';
+         adslUAS = '';
+         chType = '';
+         modem_uptime = '';
+         stat_packets = '';
+         sessionInfo = '';
+         temp = '';
+         sesTimeRec = "";
+         upTimeRec = "";
+         key = '';
+         pppconstatus = '';
+         pppLcpIpcpinfo = '';
+         layer2Infoatm = '';
+         layer2Infoptm = '';
+         wanPhy = '';
+         wanEthLinkStatus = '';
+         wanInfNamesEwan = '';
+         line1Info = '';
+         line2Info = '';
+         
+
+         statusinfo = val.split('+');
+         wanInfNamesDsl = statusinfo[0];
+         uprate = statusinfo[1];
+         downrate = statusinfo[2];
+         soft_ver = htmlDecodeStr(statusinfo[3]);
+         dslstatus = statusinfo[4];
+         if (dslstatus == undefined)
+            http_refresh();
+         dslsts_temp = dslstatus.split("|") ;
+         adslRetr = htmlDecodeStr(statusinfo[5]);
+         adslLprs = htmlDecodeStr(statusinfo[6]);
+         adslLoss = htmlDecodeStr(statusinfo[7]);
+         adslRetrLom = htmlDecodeStr(statusinfo[8]);
+         adslInitErr = htmlDecodeStr(statusinfo[9]);
+         adslUAS = htmlDecodeStr(statusinfo[10]);
+         chType = htmlDecodeStr(statusinfo[11]);
+         modem_uptime = statusinfo[12];
+         stat_packets = statusinfo[13].split("|");
+         if(stat_packets == undefined)
+         {
+	     http_refresh();
+	 }
+         sessionInfo = statusinfo[14];
+         temp=sessionInfo.split("|") ;
+         key = statusinfo[17];
+         pppLcpIpcpinfo = statusinfo[18];
+         pppconstatus = statusinfo[19];
+         layer2Infoatm = statusinfo[20];
+         layer2Infoptm = statusinfo[21];
+         wanPhy = htmlDecodeStr(statusinfo[22]);
+         wanEthLinkStatus = statusinfo[23];
+         wanInfNamesEwan = statusinfo[24];
+         line1Info = statusinfo[25];
+         line2Info = statusinfo[26];
+         if( (board_id == "V2000H" || board_id == "T2200H" || board_id == "T3200" || board_id == "T3200BM" || board_id == "T3200B" || board_id == "T3200M") && bonding == 0 )
+         {
+             if(currentport  !=  statusinfo[27])
+	     {
+               currentport = statusinfo[27];
+               var lochead = 'modemstatus_wanstatus.cgi?bondingLineNum=1';
+			   lochead += '&sessionKey=' + sessionKey;
+               postSubmit(lochead);
+	     }
+	 }
+
+      }
+   }
+
+
+   clear_info = '<%ejGetOther(clearinfo)%>';
+   clear_temp = clear_info.split("|");
+
+   sesTimeRec   = clear_temp[0];
+   pppClearRecv = clear_temp[1];
+   pppClearSend = clear_temp[2];
+   upTimeRec    = clear_temp[3];
+   dsl1ClearTime = clear_temp[4];
+   dsl2ClearTime = clear_temp[5];
+
+   if(wanEthLinkStatus == "Up")
+   {
+	 wanPhy = "Ethernet";
+   }
+    var line1_temp;
+    var line2_temp;
+    if(board_id == "V2000H" || board_id == "T2200H" || board_id == "T3200" || board_id == "T3200BM" || board_id == "T3200B" || board_id == "T3200M")
+    {
+       if( bonding == 0 && currentport == 1 )
+       {
+           dslLineTemp1 = 2;
+           dslLineTemp2 = 1;
+           line1_temp = line2Info.split("|");
+           line2_temp = line1Info.split("|");
+       }
+       else
+       {
+           dslLineTemp1 = 1;
+           dslLineTemp2 = 2;
+           line1_temp = line1Info.split("|");
+           line2_temp = line2Info.split("|");
+       }
+   }
+   else
+   {
+       line1_temp = line1Info.split("|");
+       line2_temp = line2Info.split("|");
+       dslLineTemp1 = 1;
+   }
+   if (dslLine == dslLineTemp1)
+      side_nav("wanstatus");
+   else
+      side_nav("wanstatus2");
+
+  // print_phy();
+  // print_isp();
+
+   var wanNameTypes;
+   var nameType;
+   var wanEntryInfo;
+   var ISP_proto;
+   var status;
+   var ewan_mtu = "_(N/A)_";
+
+   if (wanPhy == "xDSL")
+   {
+      if (wanInfNamesDsl != "")
+      {
+         wanNameTypes = wanInfNamesDsl.split('|');
+         nameType = wanNameTypes[0].split(':');
+         ISP_proto = htmlDecodeStr(nameType[3]);
+				 //bridge mode
+         if(ISP_proto == "Bridge")
+         {
+             status = htmlDecodeStr(nameType[7]);
+         }
+         else
+         {
+             wanEntryInfo = nameType[4].split('/');
+
+             status = htmlDecodeStr(wanEntryInfo[7]);
+         }
+          // ppp
+         if (ISP_proto == "PPPoE" || ISP_proto == "PPPoA")
+         {
+            usrname = htmlDecodeStr(wanEntryInfo[0]);
+         }
+
+         if (ISP_proto == "IPoE" && status == "Connected")
+         {
+				if (!isValidIpAddress(htmlDecodeStr(wanEntryInfo[1])) )
+              {
+                  status = "Connecting";
+              }
+         }
+
+
+/*
+         wanEntryInfo = nameType[4].split('/');
+
+
+         status = wanEntryInfo[7];
+				 if(status == "Connected")
+         {
+              if (!isValidIpAddress(wanEntryInfo[1]) )
+              {
+                  status = "Connecting";
+              }
+         }
+         // ppp
+         if (ISP_proto == "PPPoE" || ISP_proto == "PPPoA")
+         {
+            usrname = decodeUrl(wanEntryInfo[0]);
+         } else if(ISP_proto == "Bridge") {
+			status = nameType[7];
+         }
+*/
+      }
+
+      if (dslstatus == "")
+      {
+         phy_status = "Disconnected";
+      }
+      else
+      {
+				if(board_id == "V2000H" || board_id == "T2200H" || board_id == "T3200" || board_id == "T3200BM" || board_id == "T3200B" || board_id == "T3200M")
+				{
+					if( ((line1_temp[0] == "Up") && (dslLine == dslLineTemp1)) || ((line2_temp[0] == "Up") && (dslLine == dslLineTemp2)))
+					{
+			            phy_status="Connected";
+			            if( dslLine == 1 )
+					{
+						uprate = line1_temp[1]+" Kbps";
+						downrate = line1_temp[2]+" Kbps";
+					}
+					else if(dslLine == 2 )
+					{
+					    uprate = line2_temp[1]+" Kbps";
+							downrate = line2_temp[2]+" Kbps";
+					}
+		       }else if(((line1_temp[0] == "EstablishingLink") && (dslLine == dslLineTemp1)) || ((line2_temp[0] == "EstablishingLink") && (dslLine == dslLineTemp2)))
+						{
+							if( dslLine == 1 )
+						{
+							uprate = "0 Kbps";
+							downrate ="0 Kbps";
+						}
+						else if(dslLine == 2 )
+						{
+						   uprate = "0 Kbps";
+							downrate ="0 Kbps";
+						}
+					phy_status="Connecting";
+			    }
+		else
+						{
+							if( dslLine == 1 )
+						{
+							uprate = "0 Kbps";
+							downrate ="0 Kbps";
+						}
+						else if(dslLine == 2 )
+						{
+						    uprate = "0 Kbps";
+							downrate ="0 Kbps";
+						}
+					phy_status="Disconnected";
+			      }
+		 }
+		 else
+		 {
+	         if (dslsts_temp[0] == "Up" )
+	         {
+	            phy_status = "Connected";
+	            uprate += 'Kbps';
+	            downrate += 'Kbps';
+
+	         }
+	         else if (dslsts_temp[0] == "EstablishingLink" )
+	         {
+	            phy_status = "Connecting";
+	         }
+	         else
+	         {
+	            phy_status = "Disconnected";
+	         }
+		  }
+
+      }
+
+   }
+   else if (wanPhy == "Ethernet")
+   {
+      if (wanInfNamesEwan != "")
+      {
+         wanNameTypes = wanInfNamesEwan.split('|');
+         nameType = wanNameTypes[0].split(':');
+         ISP_proto = htmlDecodeStr(nameType[0]);
+
+         // PPP
+         if (ISP_proto == "PPPoE" || ISP_proto == "PPPoA")
+         {
+            usrname = htmlDecodeStr(nameType[2]);
+            status = htmlDecodeStr(nameType[8]);
+            ewan_mtu = htmlDecodeStr(nameType[15]);
+         }
+         else // DHCP
+         {
+            status = htmlDecodeStr(nameType[8]);
+            ewan_mtu = htmlDecodeStr(nameType[12]);
+         }
+      }
+
+	phy_status = "Disconnected";
+   }
+
+   if ((wanPhy == "xDSL" && wanInfNamesDsl != "") ||
+       (wanPhy == "Ethernet" && wanInfNamesEwan != ""))
+   {
+      if (ISP_proto == "PPPoE" || ISP_proto == "PPPoA")
+      {
+         //ppp staus
+         if (status == "Connecting" && phy_status == "Connected" )
+         {
+//          document.getElementById("pppoe_status").className = "status_text_y";
+//          document.getElementById("pppoe_status").innerHTML = "Connecting";
+
+            session_info();
+            show_ppp_status();
+            //Show ppp connect status
+         show_ppp_lcp_ipcp_status();
+         }
+         else if (status == "Connected" && phy_status == "Connected" )
+         {
+//          document.getElementById("pppoe_status").className = "status_text";
+//          document.getElementById("pppoe_status").innerHTML = "Connected";
+
+            session_info();
+            show_ppp_status();
+            //Show ppp connect status
+         show_ppp_lcp_ipcp_status();
+         }
+         else
+         {
+//          document.getElementById("pppoe_status").className = "status_text_r";
+//          document.getElementById("pppoe_status").innerHTML = "Not Connected";
+            document.getElementById("Packet_sent").innerHTML = "_(N/A)_";
+            document.getElementById("Packet_rece").innerHTML = "_(N/A)_";
+            document.getElementById("modem_uptime").innerHTML = "0 _(Days)_, 00_(H)_:00_(M)_:00_(S)_";
+            document.getElementById("session_time").innerHTML = "0 _(Days)_ 00_(H)_:00_(M)_:00_(S)_";
+            show_ppp_lcp_ipcp_status();
+         }
+
+         //ISP proto
+         document.getElementById("ISP_proto").innerHTML = ISP_proto;
+         //User Name
+         document.getElementById("username").innerHTML = usrname;
+         //Mac Address
+//       document.getElementById("mac_addr").innerHTML = mac_addr;
+      }
+      else // DHCP
+      {
+         //User Name
+         document.getElementById("username").innerHTML = "_(N/A)_";
+         //ISP proto
+         document.getElementById("ISP_proto").innerHTML = "_(N/A)_";
+         document.getElementById("Packet_rece").innerHTML = "_(N/A)_";
+         document.getElementById("Packet_sent").innerHTML = "_(N/A)_";
+      }
+   }
+
+   //alert("phy_status="+phy_status);
+   if ((status == "Connecting") && (phy_status == "Connected"))
+      ISP_status = "Connecting";
+   else if ((status == "Connected") && (phy_status == "Connected"))
+      ISP_status = "Connected";
+   else
+      ISP_status = "Disconnected";
+
+   if ((wanPhy != "Ethernet") && (line1_temp[0] != "Up") && (line2_temp[0] != "Up") )
+   {
+      ISP_status = "Disconnected";
+   }
+
+   if (ISP_status == "Connected")
+   {
+      document.getElementById("ISP_status2").className = "status_text";
+   }
+   else if (ISP_status == "Connecting")
+   {
+      document.getElementById("ISP_status2").className = "status_text_y";
+   }
+   else
+   {
+      document.getElementById("ISP_status2").className = "status_text_r";
+      document.getElementById("Packet_sent").innerHTML = "_(N/A)_";
+      document.getElementById("Packet_rece").innerHTML = "_(N/A)_";
+   }
+
+   if (phy_status == "Connected")
+   {
+//    document.getElementById("broadband").className = "status_text";
+//    document.getElementById("broadband").innerHTML = "Showtime";
+      document.getElementById("ISP_status1").className = "status_text";
+   }
+   else if (phy_status == "Connecting")
+   {
+//    document.getElementById("broadband").className = "status_text_y";
+//    document.getElementById("broadband").innerHTML = "Training";
+      document.getElementById("ISP_status1").className = "status_text_y";
+   }
+   else
+   {
+//    document.getElementById("broadband").className = "status_text_r";
+//    document.getElementById("broadband").innerHTML = "Idle";
+      document.getElementById("ISP_status1").className = "status_text_r";
+      //document.getElementById("mtu_size").innerHTML = "_(N/A)_";
+   }
+	var phy_status_replace = "_(Connected)_";
+	var isp_status_replace = "_(Connected)_";
+	if(phy_status=="Disconnected"){
+		phy_status_replace = "_(Disconnected)_";
+	}else if(phy_status=="Connecting"){
+		phy_status_replace = "_(Connecting)_";
+	}
+
+	if(ISP_status=="Disconnected"){
+		isp_status_replace = "_(Disconnected)_";
+	}else if(ISP_status=="Connecting"){
+		isp_status_replace = "_(Connecting)_";
+	}
+   document.getElementById("ISP_status1").innerHTML =  phy_status_replace;
+   document.getElementById("ISP_status2").innerHTML =  isp_status_replace;
+// document.getElementById("broadband").innerHTML = phy_status;
+
+   //dsl status
+   if (wanPhy == "xDSL")
+      show_dsl_status();
+   else if (wanPhy == "Ethernet")
+   {
+      document.getElementById("chType").innerHTML = "_(N/A)_";
+      //document.getElementById("mtu_size").innerHTML = ewan_mtu;
+   }
+
+   setTimeout("http_refresh()", 5000);
+}
+
+function WanStatusClear()
+{
+    clearTimeInc();
+    var lochead = 'modemstatus_wanstatus.cgi?';
+    var loc = '';
+
+    var linenum = dslLine -1;
+
+    loc += 'bondingLineNum=' + linenum;
+    loc += '&sesTimeRec=' + sesTimeRec;
+    loc += '&pppClearRecv=' + pppClearRecv;
+    loc += '&pppClearSend=' + pppClearSend;
+    loc += '&upTimeRec=' + upTimeRec;
+
+    loc += '&dsl1ClearTime=' + dsl1ClearTime;
+    loc += '&dsl2ClearTime=' + dsl2ClearTime;
+
+    loc += '&wanClearClick=1';
+	loc += '&sessionKey=' + sessionKey;
+    loc += '&nothankyou=0';
+    loc = encrypt_query(loc,key);
+    lochead += loc;
+    //var code = 'location="' + lochead + '"';
+    //eval(code);
+    postSubmit(lochead);
+}
+
+function http_refresh()
+{
+	  var xmlhttp;
+	  try
+	  {
+	    if (window.ActiveXObject)
+	      {
+	        for (var i = 5; i > -1; i--)
+	          {
+	            try
+	            {
+	              if (i == 2)
+	                {
+
+	                  xmlhttp = new ActiveXObject ("Microsoft.XMLHTTP");
+	                }
+	              else
+	                {
+
+	                  xmlhttp =
+	                    new ActiveXObject ("Msxml2.XMLHTTP." + i + ".0");
+	                }
+
+	              break;
+	            }
+	            catch (e)
+	            {
+	              xmlhttp = false;
+	            }
+	          }
+	      }
+	    else if (window.XMLHttpRequest)
+	      {
+	        xmlhttp = new XMLHttpRequest ();
+	      }
+	  }
+
+	  catch (e)
+	  {
+	    xmlhttp = false;
+	  }
+
+    if (xmlhttp != null)
+    {
+        //SW-Bug #127719
+        var curTime = new Date();
+        curTime = curTime.getTime();
+        xmlhttp.open("GET","./modemstatus_wanstatus_refresh.html?time="+curTime,true);
+        xmlhttp.onreadystatechange = function()
+        {
+            if (xmlhttp.readyState==4)
+            {
+                var statusval = xmlhttp.responseText;
+                tag = 1;
+                do_load(statusval);
+            }
+        }
+
+	xmlhttp.send(null);
+   }
+}
+function dom_load()
+{
+	var vlocal = window.location.href;
+	if (vlocal.indexOf("wanClearClick") != -1) {
+		var newUrl;
+		newUrl = "modemstatus_wanstatus.cgi?bondingLineNum=" + dslLine;
+	    newUrl += '&sessionKey=' + sessionKey;
+		window.location.href = newUrl;
+		return false;
+	}
+	do_load(0);
+}
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+<script language="Javascript">
+				//if ((wanPhy == "Ethernet") && (dslLine == 2))
+				//	document.write("<h1 class='modemstatus_wanstatus'>_(WAN Ethernet Status)_ </h1>");
+				//else
+                               if(board_id == "V2000H" || board_id == "T2200H" || board_id == "T3200" || board_id == "T3200BM" || board_id == "T3200B" || board_id == "T3200M")
+                               {
+                                     if( bonding == 0 && currentport == 1 )
+                                     {
+                                         if( dslLine == 2)
+                                         {
+                                             document.write("<h1 class='modemstatus_wanstatus'>_(Line " + 1 + " Status)_ </h1>");
+                                             document.title = "_(Status)_ - _(Internet Services)_ - _(Line 1 Status)_";
+                                         }
+                                         if( dslLine == 1)
+                                         {
+                                             document.write("<h1 class='modemstatus_wanstatus'>_(Line " + 2 + " Status)_ </h1>");
+                                             document.title = "_(Status)_ - _(Internet Services)_ - _(Line 2 Status)_";
+                                         }
+                                     }
+                                     else
+                                     {
+                                         document.write("<h1 class='modemstatus_wanstatus'>_(Line " + dslLine + " Status)_ </h1>");
+                                         document.title = "_(Status)_ - _(Internet Services)_ - _(Line "+dslLine+" Status)_";
+                                     }
+					           }
+
+					else
+                                {
+                                     document.write("<h1 class='modemstatus_wanstatus'>_(xDSL Status)_ </h1>");
+                                     document.title = "_(Status)_ - _(Internet Services)_ - _(xDSL Status)_";
+                                }
+
+
+</script>
+                <form>
+				<!--<p>Connection Status</p>-->
+				<table width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+					<tr>
+	                    <th width="50%" style="text-align:left">_(Connection)_</th>
+	                    <th width="50%" style="text-align:left">_(Status)_</th>
+	                </tr>
+					<tr>
+						<td >_(Telus Broadband)_: </td>
+						<td><span class="status_text" id='ISP_status1'>_(Connected)_</span></td>
+					</tr>
+
+					<tr>
+						<td >_(Internet Service Provider)_:</td>
+						<td ><span class="status_text" id='ISP_status2'>_(Connected)_</span></td>
+					</tr>
+				</table>
+
+			    <!--<p>PPP Status</p>-->
+					<table width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                        <tr>
+                            <th width="50%" style="text-align:left">_(PPP Parameter)_</th>
+                            <th width="50%" style="text-align:left">_(Status)_</th>
+                        </tr>
+						<tr>
+							<td>_(User Name)_: </td>
+							<td><span id='username'>&nbsp;</span></td>
+						</tr>
+						<tr>
+							<td >_(PPP Type)_: </td>
+							<td><span id='ISP_proto'>_(PPPoE)_</span></td>
+						</tr>
+				        <!--tr>
+							<td width="50%">Status:</td>
+							<td><span id="pppoe_status">Not Connected</span></td>
+					    </tr-->
+						<!--tr>
+							<td>Server MAC Address:</td>
+
+							<td><span id='mac_addr'>N/A</span></td>
+						</tr-->
+						<!--tr>
+							<td>Session ID: </td>
+							<td><span id='session_id'>N/A</span></td>
+						</tr-->
+						<tr>
+							<td>_(LCP State)_:</td>
+							<td ><span id='lcp_status'><font color="#FF0000">_(DOWN)_</font></span></td>
+						</tr>
+						<tr>
+							<td >_(IPCP State)_: </td>
+							<td><span id='ipcp_status'><font color="#FF0000">_(DOWN)_</font></span></td>
+						</tr>
+						<tr>
+							<td >_(Authentication Failures)_: </td>
+							<td><span id="pppoe_auth">0</span></td>
+						</tr>
+						<tr>
+							<td>_(Session Time)_: </td>
+							<td ><span id='session_time'>0 _(Days)_, 00_(H)_:00_(M)_:00_(S)_</span></td>
+						</tr>
+						<tr>
+							<td >_(Packets Sent)_: </td>
+							<td><span id='Packet_sent'>&nbsp;</span></td>
+						</tr>
+						<tr>
+							<td >_(Packets Received)_: </td>
+							<td ><span id='Packet_rece'>&nbsp;</span></td>
+						</tr>
+						<tr>
+							<td >_(Modem Uptime)_: </td>
+							<td ><span id='modem_uptime'>0 _(Days)_, 00_(H)_:00_(M)_:00_(S)_</span></td>
+						</tr>
+						<tr>
+							<td >_(PPP Mode)_: </td>
+							<td ><span id='ppp_mode'>_(N/A)_</span></td>
+						</tr>
+						<!--tr>
+							<td width="50%">Discarded Packets(Within last 30 mins):</td>
+							<td><span id='Disc_packet'>0</span></td>
+						</tr-->
+					</table>
+
+			      <!--<p>Broadband Status</p>				-->
+                    <table id='link_table' width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                     <tr>
+                        <th width="50%" style="text-align:left">_(DSL Link)_</th>
+                        <th width="50%" style="text-align:left">_(Status)_</th>
+                      </tr>
+                     <tr>
+                        <td>_(DSL Link Uptime)_:</td>
+                        <td><span id='retains_time'>0 _(Days)_, 0_(H)_:0_(M)_:0_(S)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(Retrains)_:</td>
+                        <td><span id='retains_num'>_(N/A)_</span></td>
+                     </tr>
+				     <tr>
+						<td>_(Retrains in Last 24 Hours)_:</td>
+						<td><span id='retains_num_last24H'>_(N/A)_</span></td>
+				     </tr>
+                     <tr>
+                        <td>_(Loss of Power Link Failures)_:</td>
+                        <td><span id='adslLprs'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(Loss of Signal Link Failure)_:</td>
+                        <td><span id='adslLoss'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(Loss of Margin Link Failure)_:</td>
+                        <td><span id='adslRetrLom'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(Link Train Errors)_:</td>
+                        <td><span id='adslInitErr'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(Unavailable Seconds)_:</td>
+                        <td><span id='adslUAS'>_(N/A)_</span></td>
+                      </tr>
+                      </table>
+
+                     <table id='transport_table' width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                     <tr>
+                        <th width="50%" style="text-align:left">_(Transport)_</th>
+                        <th width="50%" style="text-align:left">_(Status)_</th>
+                      </tr>
+                     <!--<tr>
+                        <td>MTU Size:</td>
+                        <td><span id='mtu_size'>N/A</span></td>
+                     </tr>-->
+                     <tr>
+                        <td>_(Packets Sent)_:</td>
+                        <td><span id='txPacket'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(Packets Received)_:</td>
+                        <td><span id='rxPacket'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(Error Packets Sent)_:</td>
+                        <td><span id='txPacketErr'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(Error Packets Received)_:</td>
+                        <td><span id='rxPacketErr'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(30 Minute Discarded Packets Upstream)_:</td>
+                        <td><span id='discard_pkt_up'>_(N/A)_</span></td>
+                      </tr>
+                      <tr>
+                        <td>_(30 Minute Discarded Packets Downstream)_:</td>
+                        <td><span id='discard_pkt_down'>_(N/A)_</span></td>
+                      </tr>
+                    </table>
+
+                    <table id='channel_table' width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                    <tr>
+                        <th width="50%" style="text-align:left">_(Channel)_</th>
+                        <th width="50%" style="text-align:left">_(Status)_</th>
+                      </tr>
+                     <tr>
+                        <td>_(Channel Type)_:</td>
+                        <td><span id='chType'>_(Interleaved)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(Near End CRC Errors)_:</td>
+                        <td><span id='Near_endCRC'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(Far End CRC)_:</td>
+                        <td><span id='Far_endCRC'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(30 Minute Near End CRC)_:</td>
+                        <td><span id='Near_endCRC_cnt'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(30 Minute Far End CRC)_:</td>
+                        <td><span id='Far_endCRC_cnt'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(Near End RS FEC)_:</td>
+                        <td><span id='Near_endRS'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(Far End RS FEC)_:</td>
+                        <td><span id='Far_endRS'>_(N/A)_</span></td>
+                      </tr>
+                     <tr>
+                        <td>_(30 Minute Near End FEC)_:</td>
+                        <td><span id='Near_endFEC'>_(N/A)_</span>
+                       </td>
+                      </tr>
+                     <tr>
+                        <td>_(30 Minutes Far End FEC)_:</td>
+                        <td><span id='Far_endFEC'>_(N/A)_</span></td>
+                      </tr>
+                     </table>
+
+                     <table id='levels_table' width="80%" border="0" cellpadding="0" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+                     <tr>
+                        <th width="150" align="left">_(Levels)_</th>
+                        <th style="text-transform:none;" align="left">_(Downstream)_</th>
+                        <th style="text-transform:none;" align="left">_(Upstream)_</th>
+                      </tr>
+                     <tr>
+                        <td width="150">_(Line Rate)_:</td>
+                        <td align="left"><span id='speed_d'>0</span> Kbps</td>
+                        <td align="left"><span id='speed_u'>0</span> Kbps</td>
+                      </tr>
+                     <tr>
+                        <td width="150">_(Attainable Line Rate)_:</td>
+                        <td align="left"><span id='a_speed_d'>0</span> Kbps</td>
+                        <td align="left"><span id='a_speed_u'>0</span> Kbps</td>
+                      </tr>
+                     <tr>
+                        <td width="150">_(SNR)_:</td>
+                        <td align="left"><span id='snr_margin'>0</span> dB</td>
+                        <td align="left"><span id='snr_margin_u'>0</span> dB</td>
+                      </tr>
+                     <tr>
+                        <td width="150">_(Attenuation)_:</td>
+                        <td align="left"><span id='attenuation'>0</span> dB</td>
+			<td align="left"><span id='attenuation_u'>0</span> dB</td>
+                      </tr>
+                     <tr>
+                        <td width="150">_(Power)_:</td>
+                        <td align="left"><span id="down_power" >0</span> dBm</td>
+			<td align="left"><span id="up_power" >0</span> dBm</td>
+                      </tr>
+                  </table>
+                  <table width="80%" style="margin:10px auto 0 auto;">
+                      <tr class="wpstable">
+                          <th><a class="button1" onclick="WanStatusClear();" id="btn_clear"><span>_(Clear)_</span></a></th>
+                      </tr>
+                  </table>
+                </form>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<script type="text/javascript">
+var foobar = new domFunction(dom_load);
+function print_phy()
+{
+   var con_str_1="<span class=connected><img src='../images/connectionstatus_connected.png' width='150' height='25' /></span>";
+   var con_str_2="<span class=notconnected><img src='../images/connectionstatus_notConnected.png' width='150' height='25' /></span>";
+   var con_str_3="<span class=connecting><img src='../images/connectionstatus_connecting.png' width='150' height='25' /></span>";
+   var con_str = "";
+
+   if (wanPhy == "xDSL")
+   {
+      if (dslstatus == "")
+      {
+         con_str = con_str_2;
+         con_str += "<p class='notconnected' align='center'>_(N/A)_</p>";
+      }
+      else
+      {
+         if (dslsts_temp[0] == "Up")
+         {
+            con_str = con_str_1;
+            con_str += '<p class="connected" align="center">'+downrate+'/'+uprate+' Kbps</p>';
+         }
+         else if (dslsts_temp[0] == "EstablishingLink")
+         {
+            con_str = con_str_3;
+            con_str += '<p class="connecting" align="center">'+' 0/0 Kbps</p>';
+         }
+         else
+         {
+            con_str = con_str_2;
+            con_str += '<p class="notconnected" align="center">'+'_(N/A)_</p>';
+         }
+      }
+   }
+   else if (wanPhy == "Ethernet")
+   {
+      if (wanEthLinkStatus == "Up")
+      {
+         con_str = con_str_1;
+         con_str += "<p class='connected' align='center'>_(N/A)_</p>";
+      }
+      else
+      {
+         con_str = con_str_2;
+         con_str += "<p class='notconnected' align='center'>_(N/A)_</p>";
+      }
+   }
+   else
+   {
+      con_str = con_str_2;
+      con_str += "<p class='notconnected' align='center'>_(N/A)_</p>";
+   }
+
+   document.getElementById("printphy").innerHTML = con_str;
+}
+
+function print_isp()
+{
+   var con_str_1="<span class=connected><img src='../images/connectionstatus_connected.png' width='150' height='25' /></span>";
+   var con_str_2="<span class=notconnected><img src='../images/connectionstatus_notConnected.png' width='150' height='25' /></span>";
+   var con_str_3="<span class=connecting><img src='../images/connectionstatus_connecting.png' width='150' height='25' /></span>";
+   var con_str_4="<span class=walledgarden><img src='../images/connectionstatus_walledgarden.png' width='150' height='25' /></span>";
+   var con_str = "";
+   var usrname = "";
+
+   if ((wanPhy == "xDSL" && (dslstatus == "" || dslsts_temp[0] != "Up" || wanInfNamesDsl == "")) ||
+       (wanPhy == "Ethernet" && (wanEthLinkStatus != "Up" || wanInfNamesEwan == "")))
+   {
+      con_str = con_str_2;
+   }
+   else
+   {
+      var status;
+      var wanNameTypes;
+      var nameType;
+      var wanEntryInfo;
+      var ISP_proto;
+
+      if (wanPhy == "xDSL")
+      {
+         wanNameTypes = wanInfNamesDsl.split('|');
+         nameType = wanNameTypes[0].split(':');
+         wanEntryInfo = nameType[4].split('/');
+         ISP_proto = htmlDecodeStr(nameType[3]);
+
+         if (ISP_proto == "Bridge")
+            status = nameType[7];
+         else if (ISP_proto == "PPPoE" || ISP_proto == "PPPoA")
+         {
+            usrname =htmlDecodeStr(wanEntryInfo[0]);
+            status = htmlDecodeStr(wanEntryInfo[7]);
+         }
+         else
+            status = htmlDecodeStr(wanEntryInfo[7]);
+      }
+      else if (wanPhy == "Ethernet")
+      {
+         wanNameTypes = wanInfNamesEwan.split('|');
+         nameType = wanNameTypes[0].split(':');
+         ISP_proto = htmlDecodeStr(nameType[0]);
+
+         if (ISP_proto == "PPPoE" || ISP_proto == "PPPoA")
+         {
+            usrname = htmlDecodeStr(nameType[2]);
+            status = htmlDecodeStr(nameType[8]);
+         }
+         else
+         {
+            status = htmlDecodeStr(nameType[8]);
+         }
+      }
+
+      if (status == "Connecting")
+         con_str = con_str_3;
+      else if (status == "Connected")
+      {
+         con_str = con_str_1;
+      }
+      else
+         con_str = con_str_2;
+   }
+
+   document.getElementById("printisp").innerHTML = con_str;
+}
+</script>
+</body>
+</html>

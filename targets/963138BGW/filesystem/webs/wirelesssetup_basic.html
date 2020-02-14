@@ -1,0 +1,2026 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>_(Wireless Setup)_ - _(Basic Settings)_</title>
+  <link href="css/basic3.css" rel="stylesheet" type="text/css" />
+  <SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+  <script language="JavaScript" src="js/nav.js"></script>
+  <script language="JavaScript" src="js/htmldecode.js"></script>
+  <script language="JavaScript" src="js/util.js"></script>
+  <script language="Javascript">
+
+  var user_id=htmlDecodeStr('<%ejGet(userID)%>');
+
+  // Globle vars definition
+  var wlIndex = '<%ejGetOther(wlBandFrequency)%>';// initial default selection of band frequency.
+  var gv_cssid = htmlDecodeStr('<%ejGetWl(glbSsidChanged)%>');
+  var has_QTN = htmlDecodeStr("<%ejGet(qtnExist)%>");
+  var bandSteeringState = htmlDecodeStr("<%ejGetWl(wlAbsEnable)%>");
+  var wlChipOk = htmlDecodeStr("<%ejGetWl(wlChipOk_wl0)%>");
+
+  var ssid_num=2;
+  var gv_band = new Array(2);
+      gv_band[0] = "2";
+      gv_band[1] = "1"; //need test
+  // Array of SSID
+  var gv_ssid = new Array(ssid_num);
+  // Array of Hide SSID
+  var gv_hide = new Array(ssid_num);
+  // Array of SSID enable/disable
+  var gv_ssidEnabled=new Array(ssid_num);
+  var gv_ssidInitEnabled=new Array(ssid_num);
+  var gv_ssidGuestEnabled=new Array(ssid_num);
+  var gv_ssidPriority=new Array(ssid_num);
+
+  // wireless enable/disable
+  var gv_apEnabled;
+
+  // SSID security settings
+  var gv_wlAuthMode = new Array(ssid_num);
+  var gv_wlWep = new Array(ssid_num);
+  var gv_wlWpa = new Array(ssid_num);
+
+  // SSID WPA settings
+  var gv_psk_value = new Array();
+  var gv_encrypt_algo = new Array();
+  var gv_defaultKeyFlagPsk;
+  var gv_defaultKeyPsk = new Array();
+  var gv_defaultKeyFlagPskArray = new Array();
+
+  // WEP keys
+  var gv_defaultKeyFlagWep64;
+  var gv_defaultKeyFlagWep64Array = new Array();
+  var gv_defaultKeyFlagWep128;
+  var gv_defaultKeyFlagWep128Array = new Array();
+  var gv_defaultKeyWep128Array = new Array();
+
+  var gv_key = new Array(); //to indicate 64 bit or 128 bit (current ssid)
+  var gv_keyid = new Array();
+  var gv_keylen = new Array();
+  var gv_keybit = new Array(); // to indicate 64 bit or 128 bit
+    gv_keybit[0] = new Array();
+    gv_keybit[1] = new Array();
+    gv_keybit[2] = new Array();
+    gv_keybit[3] = new Array();
+  var gv_keyvalue_64 = new Array();
+    gv_keyvalue_64[0] = new Array();
+    gv_keyvalue_64[1] = new Array();
+    gv_keyvalue_64[2] = new Array();
+    gv_keyvalue_64[3] = new Array();
+  var gv_keyvalue_128 = new Array();
+    gv_keyvalue_128[0] = new Array();
+    gv_keyvalue_128[1] = new Array();
+    gv_keyvalue_128[2] = new Array();
+    gv_keyvalue_128[3] = new Array();
+
+  var gv_network_option=0;
+
+  var abs_action = "0";
+  var sessionKey='<%ejGetOther(sessionKey)%>';
+
+  // init global varibles
+  function init_orig_vars()
+  {
+      var i = wlIndex;
+
+      // Read AP wireless setting
+      gv_apEnabled   = document.getElementById("uiPostAPEnabled_"+i).value;
+
+      // Read PSK flag
+      gv_defaultKeyFlagPsk = document.getElementById("uiPostDefaultKeyFlagPsk_"+i).value;
+      get_defaultKeyFlagArray(gv_defaultKeyFlagPskArray, gv_defaultKeyFlagPsk);
+
+      // Read WEP key flag
+      gv_defaultKeyFlagWep64 = document.getElementById("uiPostDefaultKeyFlagWep64Bit_"+i).value;
+      gv_defaultKeyFlagWep128 = document.getElementById("uiPostDefaultKeyFlagWep128Bit_"+i).value;
+      get_defaultKeyFlagArray(gv_defaultKeyFlagWep64Array, gv_defaultKeyFlagWep64);
+      get_defaultKeyFlagArray(gv_defaultKeyFlagWep128Array, gv_defaultKeyFlagWep128);
+
+      regexp_wpa = new RegExp("wpa");
+      regexp_psk = new RegExp("psk");
+
+
+      for (var j=0; j<ssid_num; j++)
+      {
+          // Read SSID enable/disable setting
+          gv_ssidEnabled[j]  = document.getElementById("uiPostAPEnabled_"+i+"_"+j).value;
+          gv_ssidInitEnabled[j] = gv_ssidEnabled[j];
+
+          // Read SSID network name
+          gv_ssid[j]       = document.getElementById("uiPostSSID_"+i+"_"+j).value;
+          // Read SSID broadcast setting
+          gv_hide[j]       = document.getElementById("uiPostHiddenSSID_"+i+"_"+j).value;
+
+          gv_ssidGuestEnabled[j]       = document.getElementById("uiPostSSIDGuest_"+i+"_"+j).value;
+
+          if(i == "1")
+          {
+              gv_ssidPriority[j] = document.getElementById("uiPostSSIDPriority_"+i+"_"+j).value;
+          }
+          // Set SSID security array
+          gv_wlAuthMode[j] = document.getElementById("uiPostAuthMode_"+i+"_"+j).value;
+          gv_wlWep[j]      = document.getElementById("uiPostWepEnabled_"+i+"_"+j).value;
+
+          // Set PSK key
+          gv_psk_value[j]        = document.getElementById("uiPostPskValue_"+i+"_"+j).value;
+          gv_encrypt_algo[j]     = document.getElementById("uiPostEncryptAlgorithm_"+i+"_"+j).value;
+          gv_defaultKeyPsk[j]    = document.getElementById("uiPostDefaultKeyPsk"+j).value;
+
+          if (regexp_wpa.test(gv_wlAuthMode[j]) == true || regexp_psk.test(gv_wlAuthMode[j]) == true)
+              gv_wlWpa[j] = "enabled";
+          else
+              gv_wlWpa[j] = "disabled";
+
+          // Set WEP Key
+          gv_key[j]     = document.getElementById("uiPostKeyBit_"+i+"_"+j).value;
+          if (gv_key[j] == 1)
+          {//64-BIT
+              gv_keyid[j] = document.getElementById("uiPostKeyId_"+i+"_"+j).value;
+              gv_keylen[j]=5;
+          }
+          else
+          {
+              gv_keyid[j] = document.getElementById("uiPostKey128Id_"+i+"_"+j).value;
+              gv_keylen[j]=13;
+          }
+          gv_defaultKeyWep128Array[j] = document.getElementById("uiPostDefaultKeyWep128Bit"+j).value;
+          //keyValue
+          for(KEY_NO=1; KEY_NO<=4; KEY_NO++)
+          {
+              gv_keybit[j][KEY_NO] = gv_key[j];//64-BIT
+              gv_keyvalue_64[j][KEY_NO] = document.getElementById("uiPostKeyValue_"+i+"_" + KEY_NO + "_" + j).value;
+              gv_keyvalue_128[j][KEY_NO] = document.getElementById("uiPostKey128Value_"+i+"_" + KEY_NO + "_" + j).value;
+          }
+      }
+  }
+
+  /************* Begin of Callback event ************/
+
+  function onSelectWlIndex()
+  {
+      if (document.getElementById("id_wl_2").checked)
+      {
+          wlIndex = "0";
+      }
+      else if (document.getElementById("id_wl_5").checked)
+      {
+          wlIndex = "1";
+      }
+      //default set to SSID 0 as selected SSID
+      gv_cssid = "0";
+      init_orig_vars();
+      loadSecurityMode();
+      loadWpaMode();
+      loadCipherMode();
+      uiset_section_all();
+  }
+
+  // Callback event when change SSID in the drop-down box
+  function onSelectSSID()
+  {
+      gv_cssid = document.getElementById("id_ssid").selectedIndex;
+      uiset_section_all();
+  }
+
+  // Callback event when change Broadcast mode
+  function onSelecBCtMode()
+  {
+      if (document.getElementById("id_mode_bcast").checked)
+      {
+          gv_hide[gv_cssid] = 0;
+      }
+      else if (document.getElementById("id_mode_hide").checked)
+      {
+          gv_hide[gv_cssid] = 1;
+      }
+      uiset_section_all();
+  }
+
+  // Callback event when wireless enabled/disabled
+  function onClickAPEnable()
+  {
+      if (document.getElementById("id_wl_on").checked)
+      {
+          gv_apEnabled = "1";
+      }
+      else if (document.getElementById("id_wl_off").checked)
+      {
+          gv_apEnabled = "0";
+
+      }
+      uiset_section_all();
+  }
+
+  // Callback for SSID state
+  function onSelectSSIDState()
+  {
+      if (document.getElementById("id_ssid_enable").checked)
+      {
+          gv_ssidEnabled[gv_cssid] = "1";
+      }
+      else if (document.getElementById("id_ssid_disable").checked)
+      {
+          gv_ssidEnabled[gv_cssid] = "0";
+      }
+      uiset_section_all();
+  }
+
+  function onSelectSSIDGuest()
+  {
+      if (document.getElementById("id_ssidguest_enable").checked)
+      {
+          gv_ssidGuestEnabled[gv_cssid] = "1";
+      }
+      else if (document.getElementById("id_ssidguest_disable").checked)
+      {
+          gv_ssidGuestEnabled[gv_cssid] = "0";
+      }
+      uiset_section_all();
+  }
+
+  function onSelectSSIDPriority()
+  {
+      gv_ssidPriority[gv_cssid] = document.getElementById("id_ssidPriority").selectedIndex;
+      uiset_section_all();
+  }
+
+
+  // Callback for SSID input check
+  //flag: 1 is from do_apply; 0 is from input onblur.
+  var ssid_check_input = false;
+  function onInputSsidName(flag)
+  {
+      var ssid = document.getElementById("id_ssid_name");
+      var vssid = trim(ssid.value);
+      var changed = false;
+      //check SSID
+      var rege=/[^a-zA-Z0-9\-\ \.]/;
+      ssid_check_input = false;
+      if(vssid.length == 0)
+      {
+          if(!flag)
+              ssid_check_input = true;
+          alert("_(The SSID should not be empty.)_");
+          return false;
+      }
+
+      for (var i=0; i<vssid.length; i++)
+      {
+          var mat = vssid.match(rege);
+          if (mat)
+          {
+              if (mat.length > 0)
+              {
+                  changed = true;
+                  var val = vssid;
+                  vssid = val.substring(0,(val.length-1));
+                  ssid.value=vssid;
+              }
+          }
+      }
+
+      if (changed)
+      {
+          if(!flag)
+              ssid_check_input = true;
+          alert("_(The SSID must contain letters and/or numbers only, with no spaces.)_");
+          document.getElementById("id_ssid_name").value = "";
+          return false;
+      }
+
+      if (vssid.length > 32)
+      {
+          if(!flag)
+              ssid_check_input = true;
+          alert("_(The maximum length of the SSID is 32 characters.)_");
+          return false;
+      }
+
+      gv_ssid[gv_cssid] = vssid;
+      if (!checkSSID())
+      {
+          if(!flag)
+              ssid_check_input = true;
+          return false;
+      }
+      if(flag==0)
+      {	
+        uiset_section_all();
+      }
+      return true;
+  }
+
+  // Callback for changing security level
+  function onSelectSecurity()
+  {
+     var sec_type= document.getElementById("id_ssid_security_mode").value;
+     switch ( sec_type)
+     {
+        case "0":
+            // WEP
+            gv_wlWep[gv_cssid]="enabled";
+            if (gv_wlWpa[gv_cssid] == "enabled")
+                gv_wlAuthMode[gv_cssid] = "open";
+            else
+                gv_wlAuthMode[gv_cssid] = document.getElementById("uiPostAuthMode_"+wlIndex+"_"+gv_cssid).value;
+            break;
+        case "1":
+            // WPA/WPA2
+            gv_wlWep[gv_cssid]="disabled";
+            if (gv_wlWpa[gv_cssid] == "enabled")
+            {
+              gv_wlAuthMode[gv_cssid] = document.getElementById("uiPostAuthMode_"+wlIndex+"_"+gv_cssid).value;
+            }
+            else
+              gv_wlAuthMode[gv_cssid] = "psk2";
+
+
+            break;
+        case "2":
+            // OFF
+            gv_wlWep[gv_cssid]="disabled";
+            gv_wlAuthMode[gv_cssid] = "open";
+            break;
+     }
+     uiset_section_select_security();
+
+  }
+
+  // Callback for entering WEP key
+  function onInputKeyUp(Idx, Flag)
+  {
+      var i_maxlen;
+      var i_key = document.getElementById("id_key" + Idx + "_value");
+      var id_no = gv_cssid;
+
+      //determin the maxlength
+      if (gv_keybit[id_no][Idx] == 1) //64BIT
+          i_maxlen = 10;
+      else
+          i_maxlen = 26;
+
+      //Validate the key, cut off the key when it is longer than the valid length
+      if (i_key.value.length != i_maxlen)
+      {
+          if (i_key.value.length > i_maxlen)
+          {
+              var kv = i_key.value;
+              i_key.value = kv.substring(0,i_maxlen);
+          }
+      }
+
+      //Validate key's length when user finally sumbit the page
+      if (Flag==2)
+      {
+          if (i_key.value.length != i_maxlen && i_key.value.length != i_maxlen/2 )
+          {
+              //alert("The length of Key 1 must be " + i_maxlen);
+              alert("_(Invalid WEP key. You must enter a valid WEP key.)_");
+              return false;
+          }
+      }
+
+      //check key value
+      if (i_key.value.length == i_maxlen)
+      {
+          var rege=/[^a-fA-F0-9]/;
+      }
+      else
+      {
+          var rege=/[^a-zA-Z0-9\_\!\@\#\$\%\^\&\*\(\)\-\=\+\~\`\,\ \.\?\|\[\]\{\}\"\;\:\,\<\>\\\/\']/;
+      }
+
+      //var i_keyvalue = i_key.value;
+      for (var i=0; i<i_key.value.length; i++)
+      {
+          var mat = i_key.value.match(rege);
+          if (mat)
+          {
+              if (mat.length > 0)
+              {
+                  alert("_(The WEP Key can only contain letters between A and F and numbers between 0 and 9, with no spaces.)_");
+                  var val = i_key.value;
+                  i_key.value = val.substring(0,(val.length-1));
+              } //end of if (mat.length > 0)
+          } //end of if (mat)
+      }
+
+      document.getElementById("id_digital_left_" + Idx).innerHTML = (i_maxlen-parseInt(i_key.value.length))+' _(Digits left)_';
+
+      //refresh gv's
+      if (gv_keybit[id_no][Idx] == 1) //64BIT
+          gv_keyvalue_64[id_no][Idx] = i_key.value;
+      else
+          gv_keyvalue_128[id_no][Idx] = i_key.value;
+
+      if (Flag==1)
+          uiset_section_all();
+      return true;
+  }
+
+  // Callback for changing WEP auth type
+  function onSelectAuthType()
+  {
+      var i = gv_cssid;
+      if (document.getElementById("id_auth_type").selectedIndex == 0)
+      {
+         gv_wlAuthMode[i] = "open";
+      }
+      else if (document.getElementById("id_auth_type").selectedIndex == 1)
+      {
+         gv_wlAuthMode[i] = "shared";
+      }
+      uiset_section_select_security();
+  }
+
+  // Call back for select WEP KEY
+  function onSelectKeyBits(idx)
+  {
+      var i = gv_cssid;
+
+      if (document.getElementById("id_key" + idx + "_bits").selectedIndex == 0)
+      {
+          gv_keybit[i][idx] = 1;
+      }
+      else if (document.getElementById("id_key" + idx + "_bits").selectedIndex == 1)
+      {
+         gv_keybit[i][idx] = 2;
+      }
+      uiset_section_select_security();
+  }
+
+  ////On's
+  function onClickKeyNumber()
+  {
+      var i = gv_cssid;
+      var KEY_NO;
+      for(KEY_NO=1; KEY_NO<=4; KEY_NO++)
+      {
+          if (document.getElementById("id_key" + KEY_NO + "_number").checked)
+          {
+              gv_keyid[i] = KEY_NO;
+          }
+      }
+      uiset_section_all();
+  }
+
+  function onSelectDefaultWep()
+  {
+      var form = document.forms[0];
+      var i;
+      var id_no = gv_cssid;
+      if (document.getElementById("id_defaultwep_on").checked == true)
+      {
+          //gv_defaultKeyFlagWep64Array[id_no] = "1";
+          gv_defaultKeyFlagWep128Array[id_no] = "1";
+      }
+      else
+      {
+          //gv_defaultKeyFlagWep64Array[id_no] = "0";
+          gv_defaultKeyFlagWep128Array[id_no] = "0";
+      }
+      uiset_section_default_wep();
+  }
+
+  //// Callback for selecting WPA mode
+  function onSelectWpa()
+  {
+      if (document.getElementById("id_select_wpa").value == 0)
+      {
+          if (gv_network_option == 1 || gv_network_option == 0 )
+          { //Home
+              gv_wlAuthMode[gv_cssid] = "psk psk2";
+          }
+          else
+              gv_wlAuthMode[gv_cssid] = "wpa wpa2";
+      }
+      else if (document.getElementById("id_select_wpa").value == 1)
+      {
+          if (gv_network_option == 1|| gv_network_option == 0)
+          { //Home
+              gv_wlAuthMode[gv_cssid] = "psk";
+          }
+          else
+              gv_wlAuthMode[gv_cssid] = "wpa";
+      }
+      else if (document.getElementById("id_select_wpa").value == 2)
+      {
+          if (gv_network_option == 1|| gv_network_option == 0)
+          { //Home
+              gv_wlAuthMode[gv_cssid] = "psk2";
+          } else
+              gv_wlAuthMode[gv_cssid] = "wpa2";
+      }
+  }
+
+  ////On's
+  function onSelectNetworkOptions()
+  {
+      if (document.getElementById("id_default_options").checked)
+      {
+          gv_network_option = 0;
+          gv_defaultKeyFlagPskArray[gv_cssid] = "1";
+      }
+      else if (document.getElementById("id_home_network_options").checked)
+      {
+          gv_network_option = 1;
+          gv_defaultKeyFlagPskArray[gv_cssid] = "0";
+      }
+      /*comment this, since we removed the 'Enterprise Network' option
+      else if (document.getElementById("id_enterprise_network_options").checked) {
+          gv_network_option = 2;
+      gv_defaultKeyFlagPskArray[gv_cssid] = "0";
+      }*/
+      onSelectWpa();
+      //uiset_section_all();
+      uiset_section_select_security();
+  }
+
+  function onSelectcipher(value)
+  {
+      gv_encrypt_algo[gv_cssid] = value;
+  }
+
+  /************* End of Callback event ************/
+
+  /************* Begin of UI settings ************/
+
+  function uiset_section_wlIndex()
+  {
+      if(bandSteeringState == "0")
+      {
+          document.getElementById("id_bandSlct").style.display = "";
+          if (wlIndex == "0" || has_QTN == "0") // swith to 2.4G
+          {
+              document.getElementById("id_wl_5").checked = false;
+              if (has_QTN == "0")
+                  document.getElementById("id_wl_5").disabled = true;
+              document.getElementById("id_wl_2").checked = true;
+          }
+          else
+          {
+              document.getElementById("id_wl_5").checked = true;
+              document.getElementById("id_wl_2").checked = false;
+          }
+      }
+      else
+      {
+          document.getElementById("id_bandSlct").style.display = "none";
+      }
+      if(wlChipOk == "0")
+          document.getElementById("id_wl_2").disabled = true;
+  }
+
+   // Set SSID to UI
+  function uiset_section_ssid_name()
+  {
+      //value
+      document.getElementById("id_ssid_name").value = gv_ssid[gv_cssid];
+      if (gv_ssidEnabled[gv_cssid] == "1")
+      {
+          document.getElementById("id_ssid_name").disabled = false;
+      }
+      else
+      {
+          document.getElementById("id_ssid_name").disabled = true;
+      }
+  }
+
+  // Set section of wireless on/off
+  function uiset_section_apoo()
+  {
+      if (gv_apEnabled == "1")
+      {
+          document.getElementById("id_wl_on").checked = true;
+          document.getElementById("id_wl_off").checked = false;
+          document.getElementById("id_wl_settings").style.display = "block";
+      }
+      else
+      {
+          document.getElementById("id_wl_on").checked = false;
+          document.getElementById("id_wl_off").checked = true;
+          document.getElementById("id_wl_settings").style.display = "none";
+      }
+  }
+
+  // set the section of SSID state
+  function uiset_section_ssid_state()
+  {
+      //values checked
+      if (gv_ssidEnabled[gv_cssid] == "1")
+      {
+          document.getElementById("id_ssid_enable").checked = true;
+          document.getElementById("id_ssid_disable").checked = false;
+          document.getElementById("id_mode_bcast").disabled = false;
+          document.getElementById("id_mode_hide").disabled = false;
+          document.getElementById("id_ssid_settings").style.display = "block";
+          document.getElementById("id_ssid_guest").style.display = "";
+      }
+      else
+      {
+          document.getElementById("id_ssid_enable").checked = false;
+          document.getElementById("id_ssid_disable").checked = true;
+          document.getElementById("id_mode_bcast").disabled = true;
+          document.getElementById("id_mode_hide").disabled = true;
+          document.getElementById("id_ssid_settings").style.display = "none";
+      }
+  }
+
+  function loadSsidOption()
+  {
+      document.getElementById("id_ssid").innerHTML = "";
+      for (var i=0; i<ssid_num; i++)
+      {
+          document.getElementById("id_ssid")[i] = new Option(gv_ssid[i], i);
+      }
+  }
+  // Set section of SSID to UI
+  function uiset_section_ssid()
+  {
+      loadSsidOption();
+      //select
+      document.getElementById("id_ssid")[gv_cssid].selected = true;
+      document.getElementById("id_ssid_enable").disabled = false;
+      document.getElementById("id_ssid_disable").disabled = false;
+      if (gv_cssid==0)
+      {
+          document.getElementById("id_ssidguest_enable").disabled = true;
+          document.getElementById("id_ssidguest_disable").disabled = true;
+      }
+      else
+      {
+          document.getElementById("id_ssidguest_enable").disabled = false;
+          document.getElementById("id_ssidguest_disable").disabled = false;
+      }
+
+      //show default psk key
+      document.getElementById("defaultPskKey").innerHTML = gv_defaultKeyPsk[gv_cssid];
+      document.getElementById("defaultPskKey").className="status_text_g";
+
+      // show default wep key
+      document.getElementById("default_wep_key").innerHTML = gv_defaultKeyWep128Array[gv_cssid];
+      document.getElementById("default_wep_key").className = "status_text_g";
+  }
+
+  // set broadcast for SSID to UI
+  function uiset_section_BC_mode()
+  {
+      if (gv_hide[gv_cssid] == 0)
+      { //Bcast
+          document.getElementById("id_mode_bcast").checked = true;
+          document.getElementById("id_mode_hide").checked = false;
+      }
+      else
+      {//Hide
+          document.getElementById("id_mode_bcast").checked = false;
+          document.getElementById("id_mode_hide").checked = true;
+      }
+  }
+
+  // UI set for WEP key
+  function uiset_section_wep_key()
+  {
+      var form = document.forms[0];
+      var i = gv_cssid;
+      var KEY_NO;
+      for(KEY_NO=1; KEY_NO<=4; KEY_NO++)
+      {
+           // set radio check -- 1. unselect all
+           document.getElementById("id_key" + KEY_NO + "_number").checked = false;
+           // each 64/128bit select & key values
+           if (gv_keybit[i][KEY_NO] == 1)
+           { //64-BIT
+              document.getElementById("id_key" + KEY_NO + "_bit_64").selected = true;
+               document.getElementById("id_key" + KEY_NO + "_value").value = gv_keyvalue_64[i][KEY_NO];
+           }
+           else
+           {
+              document.getElementById("id_key" + KEY_NO + "_bit_128").selected = true;
+              document.getElementById("id_key" + KEY_NO + "_value").value = gv_keyvalue_128[i][KEY_NO];
+           }
+           onInputKeyUp(KEY_NO, 0);
+      }
+      // set radio check -- 2. select one
+      if (gv_keyid[i] >= 1 && gv_keyid[i] <= 4)
+      {
+          document.getElementById("id_key" + gv_keyid[i] + "_number").checked = true;
+      }
+      else
+      {
+          gv_keyid[i] = 1;
+          document.getElementById("id_key1_number").checked = true;
+      }
+  }
+
+  function uiset_section_default_wep()
+  {
+      var form = document.forms[0];
+      var i;
+      var id_no = gv_cssid;
+      //if (gv_defaultKeyFlagWep64Array[id_no] == "1") {
+      if (gv_defaultKeyFlagWep128Array[id_no] == "1")
+      {
+          document.getElementById("id_defaultwep_on").checked = true;
+          for (i=1; i<5; i++)
+          {
+              document.getElementById("id_key" + i + "_number").disabled = true;
+              document.getElementById("id_key" + i + "_value").disabled = true;
+              document.getElementById("id_key" + i + "_bits").disabled = true;
+           }
+      }
+      else
+      {
+          document.getElementById("id_defaultwep_off").checked = true;
+          if (gv_wlWep[id_no] == "enabled")
+          {
+              for (i=1; i<5; i++)
+              {
+                  document.getElementById("id_key" + i + "_number").disabled = false;
+                  document.getElementById("id_key" + i + "_value").disabled = false;
+                  document.getElementById("id_key" + i + "_bits").disabled = false;
+              }
+           }
+      }
+  }
+
+  // UI set when choose WEP mode
+  function ui_section_wep()
+  {
+      if (gv_wlAuthMode[gv_cssid] == "open" )
+      {
+          // Open mode
+          document.getElementById("id_auth_type_open").selected = true;
+      }
+      else
+      {
+          //Share mode
+          document.getElementById("id_auth_type_shared").selected = true;
+      }
+
+      uiset_section_wep_key();
+      uiset_section_default_wep();
+  }
+
+  // UI set when choose WPA/WPA2 mode
+  function ui_section_wpa()
+  {
+      switch (gv_wlAuthMode[gv_cssid])
+      {
+          case "wpa":
+          case "psk":
+              document.getElementById("id_select_wpa").value = 1;
+              break;
+          case "wpa2":
+          case "psk2":
+              document.getElementById("id_select_wpa").value = 2;
+              break;
+          case "wpa wpa2":
+          case "psk psk2":
+              document.getElementById("id_select_wpa").selectedIndex = 0;
+              break;
+      }
+
+      if (gv_encrypt_algo[gv_cssid] == "aes")
+          document.getElementById("id_wpa_cipher").value = "aes";
+      else if (gv_encrypt_algo[gv_cssid] == "tkip")
+          document.getElementById("id_wpa_cipher").value = "tkip";
+      else
+          document.getElementById("id_wpa_cipher").value = "tkip+aes";
+
+      uiset_section_network_option();
+  }
+
+function loadSecurityMode()
+{
+    document.getElementById("id_ssid_security_mode").innerHTML = "";
+    if(gv_band[wlIndex] == "1")
+    {
+        //5G
+        document.getElementById("id_ssid_security_mode")[0] = new Option("WPA2", "1");
+        document.getElementById("id_ssid_security_mode")[1] = new Option("_(OFF)_", "2");
+    }
+    else
+    {
+        //2.4G
+        document.getElementById("id_ssid_security_mode")[0] = new Option("WPA / WPA2", "1");
+        document.getElementById("id_ssid_security_mode")[1] = new Option("_(OFF)_", "2");
+    }
+}
+
+function loadWpaMode()
+{
+    document.getElementById("id_select_wpa").innerHTML = "";
+    if(gv_band[wlIndex] == "1")
+    {
+        //5G
+        document.getElementById("id_select_wpa")[0] = new Option("WPA2", "2");
+    }
+    else
+    {
+        //2.4G
+        document.getElementById("id_select_wpa")[0] = new Option("WPA or WPA2 - Personal", "0");
+        document.getElementById("id_select_wpa")[1] = new Option("WPA - Personal", "1");
+        document.getElementById("id_select_wpa")[2] = new Option("WPA2 - Personal", "2");
+    }
+}
+
+function loadCipherMode()
+{
+    document.getElementById("id_wpa_cipher").innerHTML = "";
+    if(gv_band[wlIndex] == "1")
+    {
+        //5G
+        document.getElementById("id_wpa_cipher")[0] = new Option("AES", "aes");
+    }
+    else
+    {
+        //2.4G
+        document.getElementById("id_wpa_cipher")[0] = new Option("Both", "tkip+aes");
+        document.getElementById("id_wpa_cipher")[1] = new Option("AES", "aes");
+        document.getElementById("id_wpa_cipher")[2] = new Option("TKIP", "tkip");
+    }
+}
+  //--> select security settings for SSID
+  function uiset_section_select_security()
+  {
+      var curSecurity;
+      if (gv_wlWep[gv_cssid] != "disabled"  )
+      {
+          if (gv_wlAuthMode[gv_cssid]!="radius")
+          {
+              // WEP settings
+              curSecurity = "0";
+          }
+      }
+      else
+      {
+          switch (gv_wlAuthMode[gv_cssid])
+          {
+              case "open":
+              case "shared":
+              case "None":
+                  // Security set to OFF
+                  curSecurity = "2";
+                  break;
+              default:
+                  // Security set to WPA/WPA2
+                  curSecurity = "1";
+                  break;
+           }
+       }
+
+      //Set security type
+      for(var i=0;i<document.getElementById("id_ssid_security_mode").options.length;i++)
+      {
+          if(document.getElementById("id_ssid_security_mode").options[i].value == curSecurity)
+          {
+              document.getElementById("id_ssid_security_mode").options[i].selected=true;
+              break;
+          }
+          else
+          {
+              document.getElementById("id_ssid_security_mode").options[0].selected=true;
+          }
+      }
+
+      switch(curSecurity)
+      {
+          case "0":
+              document.getElementById("id_ssid_security").style.display="block";
+              document.getElementById("id_ssid_wpa").style.display="none";
+              document.getElementById("id_ssid_wep").style.display="block";
+              ui_section_wep();
+              break;
+          case "1":
+              document.getElementById("id_ssid_security").style.display="block";
+              document.getElementById("id_ssid_wpa").style.display="block";
+              document.getElementById("id_ssid_wep").style.display="none";
+              ui_section_wpa();
+              break;
+          case "2":
+              document.getElementById("id_ssid_security").style.display="none";
+              break;
+      }
+  }
+
+  function disable_home_network()
+  {
+      document.getElementById("id_pre_shared_key").disabled = true;
+      //document.getElementById("id_wpa_cipher").disabled = true;
+  }
+  function enable_home_network()
+  {
+      document.getElementById("id_pre_shared_key").disabled = false;
+      //document.getElementById("id_wpa_cipher").disabled = false;
+  }
+
+  // WPA network options
+  function uiset_section_network_option()
+  {
+      if (gv_defaultKeyFlagPskArray[gv_cssid] == "1")
+          gv_network_option = 0;
+      else
+      {
+          switch (gv_wlAuthMode[gv_cssid])
+          {
+              case "wpa":
+              case "wpa2":
+              case "wpa wpa2":
+              //comment this, since we removed the 'Enterprise Network' option
+              //gv_network_option = 2;
+                  gv_network_option = 1;
+                  break;
+              case "psk":
+              case "psk2":
+              case "psk psk2":
+                  gv_network_option = 1;
+                  break;
+              case "open":
+              case "shared":
+              case "radius":
+               default:////default values
+                  gv_network_option = 0;
+                  break;
+            }
+      }
+
+      //select
+      if (gv_network_option == 0)
+      { //default
+          document.getElementById("id_default_options").checked = true;
+          document.getElementById("id_home_network_options").checked = false;
+          //comment this, since we removed the 'Enterprise Network' option
+          document.getElementById("id_enterprise_network_options").checked = false;
+          disable_home_network();
+      }
+      else if (gv_network_option == 1)
+      { //Home
+          document.getElementById("id_default_options").checked = false;
+          document.getElementById("id_pre_shared_key").value = gv_psk_value[gv_cssid];
+          checkPassphrase(gv_psk_value[gv_cssid]);
+          document.getElementById("id_home_network_options").checked = true;
+          //comment this, since we removed the 'Enterprise Network' option
+          document.getElementById("id_enterprise_network_options").checked = false;
+          enable_home_network();
+      }
+  }
+
+  function uiset_root_8021x()
+  {
+      if (user_id == 3)
+      {
+          document.getElementById("enterprise_radio").style.display="none";
+      }
+      else
+      {
+          document.getElementById("enterprise_radio").style.display="none";
+      }
+  }
+
+  function uiset_section_ssidguest()
+  {
+      if ( gv_ssidGuestEnabled[gv_cssid] == "1" )
+      {
+          document.getElementById("id_ssidguest_enable").checked = true;
+          document.getElementById("id_ssidguest_disable").checked = false;
+      }
+      else
+      {
+          document.getElementById("id_ssidguest_enable").checked = false;
+          document.getElementById("id_ssidguest_disable").checked = true;
+      }
+  }
+
+  function uiset_section_ssidPriority()
+  {
+      if(user_id == "3" && wlIndex == "1")
+      {
+          document.getElementById("id_ssid_priority").style.display = "";
+          document.getElementById("id_ssidPriority").selectedIndex = gv_ssidPriority[gv_cssid];
+      }
+      else
+      {
+          document.getElementById("id_ssid_priority").style.display = "none";
+      }
+  }
+
+  // Reset UI
+  function uiset_section_all()
+  {
+      uiset_section_wlIndex();
+      uiset_section_apoo();
+      uiset_section_ssid();
+      uiset_section_BC_mode();
+      uiset_section_ssid_state();
+      uiset_section_ssid_name();
+      uiset_section_select_security();
+      uiset_section_ssidguest();
+      uiset_section_ssidPriority();
+      uiset_root_8021x();
+  }
+
+  /************* End of Callback event ************/
+
+  //
+  function disable_input_all()
+  {
+      document.getElementById("id_ssid").disabled       = true;
+      document.getElementById("id_ssid_enable").disabled = true;
+      document.getElementById("id_ssid_disable").disabled = true;
+      document.getElementById("id_ssid_name").disabled = true;
+      document.getElementById("id_mode_bcast").disabled = true;
+      document.getElementById("id_mode_hide").disabled  = true;
+      document.getElementById("id_ssidPriority").disabled  = true;
+  }
+
+  //
+  function do_load()
+  {
+      htmlDecode();
+      if (has_QTN == "0")
+      {
+          wlIndex = "0";
+      }
+      else
+      {
+          if(bandSteeringState == "1")
+              wlIndex = "1";
+      }
+
+      init_orig_vars();
+      loadSecurityMode();
+      loadWpaMode();
+      loadCipherMode();
+      uiset_section_all();
+
+      //highlight the button after user click on it
+      side_nav("basicsettings");
+  }
+
+  function checkSSID()
+  {
+      for (var i=0;i<ssid_num;i++)
+      {
+          var rege=/[^a-zA-Z0-9\ \-\.]/;
+          var mat = gv_ssid[i].match(rege);
+          if (gv_cssid == i)
+              continue;
+
+          if (mat)
+          {
+              if (mat.length > 0)
+              {
+                  alert("_(The SSID)_ "+i+" _(must contain letters and/or numbers only with no spaces.)_");
+                  document.getElementById("id_ssid_name").value = "";
+                  return false;
+              }
+          }
+          if ( document.getElementById("id_ssid_name").value == gv_ssid[i] && gv_cssid != i)
+          {
+              alert("_(The SSIDs are using the same network name. You must enter different network names.)_");
+              document.getElementById("id_ssid_name").value = "";
+              return false;
+          }
+      }
+
+      return true;
+  }
+
+  function apply_wep()
+  {
+      var i = wlIndex;
+      var j =  gv_cssid;
+      document.getElementById("uiPostWepEnabled_"+i+"_"+j).value = "enabled";
+      document.getElementById("uiPostAuthMode_"+i+"_"+j).value = gv_wlAuthMode[gv_cssid];
+      // key bit
+      var key_id = gv_keyid[j];
+      gv_key[j] = gv_keybit[j][key_id];
+
+      // regenerate default key flag
+      gv_defaultKeyFlagWep64 = set_defaultKeyFlag(gv_defaultKeyFlagWep64, j, gv_defaultKeyFlagWep64Array[j]);
+      gv_defaultKeyFlagWep128 = set_defaultKeyFlag(gv_defaultKeyFlagWep128, j, gv_defaultKeyFlagWep128Array[j]);
+      document.getElementById("uiPostDefaultKeyFlagWep64Bit_"+i).value = gv_defaultKeyFlagWep64;
+      document.getElementById("uiPostDefaultKeyFlagWep128Bit_"+i).value = gv_defaultKeyFlagWep128;
+
+      if (gv_defaultKeyFlagWep128Array[j] == "1") // use default key
+      {
+          document.getElementById("uiPostKeyBit_"+i+"_"+j).value = "2"; //128 bit
+          gv_keybit[j][key_id] = 2; //128 bit
+          gv_keyvalue_128[j][key_id] = gv_defaultKeyWep128Array[j];
+      }
+      else
+      {
+          if (gv_key[j] == 0)
+          {
+              document.getElementById("uiPostKeyBit_"+i+"_"+j).value = "2";
+              gv_keybit[j][key_id] = 2;
+          }
+          else
+              document.getElementById("uiPostKeyBit_"+i+"_"+j).value = gv_key[j];
+      }
+      document.getElementById("uiPostKeyId_"+i+"_"+j).value = gv_keyid[j];
+      document.getElementById("uiPostKey128Id_"+i+"_"+j).value = gv_keyid[j];
+      // 4 key's value
+      for (var KEY_NO = 1; KEY_NO <= 4; KEY_NO++)
+      {
+          if (gv_keybit[j][KEY_NO] == 1)
+          { //64-BIT
+              document.getElementById("uiPostKeyValue_"+ i + "_" + KEY_NO + "_" + j).value = gv_keyvalue_64[j][KEY_NO];
+              document.getElementById("uiPostKeyValue_"+ i + "_" + KEY_NO + "_" + j).disabled    = false;
+              document.getElementById("uiPostKey128Value_"+ i + "_" + KEY_NO + "_" + j).disabled = true;
+          }
+          else
+          {
+              document.getElementById("uiPostKey128Value_"+ i + "_" + KEY_NO + "_" + j).value = gv_keyvalue_128[j][KEY_NO];
+              document.getElementById("uiPostKeyValue_"+ i + "_" + KEY_NO + "_" + j).disabled    = true;
+              document.getElementById("uiPostKey128Value_"+ i + "_" + KEY_NO + "_" + j).disabled = false;
+          }
+      }
+
+      //validate keys input by customer
+      //Passphrase for WEP 64 bits should be exactly 10 digits, for WEP 128 bits should be 26 digits
+      if (document.getElementById("id_defaultwep_on").checked == false)
+      {   //if not using the default key
+          if(!onInputKeyUp(gv_keyid[gv_cssid],2))
+          return false;
+      }
+
+      return true;
+  }
+
+  function apply_wpa()
+  {
+      var i = wlIndex;
+   // regenerate default key flag
+      gv_defaultKeyFlagPsk = set_defaultKeyFlag(gv_defaultKeyFlagPsk, gv_cssid, gv_defaultKeyFlagPskArray[gv_cssid]);
+      document.getElementById("uiPostDefaultKeyFlagPsk_"+i).disabled = false;
+      document.getElementById("uiPostDefaultKeyFlagPsk_"+i).value    = gv_defaultKeyFlagPsk;
+
+      document.getElementById("uiPostEncryptAlgorithm_"+i+"_"+gv_cssid).disabled = false;
+      if (document.getElementById("id_wpa_cipher").value == "aes")
+          document.getElementById("uiPostEncryptAlgorithm_"+i+"_"+gv_cssid).value = "aes";
+      else if (document.getElementById("id_wpa_cipher").value == "tkip")
+          document.getElementById("uiPostEncryptAlgorithm_"+i+"_"+gv_cssid).value = "tkip";
+      else
+          document.getElementById("uiPostEncryptAlgorithm_"+i+"_"+gv_cssid).value = "tkip+aes";
+
+      if (gv_network_option == 0)
+      { //default
+          for (var j=0;j<ssid_num;j++)
+          {
+              if (j == gv_cssid)
+              {
+                  document.getElementById("uiPostAuthMode_"+i+"_"+j).disabled      = false;
+                  document.getElementById("uiPostAuthMode_"+i+"_"+j).value         = gv_wlAuthMode[gv_cssid];
+                  document.getElementById("uiPostWepEnabled_"+i+"_"+j).disabled    = false;
+                  document.getElementById("uiPostWepEnabled_"+i+"_"+j).value       = gv_wlWep[gv_cssid];
+                  //
+                  document.getElementById("uiPostPskValue_"+i+"_"+j).disabled      = false;
+                  document.getElementById("uiPostPskValue_"+i+"_"+j).value         = gv_defaultKeyPsk[gv_cssid];
+              }
+              else
+              {
+                  document.getElementById("uiPostAuthMode_"+i+"_"+j).disabled      = true;
+                  document.getElementById("uiPostWepEnabled_"+i+"_"+j).disabled    = true;
+                  document.getElementById("uiPostPskValue_"+i+"_"+j).disabled      = true;
+                  document.getElementById("uiPostEncryptAlgorithm_"+i+"_"+j).disabled = true;
+              }
+          }
+      }
+      else if (gv_network_option == 1)
+      { //Home
+          gv_psk_value[gv_cssid] = document.getElementById("id_pre_shared_key").value;
+          //document.getElementById("uiPostDefaultKeyPsk").disabled        = true;
+          //
+          for (var j=0;j<ssid_num;j++)
+          {
+              document.getElementById("uiPostDefaultKeyPsk" + j).disabled        = true;
+              if (j == gv_cssid)
+              {
+                  //validation
+                  var rege=/[^a-zA-Z0-9a\^a\$a\#a\.a\*a\+a\?a\!a\=a\:a\|a\\a\/a\(a\)a\[a\]a\{a\}a\@a\%a\&a\"a\'a\;a\<a\>a\~a\`a\,]/;
+                  var mat = gv_psk_value[gv_cssid].match(rege);
+                  if ((gv_psk_value[gv_cssid].length < 8) || (gv_psk_value[gv_cssid].length > 63))
+                  {
+                      //alert ("The length of Pre-Shared Key must be at least 8 characters in length.");
+                      alert("_(Invalid WPA key. The WPA key must be between 8 and 63 characters in length.)_");
+                      enable_input_all();
+                      return false;
+                  }
+                  if (mat)
+                  {
+                      if (mat.length > 0)
+                      {
+                          alert("_(Invalid WPA key. You must enter a valid WPA key.)_");
+                          enable_input_all();
+                          return false;
+                      }
+                  }
+
+                  //check if has html tags
+                  if(hasHTMLTags(gv_psk_value[gv_cssid]))
+                  {
+                      alert("_(Invalid WPA key. You must enter a valid WPA key.)_");
+                      return false;
+                  }
+                  document.getElementById("uiPostAuthMode_"+i+"_"+j).disabled      = false;
+                  document.getElementById("uiPostAuthMode_"+i+"_"+j).value         = gv_wlAuthMode[j];
+                  document.getElementById("uiPostWepEnabled_"+i+"_"+j).disabled    = false;
+                  document.getElementById("uiPostWepEnabled_"+i+"_"+j).value       = gv_wlWep[gv_cssid];
+                  document.getElementById("uiPostPskValue_"+i+"_"+j).disabled      = false;
+                  document.getElementById("uiPostPskValue_"+i+"_"+j).value         = gv_psk_value[j];
+              }
+              else
+              {
+                  document.getElementById("uiPostAuthMode_"+i+"_"+j).disabled      = true;
+                  document.getElementById("uiPostWepEnabled_"+i+"_"+j).disabled    = true;
+                  document.getElementById("uiPostPskValue_"+i+"_"+j).disabled      = true;
+                  document.getElementById("uiPostEncryptAlgorithm_"+i+"_"+j).disabled = true;
+              }
+          }
+      }
+
+      return true;
+  }
+
+  function apply_sec_off()
+  {
+      document.getElementById("uiPostAuthMode_"+ wlIndex +"_"+ gv_cssid).value = "open";
+      document.getElementById("uiPostWepEnabled_"+ wlIndex +"_" + gv_cssid).value = "disabled";
+      return true;
+  }
+
+  function apply_security()
+  {
+      var sec_type= document.getElementById("id_ssid_security_mode").value;
+      /*If Desable WEP, Need update WEPEncryptionLevel to Disable*/
+      if (sec_type != 0)
+      {
+          if(gv_band[wlIndex] == "2")
+          {
+              document.getElementById("uiPostKeyBit_"+ wlIndex + "_" + gv_cssid).value = "0";
+          }
+      }
+      switch (sec_type)
+      {
+          case "0":
+              // WEP
+              return apply_wep();
+              break;
+          case "1":
+              // WPA/WPA2
+
+            return apply_wpa();
+            break;
+        case "2":
+            // OFF
+            return apply_sec_off();
+            break;
+     }
+  }
+
+
+//" 
+
+
+function do_add_elements()
+{
+    var form = document.forms[0];
+    var i=0;
+    var k=0;
+    var loc="";
+    var ssid_beg;
+    var ssid_end;
+    var radio_beg;
+    var radio_end;
+    var pairSsid_beg;
+    var pairSsid_end;
+    var pairRadio_beg;
+    var pairRadio_end;
+    var pairWidx = 0;
+
+    for(i=0;i<form.elements.length;i++)
+    {
+        if(form.elements[i].value == "ssid_beg_"+wlIndex+"_"+gv_cssid)
+        {
+            ssid_beg = i;
+        }
+        else if(form.elements[i].value == "ssid_end_"+wlIndex+"_"+gv_cssid)
+        {
+            ssid_end = i;
+        }
+        else if(form.elements[i].value == "radio_beg_"+wlIndex)
+        {
+            radio_beg = i;
+        }
+        else if(form.elements[i].value == "radio_end_"+wlIndex)
+        {
+            radio_end = i;
+            break;
+        }
+    }
+
+    for(i=ssid_beg+1;i<ssid_end;i++)
+    {
+        if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+        {
+            loc+="&";
+            loc+=form.elements[i].name;
+            loc+="=";
+            loc+=form.elements[i].value;
+        }
+    }
+
+    for(i=radio_beg+1;i<radio_end;i++)
+    {
+        if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+        {
+            loc+="&";
+            loc+=form.elements[i].name;
+            loc+="=";
+            loc+=form.elements[i].value;
+        }
+    }
+
+    if(bandSteeringState == "1")
+    {
+        for(i=0;i<form.elements.length;i++)
+        {
+            if(form.elements[i].value == "ssid_beg_"+pairWidx+"_"+gv_cssid)
+            {
+                pairSsid_beg = i;
+            }
+            else if(form.elements[i].value == "ssid_end_"+pairWidx+"_"+gv_cssid)
+            {
+                pairSsid_end = i;
+            }
+            else if(form.elements[i].value == "radio_beg_"+pairWidx)
+            {
+                pairRadio_beg = i;
+            }
+            else if(form.elements[i].value == "radio_end_"+pairWidx)
+            {
+                pairRadio_end = i;
+                break;
+            }
+        }
+        k=pairSsid_end-pairSsid_beg;
+        for(i=1;i<k;i++)
+        {
+            if(form.elements[pairSsid_beg+i].type == "hidden" && form.elements[pairSsid_beg+i].disabled == false)
+            {
+                loc+="&";
+                loc+=form.elements[pairSsid_beg+i].name;
+                loc+="=";
+                loc+=form.elements[ssid_beg+i].value;
+            }
+        }
+
+        k=pairRadio_end-pairRadio_beg;
+        for(i=1;i<k;i++)
+        {
+            if(form.elements[pairRadio_beg+i].type == "hidden" && form.elements[pairRadio_beg+i].disabled == false)
+            {
+                loc+="&";
+                loc+=form.elements[pairRadio_beg+i].name;
+                loc+="=";
+                loc+=form.elements[radio_beg+i].value;
+            }
+        }
+    }
+    return loc;
+}
+
+  function do_submit()
+  {
+      var lochead='wirelesssetup_basic.wl?';
+      var loc="";
+      var key = '<%ejGetOther(encrypt_key, 0)%>';
+
+      if(bandSteeringState == "1")
+      {
+          loc += 'wlSetBandMode=2';
+      }
+      else
+      {
+          loc += 'wlSetBandMode='+wlIndex;
+      }          
+      loc += '&glbSsidChanged='+gv_cssid;
+      if(gv_band[wlIndex] == "1")
+      {
+          loc += '&wlquantenna_basic_setup_wl1=1';
+          loc += '&wlquantenna_security_setup_wl1=1';
+      }
+      loc += do_add_elements();
+      loc += '&wlAbsAction=' + abs_action;
+      loc += '&sessionKey=' + sessionKey;
+      loc += '&needthankyou=1';
+      //alert('loc='+loc);
+      //return false;
+      loc=encrypt_query(loc,key);
+      lochead+=loc;
+      // var code = 'location="' + lochead + '"';
+      //eval(code);
+      postSubmit(lochead);
+      //     form.submit();
+      return true;
+  }
+
+  function btn_do_apply()
+  {
+      setTimeout("do_apply()", 500);
+  }
+  ////
+  function do_apply()
+  {
+      var form = document.forms[0];
+      var i = wlIndex;
+
+      if(document.getElementById("uiPostAPEnabled_"+i).value != gv_apEnabled)
+      {
+          if(gv_apEnabled == "0")
+          {
+              abs_action = "6";
+          }
+          else
+          {
+              abs_action = "2";
+          }
+      }
+      if (gv_apEnabled == "0")
+      { // Disable Radio
+          document.getElementById("uiPostAPEnabled_"+i).disabled = false;
+          document.getElementById("uiPostAPEnabled_"+i).value = gv_apEnabled;
+          //form.submit();
+          do_submit();
+          return;
+      }
+
+      if (document.getElementById("uiPostAPEnabled_"+i).value!="1")
+      {
+          // Enable radio
+          document.getElementById("uiPostAPEnabled_"+i).value = gv_apEnabled;
+      }
+      if(gv_ssid[gv_cssid]=="")
+      {
+          alert("_(The SSID should not be empty.)_");
+          return;
+      }
+      if(ssid_check_input)
+      {
+          ssid_check_input = false;
+          return;
+      }
+      else
+      {
+          if(!onInputSsidName(1))
+              return;
+      }
+      if(gv_ssidInitEnabled[gv_cssid]==0 && gv_ssidEnabled[gv_cssid]==0)
+          return;
+
+      // Enable/disable SSID
+      if(document.getElementById("uiPostAPEnabled_"+i+"_"+gv_cssid).value != gv_ssidEnabled[gv_cssid])
+      {
+          abs_action = "4";
+      }
+      document.getElementById("uiPostAPEnabled_"+i+"_"+gv_cssid).value = gv_ssidEnabled[gv_cssid];
+
+      // Set SSID name
+      document.getElementById("uiPostSSID_"+i+"_"+gv_cssid).value = gv_ssid[gv_cssid];
+
+      // Set SSID Guest
+      document.getElementById("uiPostSSIDGuest_"+i+"_"+gv_cssid).value = gv_ssidGuestEnabled[gv_cssid];
+      document.getElementById("uiPostAPisolate_"+i+"_"+gv_cssid).value = gv_ssidGuestEnabled[gv_cssid];
+
+      if(i == "1")
+      {
+           document.getElementById("uiPostSSIDPriority_"+i+"_"+gv_cssid).value = gv_ssidPriority[gv_cssid];
+      }
+      // Set SSID broadcast state
+      document.getElementById("uiPostHiddenSSID_"+i+"_"+gv_cssid).value = gv_hide[gv_cssid];
+
+      if (!apply_security())
+          return;
+
+      //
+      disable_input_all();
+      // submit
+      do_submit();
+      return true;
+   }
+
+//Task8507:Check the Security level of password.
+function checkPassphrase(pwd)
+{
+    var pwd_low = '<font style=" font-weight:bold; color:#FF0000">_(Low)_</font>';
+    var pwd_medium = '<font style=" font-weight:bold; color: #FFD700">_(Medium)_</font></span>';
+    var pwd_high = '<font style=" font-weight:bold; color:#008000">_(High)_</font>';
+    var objSpan = document.getElementById("pwdIndication");
+    var p1= (pwd.search(/[a-zA-Z]/)!=-1) ? 1 : 0;
+    var p2= (pwd.search(/[0-9]/)!=-1) ? 1 : 0;
+    var p3= (pwd.search(/[^A-Za-z0-9]/)!=-1) ? 1 : 0;
+    var pa=p1+p2+p3;
+    if(pa==1)
+    {
+        objSpan.innerHTML = pwd_low;
+    }
+    else if(pa==2)
+    {
+        objSpan.innerHTML = pwd_medium;
+    }
+    else if(pa==3)
+    {
+        objSpan.innerHTML = pwd_high;
+    }
+    else
+    {
+        objSpan.innerHTML = '';
+    }
+}
+
+function dom_load(){ do_load(); }
+
+  </script>
+</head>
+
+<body>
+<div id="wrapper">
+  <!-- TOP NAV -->
+  <%ejInclude(top_btn_nav3.html)%>
+  <!-- END TOP NAV -->
+  <!-- SIDE NAV -->
+  <%ejInclude(wireless_left.html)%>
+  <!-- END SIDE NAV -->
+  <!-- MAIN CONTENT AREA -->
+  <div id="content_right">
+    <div id="content_right_header">
+    </div>
+    <div id="content_right_contentarea">
+      <h1 class="wirelesssetup_ssid">_(Basic Settings)_</h1>
+      <form name="mainform" action="wirelesssetup_basic.wl" method="POST" onSubmit="return do_apply();">
+        <input type="hidden" name="ssid_beg_0_0"    value="ssid_beg_0_0"  id="ssid_beg_0_0">
+        <input type="hidden" name="wlSsid_wl0v0" value="<%ejGetWl(wlSsid_wl0v0)%>" id="uiPostSSID_0_0">
+        <input type="hidden" name="wlSsidGuest_wl0v0" value="<%ejGetWl(wlSsidGuest_wl0v0)%>" id="uiPostSSIDGuest_0_0">
+        <input type="hidden" name="wlSsidPriority_wl0v0" value="<%ejGetWl(wlSsidPriority_wl0v0)%>" id="uiPostSSIDPriority_0_0">
+        <input type="hidden" name="wlAPIsolation_wl0v0" value="<%ejGetWl(wlAPIsolation_wl0v0)%>" id="uiPostAPisolate_0_0">
+        <input type="hidden" name="wlHide_wl0v0" value="<%ejGetWl(wlHide_wl0v0)%>" id="uiPostHiddenSSID_0_0">
+
+        <input type="hidden" name="wlAuthMode_wl0v0" value="<%ejGetWl(wlAuthMode_wl0v0)%>"   id="uiPostAuthMode_0_0">
+        <input type="hidden" name="wlWep_wl0v0"      value="<%ejGetWl(wlWep_wl0v0)%>"        id="uiPostWepEnabled_0_0">
+
+        <input type="hidden" name="wlWpaPsk_wl0v0"         value="<%ejGetWl(wlWpaPsk_wl0v0)%>"      id="uiPostPskValue_0_0">
+        <input type="hidden" name="wlWpa_wl0v0"            value="<%ejGetWl(wlWpa_wl0v0)%>"         id="uiPostEncryptAlgorithm_0_0">
+
+        <input type="hidden" name="wlKeyBit_wl0v0"   value="<%ejGetWl(wlKeyBit_wl0v0)%>"     id="uiPostKeyBit_0_0">
+        <input type="hidden" name="wlKeyIndex_wl0v0" value="<%ejGetWl(wlKeyIndex_wl0v0)%>"   id="uiPostKeyId_0_0">
+        <input type="hidden" name="wlKeyIndex_wl0v0" value="<%ejGetWl(wlKeyIndex_wl0v0)%>"   id="uiPostKey128Id_0_0">
+        <input type="hidden" name="wlKey1_64_wl0v0"  value="<%ejGetWl(wlKey1_64_wl0v0)%>"  id="uiPostKeyValue_0_1_0">
+        <input type="hidden" name="wlKey1_128_wl0v0" value="<%ejGetWl(wlKey1_128_wl0v0)%>" id="uiPostKey128Value_0_1_0">
+        <input type="hidden" name="wlKey2_64_wl0v0"  value="<%ejGetWl(wlKey2_64_wl0v0)%>"  id="uiPostKeyValue_0_2_0">
+        <input type="hidden" name="wlKey2_128_wl0v0" value="<%ejGetWl(wlKey2_128_wl0v0)%>" id="uiPostKey128Value_0_2_0">
+        <input type="hidden" name="wlKey3_64_wl0v0"  value="<%ejGetWl(wlKey3_64_wl0v0)%>"  id="uiPostKeyValue_0_3_0">
+        <input type="hidden" name="wlKey3_128_wl0v0" value="<%ejGetWl(wlKey3_128_wl0v0)%>" id="uiPostKey128Value_0_3_0">
+        <input type="hidden" name="wlKey4_64_wl0v0"  value="<%ejGetWl(wlKey4_64_wl0v0)%>"  id="uiPostKeyValue_0_4_0">
+        <input type="hidden" name="wlKey4_128_wl0v0" value="<%ejGetWl(wlKey4_128_wl0v0)%>" id="uiPostKey128Value_0_4_0">
+        <input type="hidden" name="ssid_end_0_0"    value="ssid_end_0_0"  id="ssid_end_0_0">
+
+
+        <input type="hidden" name="ssid_beg_0_1"    value="ssid_beg_0_1"  id="ssid_beg_0_1">
+        <input type="hidden" name="wlSsid_wl0v1" value="<%ejGetWl(wlSsid_wl0v1)%>" id="uiPostSSID_0_1">
+        <input type="hidden" name="wlSsidGuest_wl0v1" value="<%ejGetWl(wlSsidGuest_wl0v1)%>" id="uiPostSSIDGuest_0_1">
+        <input type="hidden" name="wlSsidPriority_wl0v1" value="<%ejGetWl(wlSsidPriority_wl0v1)%>" id="uiPostSSIDPriority_0_1">
+        <input type="hidden" name="wlAPIsolation_wl0v1" value="<%ejGetWl(wlAPIsolation_wl0v1)%>" id="uiPostAPisolate_0_1">
+        <input type="hidden" name="wlEnbl_wl0v1" value="<%ejGetWl(wlEnbl_wl0v1)%>" id="uiPostAPEnabled_0_1">
+        <input type="hidden" name="wlHide_wl0v1" value="<%ejGetWl(wlHide_wl0v1)%>" id="uiPostHiddenSSID_0_1">
+
+        <input type="hidden" name="wlAuthMode_wl0v1"       value="<%ejGetWl(wlAuthMode_wl0v1)%>"    id="uiPostAuthMode_0_1">
+        <input type="hidden" name="wlWep_wl0v1"            value="<%ejGetWl(wlWep_wl0v1)%>"         id="uiPostWepEnabled_0_1">
+
+        <input type="hidden" name="wlWpaPsk_wl0v1"         value="<%ejGetWl(wlWpaPsk_wl0v1)%>"      id="uiPostPskValue_0_1">
+        <input type="hidden" name="wlWpa_wl0v1"            value="<%ejGetWl(wlWpa_wl0v1)%>"         id="uiPostEncryptAlgorithm_0_1">
+
+        <input type="hidden" name="wlKeyBit_wl0v1"   value="<%ejGetWl(wlKeyBit_wl0v1)%>"     id="uiPostKeyBit_0_1">
+        <input type="hidden" name="wlKeyIndex_wl0v1" value="<%ejGetWl(wlKeyIndex_wl0v1)%>"   id="uiPostKeyId_0_1">
+        <input type="hidden" name="wlKeyIndex_wl0v1" value="<%ejGetWl(wlKeyIndex_wl0v1)%>"   id="uiPostKey128Id_0_1">
+        <input type="hidden" name="wlKey1_64_wl0v1"  value="<%ejGetWl(wlKey1_64_wl0v1)%>"  id="uiPostKeyValue_0_1_1">
+        <input type="hidden" name="wlKey1_128_wl0v1" value="<%ejGetWl(wlKey1_128_wl0v1)%>" id="uiPostKey128Value_0_1_1">
+        <input type="hidden" name="wlKey2_64_wl0v1"  value="<%ejGetWl(wlKey2_64_wl0v1)%>"  id="uiPostKeyValue_0_2_1">
+        <input type="hidden" name="wlKey2_128_wl0v1" value="<%ejGetWl(wlKey2_128_wl0v1)%>" id="uiPostKey128Value_0_2_1">
+        <input type="hidden" name="wlKey3_64_wl0v1"  value="<%ejGetWl(wlKey3_64_wl0v1)%>"  id="uiPostKeyValue_0_3_1">
+        <input type="hidden" name="wlKey3_128_wl0v1" value="<%ejGetWl(wlKey3_128_wl0v1)%>" id="uiPostKey128Value_0_3_1">
+        <input type="hidden" name="wlKey4_64_wl0v1"  value="<%ejGetWl(wlKey4_64_wl0v1)%>"  id="uiPostKeyValue_0_4_1">
+        <input type="hidden" name="wlKey4_128_wl0v1" value="<%ejGetWl(wlKey4_128_wl0v1)%>" id="uiPostKey128Value_0_4_1">
+        <input type="hidden" name="ssid_end_0_1"    value="ssid_end_0_1"  id="ssid_end_0_1">
+
+        <input type="hidden" name="ssid_beg_0_2"    value="ssid_beg_0_2"  id="ssid_beg_0_2">
+        <input type="hidden" name="wlSsid_wl0v2" value="<%ejGetWl(wlSsid_wl0v2)%>" id="uiPostSSID_0_2">
+        <input type="hidden" name="wlSsidGuest_wl0v2" value="<%ejGetWl(wlSsidGuest_wl0v2)%>" id="uiPostSSIDGuest_0_2">
+        <input type="hidden" name="wlSsidPriority_wl0v2" value="<%ejGetWl(wlSsidPriority_wl0v2)%>" id="uiPostSSIDPriority_0_2">
+        <input type="hidden" name="wlAPIsolation_wl0v2" value="<%ejGetWl(wlAPIsolation_wl0v2)%>" id="uiPostAPisolate_0_2">
+        <input type="hidden" name="wlEnbl_wl0v2" value="<%ejGetWl(wlEnbl_wl0v2)%>" id="uiPostAPEnabled_0_2">
+        <input type="hidden" name="wlHide_wl0v2" value="<%ejGetWl(wlHide_wl0v2)%>" id="uiPostHiddenSSID_0_2">
+
+        <input type="hidden" name="wlAuthMode_wl0v2" value="<%ejGetWl(wlAuthMode_wl0v2)%>"   id="uiPostAuthMode_0_2">
+        <input type="hidden" name="wlWep_wl0v2"      value="<%ejGetWl(wlWep_wl0v2)%>"        id="uiPostWepEnabled_0_2">
+
+        <input type="hidden" name="wlWpaPsk_wl0v2"         value="<%ejGetWl(wlWpaPsk_wl0v2)%>"      id="uiPostPskValue_0_2">
+        <input type="hidden" name="wlWpa_wl0v2"            value="<%ejGetWl(wlWpa_wl0v2)%>"         id="uiPostEncryptAlgorithm_0_2">
+
+        <input type="hidden" name="wlKeyBit_wl0v2"   value="<%ejGetWl(wlKeyBit_wl0v2)%>"     id="uiPostKeyBit_0_2">
+        <input type="hidden" name="wlKeyIndex_wl0v2" value="<%ejGetWl(wlKeyIndex_wl0v2)%>"   id="uiPostKeyId_0_2">
+        <input type="hidden" name="wlKeyIndex_wl0v2" value="<%ejGetWl(wlKeyIndex_wl0v2)%>"   id="uiPostKey128Id_0_2">
+        <input type="hidden" name="wlKey1_64_wl0v2"  value="<%ejGetWl(wlKey1_64_wl0v2)%>"  id="uiPostKeyValue_0_1_2">
+        <input type="hidden" name="wlKey1_128_wl0v2" value="<%ejGetWl(wlKey1_128_wl0v2)%>" id="uiPostKey128Value_0_1_2">
+        <input type="hidden" name="wlKey2_64_wl0v2"  value="<%ejGetWl(wlKey2_64_wl0v2)%>"  id="uiPostKeyValue_0_2_2">
+        <input type="hidden" name="wlKey2_128_wl0v2" value="<%ejGetWl(wlKey2_128_wl0v2)%>" id="uiPostKey128Value_0_2_2">
+        <input type="hidden" name="wlKey3_64_wl0v2"  value="<%ejGetWl(wlKey3_64_wl0v2)%>"  id="uiPostKeyValue_0_3_2">
+        <input type="hidden" name="wlKey3_128_wl0v2" value="<%ejGetWl(wlKey3_128_wl0v2)%>" id="uiPostKey128Value_0_3_2">
+        <input type="hidden" name="wlKey4_64_wl0v2"  value="<%ejGetWl(wlKey4_64_wl0v2)%>"  id="uiPostKeyValue_0_4_2">
+        <input type="hidden" name="wlKey4_128_wl0v2" value="<%ejGetWl(wlKey4_128_wl0v2)%>" id="uiPostKey128Value_0_4_2">
+        <input type="hidden" name="ssid_end_0_2"    value="ssid_end_0_2"  id="ssid_end_0_2">
+
+        <input type="hidden" name="ssid_beg_0_3"    value="ssid_beg_0_3"  id="ssid_beg_0_3">
+        <input type="hidden" name="wlSsid_wl0v3" value="<%ejGetWl(wlSsid_wl0v3)%>" id="uiPostSSID_0_3">
+        <input type="hidden" name="wlSsidGuest_wl0v3" value="<%ejGetWl(wlSsidGuest_wl0v3)%>" id="uiPostSSIDGuest_0_3">
+        <input type="hidden" name="wlSsidPriority_wl0v3" value="<%ejGetWl(wlSsidPriority_wl0v3)%>" id="uiPostSSIDPriority_0_3">
+        <input type="hidden" name="wlAPIsolation_wl0v3" value="<%ejGetWl(wlAPIsolation_wl0v3)%>" id="uiPostAPisolate_0_3">
+        <input type="hidden" name="wlEnbl_wl0v3" value="<%ejGetWl(wlEnbl_wl0v3)%>" id="uiPostAPEnabled_0_3">
+        <input type="hidden" name="wlHide_wl0v3" value="<%ejGetWl(wlHide_wl0v3)%>" id="uiPostHiddenSSID_0_3">
+
+        <input type="hidden" name="wlAuthMode_wl0v3" value="<%ejGetWl(wlAuthMode_wl0v3)%>"   id="uiPostAuthMode_0_3">
+        <input type="hidden" name="wlWep_wl0v3"      value="<%ejGetWl(wlWep_wl0v3)%>"        id="uiPostWepEnabled_0_3">
+
+        <input type="hidden" name="wlWpaPsk_wl0v3"         value="<%ejGetWl(wlWpaPsk_wl0v3)%>"      id="uiPostPskValue_0_3">
+        <input type="hidden" name="wlWpa_wl0v3"            value="<%ejGetWl(wlWpa_wl0v3)%>"         id="uiPostEncryptAlgorithm_0_3">
+
+        <input type="hidden" name="wlKeyBit_wl0v3"   value="<%ejGetWl(wlKeyBit_wl0v3)%>"     id="uiPostKeyBit_0_3">
+        <input type="hidden" name="wlKeyIndex_wl0v3" value="<%ejGetWl(wlKeyIndex_wl0v3)%>"   id="uiPostKeyId_0_3">
+        <input type="hidden" name="wlKeyIndex_wl0v3" value="<%ejGetWl(wlKeyIndex_wl0v3)%>"   id="uiPostKey128Id_0_3">
+        <input type="hidden" name="wlKey1_64_wl0v3"  value="<%ejGetWl(wlKey1_64_wl0v3)%>"  id="uiPostKeyValue_0_1_3">
+        <input type="hidden" name="wlKey1_128_wl0v3" value="<%ejGetWl(wlKey1_128_wl0v3)%>" id="uiPostKey128Value_0_1_3">
+        <input type="hidden" name="wlKey2_64_wl0v3"  value="<%ejGetWl(wlKey2_64_wl0v3)%>"  id="uiPostKeyValue_0_2_3">
+        <input type="hidden" name="wlKey2_128_wl0v3" value="<%ejGetWl(wlKey2_128_wl0v3)%>" id="uiPostKey128Value_0_2_3">
+        <input type="hidden" name="wlKey3_64_wl0v3"  value="<%ejGetWl(wlKey3_64_wl0v3)%>"  id="uiPostKeyValue_0_3_3">
+        <input type="hidden" name="wlKey3_128_wl0v3" value="<%ejGetWl(wlKey3_128_wl0v3)%>" id="uiPostKey128Value_0_3_3">
+        <input type="hidden" name="wlKey4_64_wl0v3"  value="<%ejGetWl(wlKey4_64_wl0v3)%>"  id="uiPostKeyValue_0_4_3">
+        <input type="hidden" name="wlKey4_128_wl0v3" value="<%ejGetWl(wlKey4_128_wl0v3)%>" id="uiPostKey128Value_0_4_3">
+        <input type="hidden" name="ssid_end_0_3"    value="ssid_end_0_3"  id="ssid_end_0_3">
+
+        <input type="hidden" name="radio_beg_0"    value="radio_beg_0"  id="radio_beg_0">
+        <input type="hidden" name="wlEnbl_wl0v0" value="<%ejGetWl(wlEnbl_wl0v0)%>" id="uiPostAPEnabled_0_0">
+        <input type="hidden" name="wlRadio_wl0"     value="<%ejGetWl(wlRadio_wl0)%>" id="uiPostAPEnabled_0">
+        <input type="hidden" name="wlDefaultKeyFlagPsk_wl0" value="<%ejGetWl(wlDefaultKeyFlagPsk_wl0)%>" id="uiPostDefaultKeyFlagPsk_0">
+        <input type="hidden" name="wlDefaultKeyFlagWep64Bit_wl0" value="<%ejGetWl(wlDefaultKeyFlagWep64Bit_wl0)%>" id="uiPostDefaultKeyFlagWep64Bit_0">
+        <input type="hidden" name="wlDefaultKeyFlagWep128Bit_wl0" value="<%ejGetWl(wlDefaultKeyFlagWep128Bit_wl0)%>" id="uiPostDefaultKeyFlagWep128Bit_0">
+        <input type="hidden" name="wlSyncNvram_wl0" value="1" id="uiPostwlSyncNvram_0">
+        <input type="hidden" name="radio_end_0"    value="radio_end_0"  id="radio_end_0">
+
+
+        <input type="hidden" name="ssid_beg_1_0"    value="ssid_beg_1_0"  id="ssid_beg_1_0">
+        <input type="hidden" name="wlSsid_wl1v0" value="<%ejGetWl(wlSsid_wl1v0)%>" id="uiPostSSID_1_0">
+        <input type="hidden" name="wlSsidGuest_wl1v0" value="<%ejGetWl(wlSsidGuest_wl1v0)%>" id="uiPostSSIDGuest_1_0">
+        <input type="hidden" name="wlSsidPriority_wl1v0" value="<%ejGetWl(wlSsidPriority_wl1v0)%>" id="uiPostSSIDPriority_1_0">
+        <input type="hidden" name="wlAPIsolation_wl1v0" value="<%ejGetWl(wlAPIsolation_wl1v0)%>" id="uiPostAPisolate_1_0">
+        <input type="hidden" name="wlHide_wl1v0" value="<%ejGetWl(wlHide_wl1v0)%>" id="uiPostHiddenSSID_1_0">
+
+        <input type="hidden" name="wlAuthMode_wl1v0" value="<%ejGetWl(wlAuthMode_wl1v0)%>"   id="uiPostAuthMode_1_0">
+        <input type="hidden" name="wlWep_wl1v0"      value="<%ejGetWl(wlWep_wl1v0)%>"        id="uiPostWepEnabled_1_0">
+
+        <input type="hidden" name="wlWpaPsk_wl1v0"         value="<%ejGetWl(wlWpaPsk_wl1v0)%>"      id="uiPostPskValue_1_0">
+        <input type="hidden" name="wlWpa_wl1v0"            value="<%ejGetWl(wlWpa_wl1v0)%>"         id="uiPostEncryptAlgorithm_1_0">
+
+        <input type="hidden" name="wlKeyBit_wl1v0"   value="<%ejGetWl(wlKeyBit_wl1v0)%>"     id="uiPostKeyBit_1_0">
+        <input type="hidden" name="wlKeyIndex_wl1v0" value="<%ejGetWl(wlKeyIndex_wl1v0)%>"   id="uiPostKeyId_1_0">
+        <input type="hidden" name="wlKeyIndex_wl1v0" value="<%ejGetWl(wlKeyIndex_wl1v0)%>"   id="uiPostKey128Id_1_0">
+        <input type="hidden" name="wlKey1_64_wl1v0"  value="<%ejGetWl(wlKey1_64_wl1v0)%>"  id="uiPostKeyValue_1_1_0">
+        <input type="hidden" name="wlKey1_128_wl1v0" value="<%ejGetWl(wlKey1_128_wl1v0)%>" id="uiPostKey128Value_1_1_0">
+        <input type="hidden" name="wlKey2_64_wl1v0"  value="<%ejGetWl(wlKey2_64_wl1v0)%>"  id="uiPostKeyValue_1_2_0">
+        <input type="hidden" name="wlKey2_128_wl1v0" value="<%ejGetWl(wlKey2_128_wl1v0)%>" id="uiPostKey128Value_1_2_0">
+        <input type="hidden" name="wlKey3_64_wl1v0"  value="<%ejGetWl(wlKey3_64_wl1v0)%>"  id="uiPostKeyValue_1_3_0">
+        <input type="hidden" name="wlKey3_128_wl1v0" value="<%ejGetWl(wlKey3_128_wl1v0)%>" id="uiPostKey128Value_1_3_0">
+        <input type="hidden" name="wlKey4_64_wl1v0"  value="<%ejGetWl(wlKey4_64_wl1v0)%>"  id="uiPostKeyValue_1_4_0">
+        <input type="hidden" name="wlKey4_128_wl1v0" value="<%ejGetWl(wlKey4_128_wl1v0)%>" id="uiPostKey128Value_1_4_0">
+        <input type="hidden" name="ssid_end_1_0"    value="ssid_end_1_0"  id="ssid_end_1_0">
+
+        <input type="hidden" name="ssid_beg_1_1"    value="ssid_beg_1_1"  id="ssid_beg_1_1">
+        <input type="hidden" name="wlSsid_wl1v1" value="<%ejGetWl(wlSsid_wl1v1)%>" id="uiPostSSID_1_1">
+        <input type="hidden" name="wlSsidGuest_wl1v1" value="<%ejGetWl(wlSsidGuest_wl1v1)%>" id="uiPostSSIDGuest_1_1">
+        <input type="hidden" name="wlSsidPriority_wl1v1" value="<%ejGetWl(wlSsidPriority_wl1v1)%>" id="uiPostSSIDPriority_1_1">
+        <input type="hidden" name="wlAPIsolation_wl1v1" value="<%ejGetWl(wlAPIsolation_wl1v1)%>" id="uiPostAPisolate_1_1">
+        <input type="hidden" name="wlEnbl_wl1v1" value="<%ejGetWl(wlEnbl_wl1v1)%>" id="uiPostAPEnabled_1_1">
+        <input type="hidden" name="wlHide_wl1v1" value="<%ejGetWl(wlHide_wl1v1)%>" id="uiPostHiddenSSID_1_1">
+
+        <input type="hidden" name="wlAuthMode_wl1v1"       value="<%ejGetWl(wlAuthMode_wl1v1)%>"    id="uiPostAuthMode_1_1">
+        <input type="hidden" name="wlWep_wl1v1"            value="<%ejGetWl(wlWep_wl1v1)%>"         id="uiPostWepEnabled_1_1">
+
+        <input type="hidden" name="wlWpaPsk_wl1v1"         value="<%ejGetWl(wlWpaPsk_wl1v1)%>"      id="uiPostPskValue_1_1">
+        <input type="hidden" name="wlWpa_wl1v1"            value="<%ejGetWl(wlWpa_wl1v1)%>"         id="uiPostEncryptAlgorithm_1_1">
+
+        <input type="hidden" name="wlKeyBit_wl1v1"   value="<%ejGetWl(wlKeyBit_wl1v1)%>"     id="uiPostKeyBit_1_1">
+        <input type="hidden" name="wlKeyIndex_wl1v1" value="<%ejGetWl(wlKeyIndex_wl1v1)%>"   id="uiPostKeyId_1_1">
+        <input type="hidden" name="wlKeyIndex_wl1v1" value="<%ejGetWl(wlKeyIndex_wl1v1)%>"   id="uiPostKey128Id_1_1">
+        <input type="hidden" name="wlKey1_64_wl1v1"  value="<%ejGetWl(wlKey1_64_wl1v1)%>"  id="uiPostKeyValue_1_1_1">
+        <input type="hidden" name="wlKey1_128_wl1v1" value="<%ejGetWl(wlKey1_128_wl1v1)%>" id="uiPostKey128Value_1_1_1">
+        <input type="hidden" name="wlKey2_64_wl1v1"  value="<%ejGetWl(wlKey2_64_wl1v1)%>"  id="uiPostKeyValue_1_2_1">
+        <input type="hidden" name="wlKey2_128_wl1v1" value="<%ejGetWl(wlKey2_128_wl1v1)%>" id="uiPostKey128Value_1_2_1">
+        <input type="hidden" name="wlKey3_64_wl1v1"  value="<%ejGetWl(wlKey3_64_wl1v1)%>"  id="uiPostKeyValue_1_3_1">
+        <input type="hidden" name="wlKey3_128_wl1v1" value="<%ejGetWl(wlKey3_128_wl1v1)%>" id="uiPostKey128Value_1_3_1">
+        <input type="hidden" name="wlKey4_64_wl1v1"  value="<%ejGetWl(wlKey4_64_wl1v1)%>"  id="uiPostKeyValue_1_4_1">
+        <input type="hidden" name="wlKey4_128_wl1v1" value="<%ejGetWl(wlKey4_128_wl1v1)%>" id="uiPostKey128Value_1_4_1">
+        <input type="hidden" name="ssid_end_1_1"    value="ssid_end_1_1"  id="ssid_end_1_1">
+
+        <input type="hidden" name="ssid_beg_1_2"    value="ssid_beg_1_2"  id="ssid_beg_1_2">
+        <input type="hidden" name="wlSsid_wl1v2" value="<%ejGetWl(wlSsid_wl1v2)%>" id="uiPostSSID_1_2">
+        <input type="hidden" name="wlSsidGuest_wl1v2" value="<%ejGetWl(wlSsidGuest_wl1v2)%>" id="uiPostSSIDGuest_1_2">
+        <input type="hidden" name="wlSsidPriority_wl1v2" value="<%ejGetWl(wlSsidPriority_wl1v2)%>" id="uiPostSSIDPriority_1_2">
+        <input type="hidden" name="wlAPIsolation_wl1v2" value="<%ejGetWl(wlAPIsolation_wl1v2)%>" id="uiPostAPisolate_1_2">
+        <input type="hidden" name="wlEnbl_wl1v2" value="<%ejGetWl(wlEnbl_wl1v2)%>" id="uiPostAPEnabled_1_2">
+        <input type="hidden" name="wlHide_wl1v2" value="<%ejGetWl(wlHide_wl1v2)%>" id="uiPostHiddenSSID_1_2">
+
+        <input type="hidden" name="wlAuthMode_wl1v2" value="<%ejGetWl(wlAuthMode_wl1v2)%>"   id="uiPostAuthMode_1_2">
+        <input type="hidden" name="wlWep_wl1v2"      value="<%ejGetWl(wlWep_wl1v2)%>"        id="uiPostWepEnabled_1_2">
+
+        <input type="hidden" name="wlWpaPsk_wl1v2"         value="<%ejGetWl(wlWpaPsk_wl1v2)%>"      id="uiPostPskValue_1_2">
+        <input type="hidden" name="wlWpa_wl1v2"            value="<%ejGetWl(wlWpa_wl1v2)%>"         id="uiPostEncryptAlgorithm_1_2">
+
+        <input type="hidden" name="wlKeyBit_wl1v2"   value="<%ejGetWl(wlKeyBit_wl1v2)%>"     id="uiPostKeyBit_1_2">
+        <input type="hidden" name="wlKeyIndex_wl1v2" value="<%ejGetWl(wlKeyIndex_wl1v2)%>"   id="uiPostKeyId_1_2">
+        <input type="hidden" name="wlKeyIndex_wl1v2" value="<%ejGetWl(wlKeyIndex_wl1v2)%>"   id="uiPostKey128Id_1_2">
+        <input type="hidden" name="wlKey1_64_wl1v2"  value="<%ejGetWl(wlKey1_64_wl1v2)%>"  id="uiPostKeyValue_1_1_2">
+        <input type="hidden" name="wlKey1_128_wl1v2" value="<%ejGetWl(wlKey1_128_wl1v2)%>" id="uiPostKey128Value_1_1_2">
+        <input type="hidden" name="wlKey2_64_wl1v2"  value="<%ejGetWl(wlKey2_64_wl1v2)%>"  id="uiPostKeyValue_1_2_2">
+        <input type="hidden" name="wlKey2_128_wl1v2" value="<%ejGetWl(wlKey2_128_wl1v2)%>" id="uiPostKey128Value_1_2_2">
+        <input type="hidden" name="wlKey3_64_wl1v2"  value="<%ejGetWl(wlKey3_64_wl1v2)%>"  id="uiPostKeyValue_1_3_2">
+        <input type="hidden" name="wlKey3_128_wl1v2" value="<%ejGetWl(wlKey3_128_wl1v2)%>" id="uiPostKey128Value_1_3_2">
+        <input type="hidden" name="wlKey4_64_wl1v2"  value="<%ejGetWl(wlKey4_64_wl1v2)%>"  id="uiPostKeyValue_1_4_2">
+        <input type="hidden" name="wlKey4_128_wl1v2" value="<%ejGetWl(wlKey4_128_wl1v2)%>" id="uiPostKey128Value_1_4_2">
+        <input type="hidden" name="ssid_end_1_2"    value="ssid_end_1_2"  id="ssid_end_1_2">
+
+        <input type="hidden" name="radio_beg_1"    value="radio_beg_1"  id="radio_beg_1">
+        <input type="hidden" name="wlEnbl_wl1v0" value="<%ejGetWl(wlEnbl_wl1v0)%>" id="uiPostAPEnabled_1_0">
+        <input type="hidden" name="wlRadio_wl1"     value="<%ejGetWl(wlRadio_wl1)%>" id="uiPostAPEnabled_1">
+        <input type="hidden" name="wlDefaultKeyFlagPsk_wl1" value="<%ejGetWl(wlDefaultKeyFlagPsk_wl1)%>" id="uiPostDefaultKeyFlagPsk_1">
+        <input type="hidden" name="wlDefaultKeyFlagWep64Bit_wl1" value="<%ejGetWl(wlDefaultKeyFlagWep64Bit_wl1)%>" id="uiPostDefaultKeyFlagWep64Bit_1">
+        <input type="hidden" name="wlDefaultKeyFlagWep128Bit_wl1" value="<%ejGetWl(wlDefaultKeyFlagWep128Bit_wl1)%>" id="uiPostDefaultKeyFlagWep128Bit_1">
+        <input type="hidden" name="wlSyncNvram_wl1" value="1" id="uiPostwlSyncNvram_1">
+        <input type="hidden" name="radio_end_1"    value="radio_end_1"  id="radio_end_1">
+
+        <input type="hidden" name="wlDefaultKeyPsk0" value="<%ejGetWl(wlDefaultKeyPsk0)%>" id="uiPostDefaultKeyPsk0">
+        <input type="hidden" name="wlDefaultKeyPsk1" value="<%ejGetWl(wlDefaultKeyPsk1)%>" id="uiPostDefaultKeyPsk1">
+        <input type="hidden" name="wlDefaultKeyPsk2" value="<%ejGetWl(wlDefaultKeyPsk2)%>" id="uiPostDefaultKeyPsk2">
+        <input type="hidden" name="wlDefaultKeyPsk3" value="<%ejGetWl(wlDefaultKeyPsk3)%>" id="uiPostDefaultKeyPsk3">
+
+        <input type="hidden" name="wlDefaultKeyWep64Bit" value="<%ejGetWl(wlDefaultKeyWep64Bit)%>" id="uiPostDefaultKeyWep64Bit">
+        <input type="hidden" name="wlDefaultKeyWep128Bit" value="<%ejGetWl(wlDefaultKeyWep128Bit0)%>" id="uiPostDefaultKeyWep128Bit0">
+        <input type="hidden" name="wlDefaultKeyWep128Bit" value="<%ejGetWl(wlDefaultKeyWep128Bit1)%>" id="uiPostDefaultKeyWep128Bit1">
+        <input type="hidden" name="wlDefaultKeyWep128Bit" value="<%ejGetWl(wlDefaultKeyWep128Bit2)%>" id="uiPostDefaultKeyWep128Bit2">
+        <input type="hidden" name="wlDefaultKeyWep128Bit" value="<%ejGetWl(wlDefaultKeyWep128Bit3)%>" id="uiPostDefaultKeyWep128Bit3">
+
+    <input type="hidden" name="needthankyou" value="1" >
+    </form>
+        <p>
+        _(Basic Settings is used to enable or disable the wireless radio or change wireless security settings.)_
+        </p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <table width="85%" border="0" cellpadding="0" cellspacing="0" id="id_bandSlct"  style="margin:0 auto;">
+          <tr>
+            <td width="26%" style="text-align:left"><strong>_(Frequency)_</strong></td>
+            <td width="10%" style="text-align:left"><input name="wireless_index" id="id_wl_5" type="radio" onClick="onSelectWlIndex();" />
+             _(5G)_ </td>
+            <td width="64%" style="text-align:left"><input name="wireless_index" id="id_wl_2" type="radio" onClick="onSelectWlIndex();" />
+             _(2.4G)_ </td>
+          </tr>
+        </table>
+        <table width="85%" border="0" cellpadding="0" cellspacing="0"  style="margin:0 auto;">
+          <tr>
+            <td width="26%" style="text-align:left"><strong>_(Wireless Radio)_</strong></td>
+            <td width="74%" style="text-align:left">
+             <input name="wireless_onoff" id="id_wl_on" type="radio" value="on" onClick="onClickAPEnable();" checked="checked"/>_(Enable)_&nbsp;&nbsp;&nbsp;
+             <input name="wireless_onoff" id="id_wl_off" type="radio" value="off" onClick="onClickAPEnable();" />_(Disable)_
+             </td>
+          </tr>
+        </table>
+        <div id="id_wl_settings">
+        <table width="85%" border="0" cellpadding="0" cellspacing="0"  style="margin:0 auto;">
+          <tr>
+            <td width="26%" style="text-align:left"><strong>_(Select SSID)_</strong></td>
+            <td width="74%" style="text-align:left">
+                <select name="ssid" id="id_ssid" onchange="onSelectSSID();">
+                  <option id="id_ssid_0" value="SSID_1">SSID 1</option>
+                  <option id="id_ssid_1" value="SSID_2">SSID 2</option>
+                  <option id="id_ssid_2" value="SSID_3">SSID 3</option>
+                </select>
+            </td>
+          </tr>
+          <tr>
+            <td ><strong>_(SSID State)_</strong></td>
+            <td>
+            <input name="ssid_state" id="id_ssid_enable" type="radio" value="enable" checked="checked" onclick="onSelectSSIDState();" />_(Enable)_&nbsp;&nbsp;&nbsp;
+            <input name="ssid_state" id="id_ssid_disable" type="radio" value="disable" onclick="onSelectSSIDState();" />_(Disable)_
+            </td>
+          </tr>
+         </table>
+
+         <div id="id_ssid_settings">
+         <table width="85%" border="0" cellpadding="0" cellspacing="0"  style="margin:0 auto;">
+          <tr id="id_ssid_guest">
+            <td width="26%" style="text-align:left"><strong>_(SSID Isolation)_</strong></td>
+            <td width="74%" style="text-align:left">
+                <input name="ssid_guest" id="id_ssidguest_enable" type="radio" value="enable" checked="checked" onclick="onSelectSSIDGuest();" />_(Enable)_&nbsp;&nbsp;&nbsp;
+                <input name="ssid_guest" id="id_ssidguest_disable" type="radio" value="disable" onclick="onSelectSSIDGuest();" />_(Disable)_
+            </td>
+	  </tr>
+	<td colspan="2" style="text-align:left">
+	  _(Control whether users in one Network can see your other Networks.Recommendation: enable isolation for the Guest Network)_
+	</td>
+
+          <tr id="id_ssid_priority">
+            <td ><strong>_(SSID Priority)_</strong></td>
+            <td width="74%" style="text-align:left">
+                <select name="ssidPriority" id="id_ssidPriority" onchange="onSelectSSIDPriority();">
+                  <option id="id_ssidPriority_0" value="0">0</option>
+                  <option id="id_ssidPriority_1" value="1">1</option>
+                  <option id="id_ssidPriority_2" value="2">2</option>
+                  <option id="id_ssidPriority_3" value="2">3</option>
+                </select>
+            </td>
+          </tr>
+          <tr>
+            <td width="26%" style="text-align:left"><strong>_(SSID Broadcast)_</strong></td>
+            <td width="74%" style="text-align:left">
+            <input name="ssid_mode" id="id_mode_bcast" type="radio" value="enable" checked="checked" onclick="onSelecBCtMode();" />_(Enable)_&nbsp;&nbsp;&nbsp;
+        <input name="ssid_mode" id="id_mode_hide" type="radio" value="disable" onclick="onSelecBCtMode();" />_(Disable)_
+            </td>
+          </tr>
+          <tr>
+            <td ><strong>_(SSID Name)_</strong></td>
+            <td>
+            <input name="ssid_name" id="id_ssid_name" type="text" size="32" maxlength="32" onblur="onInputSsidName(0);" style="height:18px;"/>
+            </td>
+          </tr>
+          <tr>
+            <td ><strong>_(Security)_</strong></td>
+            <td>
+                <select name="ssid_security" id="id_ssid_security_mode" onchange="onSelectSecurity();">
+                  <option id="id_ssid_wep_mode" value="0">_(WEP)_</option>
+                  <option id="id_ssid_wpa_mode" value="1">_(WPA / WPA2)_</option>
+                  <option id="id_ssid_sec_off_mode" value="2">_(OFF)_</option>
+
+                </select>
+            </td>
+          </tr>
+        </table>
+        <div id="id_ssid_security">
+
+        <div id="id_ssid_wpa">
+
+        <table width="85%" border="0" cellpadding="0" cellspacing="0"  style="margin:0 auto;">
+        <tr>
+            <td width="26%" style="text-align:left"><strong>_(WPA Type)_</strong></td>
+            <td width="74%" style="text-align:left">
+            <select name="select_wpa" id="id_select_wpa" onchange="onSelectWpa()">
+            <option id="id_wpa_mixed">_(WPA or WPA2 - Personal)_</option>
+            <option id="id_wpa"      >_(WPA-Personal)_</option>
+            <option id="id_wpa2"     >_(WPA2-Personal)_</option>
+        </select>
+            </td>
+        </tr>
+        <tr>
+            <td width="26%" style="text-align:left"><strong>_(Encryption Type)_</strong></td>
+            <td width="74%" style="text-align:left">
+        <select id="id_wpa_cipher" name="wpa_cipher" onchange="onSelectcipher(this.value)">
+          <option value="tkip+aes" id="encryption_both">Both</option>
+          <option value="aes" id="encryption_aes">AES</option>
+          <option value="tkip" id="encryption_tkip">TKIP</option>
+        </select>
+            </td>
+        </tr>
+        <tr>
+            <td width="26%" style="text-align:left" valign="top"><strong>_(Security Key Type)_</strong></td>
+            <td width="74%" style="text-align:left">
+        <input name="network_options" id="id_default_options" value="default_options" type="radio" onclick="onSelectNetworkOptions();" checked="checked" />
+_(Use Default Key/Passphrase)_ <span id="defaultPskKey" class="status_text_g">tetwetssdsd</span><br><br>
+            <input name="network_options" id="id_home_network_options" value="home_network_options" type="radio" onclick="onSelectNetworkOptions();" checked="checked" />
+       _(Use Custom Key/Passphrase)_<br><br>
+       &nbsp;&nbsp;&nbsp;&nbsp;<input name="pre_shared_key" id="id_pre_shared_key" type="text" maxlength="63" size="35" style="height:18px;" onkeyup="checkPassphrase(this.value);"/>&nbsp;<span id="pwdIndication"></span><br><br>
+
+<!--  remove this part according to TELUS's requirement -->
+<div id="enterprise_radio" style="display:none">
+        <input name="network_options" id="id_enterprise_network_options" type="radio" value="enterprise_network_options" onclick="onSelectNetworkOptions();" />
+        _(Enterprise Network)_<br><br>
+</div>
+            </td>
+        </tr>
+        </table>
+        </div><!--end of ssid_wpa div -->
+        <div id="id_ssid_wep">
+
+        <table width="85%" border="0" cellpadding="0" cellspacing="0"  style="margin:0 auto;">
+        <tr>
+            <td width="26%" style="text-align:left"><strong>_(Authentication Type)_</strong></td>
+            <td width="74%" style="text-align:left">
+        <select name="auth_type" id="id_auth_type" onchange="onSelectAuthType();">
+            <option id="id_auth_type_open" selected="selected">_(Open)_</option>
+            <option id="id_auth_type_shared">_(Shared)_</option>
+        </select>
+            </td>
+        </tr>
+        <tr>
+            <td width="26%" style="text-align:left" valign="top"><strong>_(Security Key Type)_</strong></td>
+            <td width="74%" style="text-align:left">
+            <input type=radio name=defaultwep value=on id="id_defaultwep_on" onClick="onSelectDefaultWep();" />_(Use Default Key/Passphrase)_
+            <span id="default_wep_key" class="status_text_g">asfasdfdsf</span><br><br>
+            <input type=radio name=defaultwep value=off id="id_defaultwep_off" onClick="onSelectDefaultWep();" />_(Use Custom Key/Passphrase)_<br><br>
+
+
+            &nbsp;&nbsp;_(Key)_ 1:
+            <input name="key_number"  id="id_key1_number" type="radio" value="key1" checked="checked" onClick="onClickKeyNumber();" />
+            <input name="key_value"  id="id_key1_value" type="text" size="35" maxlength="26" onKeyUp="onInputKeyUp(1, 1);" style="height:18px;"/>
+            <select name="key_bits"  id="id_key1_bits" onchange="onSelectKeyBits(1);">
+              <option id="id_key1_bit_64" selected="selected">64 _(Bits)_</option>
+              <option id="id_key1_bit_128">128 Bits</option>
+            </select>
+            <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="smallprint_green" id="id_digital_left_1">
+            _(0 Digits left)_
+            </span>
+            <br>
+
+
+            &nbsp;&nbsp;_(Key)_ 2:
+            <input name="key_number"  id="id_key2_number" type="radio" value="key2" onClick="onClickKeyNumber();"/>
+            <input name="key_value"  id="id_key2_value" type="text" size="35" maxlength="26" onKeyUp="onInputKeyUp(2, 1);" style="height:18px;"/>
+            <select name="key_bits"  id="id_key2_bits" onchange="onSelectKeyBits(2);">
+              <option id="id_key2_bit_64" selected="selected">64 Bits</option>
+              <option id="id_key2_bit_128">128 Bits</option>
+            </select>
+            <br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="smallprint_green" id="id_digital_left_2">
+            _(0 Digits left)_
+            </span>
+            <br/>
+
+            &nbsp;&nbsp;_(Key)_ 3:
+            <input name="key_number"  id="id_key3_number" type="radio" value="key3" onClick="onClickKeyNumber();"/>
+        <input name="key_value"  id="id_key3_value" type="text" size="35" maxlength="26" onKeyUp="onInputKeyUp(3, 1);" style="height:18px;"/>
+        <select name="key_bits"  id="id_key3_bits" onchange="onSelectKeyBits(3);">
+             <option id="id_key3_bit_64" selected="selected">64 Bits</option>
+             <option id="id_key3_bit_128">128 Bits</option>
+        </select>
+            <br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="smallprint_green" id="id_digital_left_3">
+            _(0 Digits left)_
+            </span>
+            <br>
+
+            &nbsp;&nbsp;_(Key)_ 4:
+        <input name="key_number"  id="id_key4_number" type="radio" value="key4" onClick="onClickKeyNumber();"/>
+        <input name="key_value"  id="id_key4_value" type="text" size="35" maxlength="26" onKeyUp="onInputKeyUp(4, 1);" style="height:18px;"/>
+        <select name="key_bits"  id="id_key4_bits" onchange="onSelectKeyBits(4);">
+          <option id="id_key4_bit_64" selected="selected">64 _(Bits)_</option>
+          <option id="id_key4_bit_128">128 _(Bits)_</option>
+        </select>
+            <br/>
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="smallprint_green" id="id_digital_left_4">
+            _(0 Digits left)_
+            </span>
+
+            </td>
+        </tr>
+        </table>
+        </div><!--end of ssid_wep div -->
+
+        </div><!--end of ssid_security div -->
+
+
+        </div><!--end of ssid_settings div -->
+
+        </div> <!--end of wl_settings div -->
+
+        <p>
+            <a class="button1" onclick="btn_do_apply();" id="btn_apply"><span>_(Apply)_</span></a>
+        </p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+    </div>
+    <div id="content_right_footer">
+    </div>
+  </div>
+  <div class="clear_left">
+  </div>
+  <div id="footer">
+  </div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

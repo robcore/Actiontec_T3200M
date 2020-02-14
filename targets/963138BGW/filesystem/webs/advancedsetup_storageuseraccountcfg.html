@@ -1,0 +1,250 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Storage Service)_ - _(Samba Configuration)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+
+
+var glb_dmsMediaPath="<%ejGetOther(sysInfo, smbdVolume)%>";
+var sessionKey='<%ejGetOther(sessionKey)%>';
+function get_usb_device()
+{
+   if(xmlhttp != null)
+   {
+      //SW-Bug #127719
+      var curTime = new Date();
+      curTime = curTime.getTime();
+      xmlhttp.open("GET","./network_usb_refresh.html?time="+curTime,true);
+      xmlhttp.onreadystatechange =function()
+      {
+         if(xmlhttp.readyState==4)
+         {
+            var statusval = xmlhttp.responseText;
+            // If GUI is locked, return it to avoid parameters undefined error.
+            if(statusval.indexOf("Lock error")!=-1){
+                get_usb_device();
+            }else{
+                tag = 1;
+                add_devices_list(statusval);
+            }
+         }
+      }
+      xmlhttp.send(null);
+   }
+   setTimeout("get_usb_device()",30000);
+}
+function add_devices_list(instr)
+{
+	document.myform.dmsMediaPath.options.length = 0;
+     if(tag != 1 || instr == 0)
+     {
+	     return;
+     }
+
+        var form=document.myform;
+	var sdinfo = document.getElementById("dmsMediaPath");
+	var storagedevice_item = instr.split('|');
+	var i = 0;
+	if (storagedevice_item != '')
+	{
+		for (i=0; i<storagedevice_item.length; i++)
+		{
+			var details = storagedevice_item[i].split('/');
+      details[0] = htmlDecodeStr(details[0]);
+			form.dmsMediaPath[i]=new Option(details[0],details[0]);
+			if(glb_dmsMediaPath == details[0])
+			{
+			   form.dmsMediaPath[i].selected="selected";
+			}
+		}
+	}
+
+}
+var sambastatus = '<%ejGetOther(sysInfo, smbdEnable)%>';
+function do_load()
+{
+  htmlDecode();
+  side_nav("advancedsetup_storageuseraccountcfg");
+  var form = document.myform;
+
+  form.smbUserid.value = htmlDecodeStr("<%ejGetOther(sysInfo, smbdUserid)%>");
+  form.smbPasswd.value = htmlDecodeStr("<%ejGetOther(sysInfo, smbdPasswd)%>");
+  form.smbWorkgroup.value = htmlDecodeStr("<%ejGetOther(sysInfo, smbdWorkgroup)%>");
+
+  get_usb_device();
+  if( sambastatus == "1" )
+  {
+      form.samba[0].checked = true;
+      form.samba[1].checked = false;
+      document.getElementById("fileShare").style.display = "block";
+  }
+  else
+  {
+      form.samba[0].checked = false;
+      form.samba[1].checked = true;
+      document.getElementById("fileShare").style.display = "none";
+  }
+}
+
+
+function do_apply() {
+    var lochead='fileshare.cmd?';
+    var loc='action=savapply&smbdEnable=';
+    var i=0;
+    var form = document.myform;
+    var key = '<%ejGetOther(encrypt_key, 0)%>';
+    var form = document.forms[0];
+    var str = form.smbPasswd.value;
+    var re = /[<>\"';%)(&+|\\]/;
+
+    if( form.samba[0].checked )
+    {
+        if ( str.length < 1 ) {
+            alert("_(Samba Password should not be empty.)_");
+            return;
+        }
+        if(re.test(str))
+        {
+            alert("_(Samba Password should not support special character < > \" \' ; % ) ( & + | \\ .)_");
+            return;
+        }
+        str = form.smbUserid.value;
+        if ( str.length < 1 ) {
+            alert("_(Samba Userid should not be empty.)_");
+            return;
+        }
+        if( re.test(str )) {
+            alert("_(Samba Userid should not support special character < > \" \' ; % ) ( & + | \\ .)_");
+            return;
+        }
+
+        str = form.smbWorkgroup.value;
+        if ( str.length < 1 ) {
+            alert("_(Samba Workgroup name should not be empty.)_");
+            return;
+        }
+        if( re.test(str) ) {
+            alert("_(Samba Workgroup name should not support special character < > \" \' ; % ) ( & + | \\ .)_");
+            return;
+        }
+        str = form.dmsMediaPath.value;
+        if ( str.length < 1 ) {
+            alert("_(Samba Volume name should not be empty. There is no drive available for samba, please plug one at least and refresh the page.)_", 0);
+            return;
+        }
+        loc += '1';
+        loc += '&smbdPasswd='+ form.smbPasswd.value;
+        loc += '&smbdUserid='+ form.smbUserid.value;
+        loc += '&smbdVolume='+ form.dmsMediaPath.value;
+        loc += '&smbdWorkgroup='+ form.smbWorkgroup.value;
+    }
+    else
+    {
+       loc += '0';
+    }
+
+    DisableUseless(form);
+    loc += '&sessionKey=' + sessionKey;
+    loc += '&needthankyou=advancedsetup_storageuseraccountcfg.html';
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+    postSubmit(lochead);
+
+}
+
+function DisableUseless(form) {
+    form.samba[0].disabled = true;
+    form.samba[1].disabled = true;
+    form.smbPasswd.disabled = true;
+    form.smbUserid.disabled = true;
+}
+
+function onClickEnable()
+{
+    var form = document.myform;
+    if (form.samba[0].checked == true)
+    {
+       document.getElementById("fileShare").style.display = "block";
+    }
+    else if (form.samba[1].checked == true)
+    {
+       document.getElementById("fileShare").style.display = "none";
+    }
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+    <div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+	<div id="content_right_header"></div>
+	<div id="content_right_contentarea">
+            <h1 class="advancedsetup_sharefile">_(Samba Configuration)_</h1>
+            <form  name="myform" onSubmit="return false;">
+            <input type="hidden" name="smbdEnable" value="<%ejGet(smbdEnable)%>" />
+            <table>
+                <tr>
+                    <td width="130">_(File Sharing)_:</td>
+                    <td><input name="samba" id="samba_on" type="radio" value="Enable" onClick="onClickEnable();"/> _(Enable)_
+                    &nbsp;&nbsp;
+                    <input name="samba" id="samba_off" type="radio" value="Disable" checked="checked" onClick="onClickEnable();"/> _(Disable)_
+                  </td>
+                </tr>
+            </table>
+            <table id="fileShare" style="display:none">
+                <tr>
+                    <td width="130">_(Samba Username)_:</td>
+                    <td><input name="smbUserid" id="smbUserName" type="text"/></td>
+                </tr>
+                <tr>
+                    <td width="130">_(Samba Password)_:</td>
+                    <td><input name="smbPasswd" id="smbPassword" type="password"/></td>
+                </tr>
+                <tr>
+                    <td width="130">_(Device Name)_:</td>
+                    <td>
+                        <select name="dmsMediaPath"  style="width:185px" id="dmsMediaPath" >
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="130">_(Workgroup)_:</td>
+                    <td> <input name="smbWorkgroup" id="smbWorkgroup" type="text" value="" />
+                    </td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <td>
+                        <a href="javascript:do_apply();" class="button1" id="btn_apply"><span>_(Apply)_</span></a>
+                    </td>
+                </tr>
+            </table>
+    </form>
+    <div class="clear_left"></div>
+    </div>
+    <div id="content_right_footer"></div>
+    </div>
+    <div class="clear_left"></div>
+    <div id="footer">&nbsp;</div>
+    </div>
+    <SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT>
+</body>
+</html>

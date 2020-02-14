@@ -1,0 +1,14 @@
+#
+# Kconfig for the aei_sfp_laser driver module - aei_sfp_laser_dev.ko
+#
+
+#add a line in ../Kconfig
+#source "drivers/char/aei_sfp_laser/Kconfig"
+
+config SFP_LASER
+        tristate "sfp laser card"
+       ---help---
+          Say Y here if you intend to attach an sckipio gfast to your computer.
+
+          To compile this driver as a module, choose M here, If unsure, say N.
+~                                                                               

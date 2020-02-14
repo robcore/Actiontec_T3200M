@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(TR-069)_</title>
+<script language="JavaScript" src="js/nav.js"></script>
+<link href="../css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="../js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="JavaScript">
+var con_name = new Array();
+var con_type = new Array();
+var con_cnt  = 0;
+var top_idx = 5;
+function next(form)
+{   var form = document.forms[0];
+  if (form.ACSURL.value != form.elements[1].value ) form.ACSURL.name = form.elements[1].name;
+  if (form.ACSUSERNAME.value != form.elements[2].value) form.ACSUSERNAME.name = form.elements[2].name;
+  if (form.ACSPASSWORD.value != form.elements[3].value) form.ACSPASSWORD.name = form.elements[3].name;
+  if (form.ACS_PeriodicInformEnable.value != form.elements[4].value)
+	form.ACS_PeriodicInformEnable.name = form.elements[4].name;
+  if (form.ACS_PeriodicInformInterval.value != form.elements[5].value)
+	form.ACS_PeriodicInformInterval.name = form.elements[5].name;
+  if (form.ACS_PeriodicInformTime.value != form.elements[6].value)
+	form.ACS_PeriodicInformTime.name = form.elements[6].name;
+  if (form.ACS_ConnectionRequestURL.value != form.elements[7].value)
+	form.ACS_ConnectionRequestURL.name = form.elements[7].name;
+  if (form.ACS_ConnectionRequestUsername.value != form.elements[8].value)
+	form.ACS_ConnectionRequestUsername.name = form.elements[8].name;
+  if (form.ACS_ConnectionRequestPassword.value != form.elements[9].value)
+	form.ACS_ConnectionRequestPassword.name = form.elements[9].name;
+  if (form.ACS_BackoffInterval.value != form.elements[10].value)
+    form.ACS_BackoffInterval.name = form.elements[10].name;
+  form.elements[11].disabled = false;
+  if (form.ACS_Debug[1].checked == true)
+    form.elements[11].value = '1';
+  else
+    form.elements[11].value = '0';
+      //alert('Apply:form.element[13].value='+form.elements[13].value);
+  return true;
+}
+
+function do_next()
+{
+    var form = document.forms[0];
+    if( next(form) )
+	form.submit();
+}
+
+function do_load()
+{
+//    top_nav(top_idx);
+    //document.getElementById("userpass_set").className = "buttons_active";
+    htmlDecode();
+	side_nav("advancedutilities_tr069");
+    var form = document.forms[0];
+    form.ACSURL.value = form.elements[1].value;
+    form.ACSUSERNAME.value = form.elements[2].value;
+    form.ACSPASSWORD.value = form.elements[3].value;
+    form.ACS_PeriodicInformEnable.value = form.elements[4].value;
+    form.ACS_PeriodicInformInterval.value = form.elements[5].value;
+    form.ACS_PeriodicInformTime.value = form.elements[6].value;
+    form.ACS_ConnectionRequestURL.value = form.elements[7].value;
+    form.ACS_ConnectionRequestUsername.value = form.elements[8].value;
+    form.ACS_ConnectionRequestPassword.value = form.elements[9].value;
+    form.ACS_BackoffInterval.value = form.elements[10].value;
+    form.ACS_Debug.value = form.elements[11].value;
+    if (form.elements[11].value == '1')
+        form.ACS_Debug[1].checked = true;
+    else
+        form.ACS_Debug[0].checked = true;
+
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+
+    <!-- MAIN CONTENT AREA -->
+	<div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="utilities_webactivitylog"> &nbsp;_(TR-069)_ </h1>
+	<form name="custom_setup_tr69" action="../advancedutilities_tr069.cgi" method="POST" onSubmit="return do_next();">
+    <!--0-->
+   <input type="hidden" name="getpage" value="../html/confirm.html">
+   <input type="hidden" name="tr69cAcsURL" value="<%ejGet(tr69cAcsURL)%>" disabled>
+    <input type="hidden" name="tr69cAcsUser" value="<%ejGet(tr69cAcsUser)%>" disabled>
+    <!--3-->
+    <input type="hidden" name="tr69cAcsPwd" value="" disabled>
+    <input type="hidden" name="tr69cInformEnable" value="<%ejGet(tr69cInformEnable)%>" disabled>
+    <input type="hidden" name="tr69cInformInterval" value="<%ejGet(tr69cInformInterval)%>" disabled>
+    <input type="hidden" name="tr69cPeriodicInformTime" value="<%ejGet(tr69cPeriodicInformTime)%>" disabled>
+    <input type="hidden" name="tr69cConnReqURL" value="<%ejGet(tr69cConnReqURL)%>" disabled>
+    <!--8-->
+    <input type="hidden" name="tr69cConnReqUser" value="<%ejGet(tr69cConnReqUser)%>" disabled>
+    <input type="hidden" name="tr69cConnReqPwd" value="" disabled>
+    <input type="hidden" name="tr69cBackoffInterval" value="<%ejGetOther(tr69cInfo, tr69cBackoffInterval)%>" disabled>
+    <input type="hidden" name="tr69cDebugEnable" value="<%ejGet(tr69cDebugEnable)%>" disabled>
+   <input type="hidden" name="sessionKey" value='<%ejGetOther(sessionKey)%>' >
+   <div>
+   <p>_(Do not change the setting below unless instructed to do so by a certified support representative.)_</p>
+				<p><table cellspacing=0>
+				<p>1. _(TR-069 ACS Settings.)_</p>
+				<tr>
+				  <td align=left class="reg_text_b">_(ACS URL:)_ &nbsp;</td>
+				  <td class="reg_text">&nbsp;&nbsp;<input type=text name="ACSURL" id="ACSURL" size="30" class="reg_text" style="margin:auto auto auto auto; line-height:12px;"></td>
+				</tr>
+        <tr>
+          <td align=left class="reg_text_b">_(Username)_: &nbsp;</td>
+          <td class="reg_text">&nbsp;&nbsp;<input type=text name="ACSUSERNAME" id="ACSUSERNAME" size="30" class="reg_text" ></td>
+        </tr>
+				<tr>
+          <td align=left class="reg_text_b">_(Password)_: &nbsp;</td>
+          <td class="reg_text">&nbsp;&nbsp;<input type="text" name="ACSPASSWORD" id="ACSPASSWORD" size="30" class="reg_text" ></td>
+        </tr>
+				<tr>
+          <td align=left class="reg_text_b">_(ACS_PeriodicInformEnable)_: &nbsp;</td>
+          <td class="reg_text">&nbsp;&nbsp;<input type=text name="ACS_PeriodicInformEnable" id="ACS_PeriodicInformEnable" size="30" class="reg_text" ></td>
+        </tr>
+				<tr>
+          <td align=left class="reg_text_b">_(ACS_PeriodicInformInterval)_: &nbsp;</td>
+          <td class="reg_text">&nbsp;&nbsp;<input type=text name="ACS_PeriodicInformInterval" id="ACS_PeriodicInformInterval" size="30" class="reg_text" ></td>
+        </tr>
+				<tr>
+          <td align=left class="reg_text_b">_(ACS_PeriodicInformTime)_: &nbsp;</td>
+          <td class="reg_text">&nbsp;&nbsp;<input type=text name="ACS_PeriodicInformTime" id="ACS_PeriodicInformTime" size="30" class="reg_text" ></td>
+        </tr>
+				<tr>
+          <td align=left class="reg_text_b">_(ACS_BackoffInterval)_: &nbsp;</td>
+          <td class="reg_text">&nbsp;&nbsp;<input type=text name="ACS_BackoffInterval" id="ACS_BackoffInterval" size="30" class="reg_text" ></td>
+        </tr>
+				<tr>
+          <td align=left class="reg_text_b">_(ACS_ConnectionRequestURL)_: &nbsp;</td>
+          <td class="reg_text">&nbsp;&nbsp;<input type=text name="ACS_ConnectionRequestURL" id="ACS_ConnectionRequestURL" size="30" class="reg_text" ></td>
+        </tr>
+				<tr>
+          <td align=left class="reg_text_b">_(ACS_ConnectionRequestUsername)_: &nbsp;</td>
+          <td class="reg_text">&nbsp;&nbsp;<input type=text name="ACS_ConnectionRequestUsername" id="ACS_ConnectionRequestUsername" size="30" class="reg_text" ></td>
+        </tr>
+				<tr>
+          <td align=left class="reg_text_b">_(ACS_ConnectionRequestPassword)_: &nbsp;</td>
+          <td class="reg_text">&nbsp;&nbsp;<input type="text" name="ACS_ConnectionRequestPassword" id="ACS_ConnectionRequestPassword" size="30" class="reg_text" ></td>
+        </tr>
+				</table>
+        <p>
+        <table border="0" cellspacing="0">
+            <tr>
+                <td align="left" class="reg_text_b">_(Display SOAP messages on serial console)_: &nbsp;&nbsp;</td>
+                <td class="reg_text">&nbsp;&nbsp;&nbsp;
+                    <input name="ACS_Debug" id="ACS_Debug_disable" value="0" type="radio">
+                    _(Disable)_</td>
+                <td class="reg_text">&nbsp;&nbsp;&nbsp;
+                    <input name="ACS_Debug" id="ACS_Debug_enable" value="1" type="radio">
+                    _(Enable)_</td>
+            </tr>
+        </table>
+    </div>
+					<div class="clear_left"></div>
+					<p>2. _(Click Apply to save changes.)_</p>
+					<p><a class="button1" onclick="do_next();" id="btn_apply"><span>_(Apply)_</span></a></p>
+          <input type="hidden" name="var:frompage" value="advancedutilities_tr069.html">
+				</form>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

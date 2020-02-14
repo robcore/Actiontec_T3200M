@@ -1,0 +1,18 @@
+--- quantenna-sdk-v36.4.0.11/buildroot/target/device/Quantenna/Ruby/scripts/start-prod	2014-01-27 18:55:36.000000000 -0800
++++ quantenna-sdk-v36.4.0.11/buildroot/target/device/Quantenna/Ruby/scripts/start-prod	2014-02-11 17:49:33.210970432 -0800
+@@ -101,6 +101,15 @@ then
+     fi
+ fi
+ 
++#aei set static ip
++echo 10.1.1.253 > ${base_persistent_files}/ipaddr
++ifconfig br0 10.1.1.253
++
++tmp_conf=`cat ${base_persistent_files}/wireless_conf.txt`
++if [ -z `echo $tmp_conf | grep staticip` ] ; then
++        echo "${tmp_conf}&staticip=1" > ${base_persistent_files}/wireless_conf.txt
++fi
++sed -i 's/staticip=[0,1]*/staticip=1/' ${base_persistent_files}/wireless_conf.txt
+ 
+ start_mode="runtime"
+ $base_scripts/load-qdrv qtn_ruby "$start_mode"

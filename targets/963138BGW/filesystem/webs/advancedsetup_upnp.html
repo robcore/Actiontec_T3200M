@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Firewall)_ - _(UPnP)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="javascript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+function do_load() {
+     htmlDecode();
+     var form0=document.forms[0];
+
+     if(location.pathname.indexOf(".cgi") != -1)
+         location.href=location.href.replace(".cgi", ".html");
+
+     var upnp_enable = htmlDecodeStr("<%ejGet(enblUpnp)%>");
+     var logEnable = htmlDecodeStr("<%ejGet(upnpLog)%>");
+     var Mode = htmlDecodeStr("<%ejGet(upnpMode)%>");
+     upnp_enable = upnp_enable.toLowerCase();
+
+     if( upnp_enable=="yes" || upnp_enable=="1" ) {
+       //form0.upnp[0].checked = "Enable";
+       form0.upnp[0].checked = true;
+     } else {
+       //form0.upnp[1].checked = "Disable";
+       form0.upnp[1].checked = true;
+     }
+     
+     if(logEnable == "1")
+         form0.upnp_log[0].checked = true;
+     else
+         form0.upnp_log[1].checked = true;
+
+     if(Mode == "1")
+         form0.upnp_mode[0].checked = true;
+     else         
+         form0.upnp_mode[1].checked = true;
+
+	//highlight the button after user click on it
+	side_nav("advancedsetup_upnp");
+}
+
+function do_apply() {
+    var form = document.forms[0];
+    var i=0;
+    var lochead='advancedsetup_upnp.cgi?';
+    var loc="";
+
+    if(form.upnp[0].checked)
+        form.enblUpnp.value = "1";
+    else
+        form.enblUpnp.value = "0";
+  
+    if(form.upnp_log[0].checked)
+        form.upnpLog.value = "1";
+    else
+        form.upnpLog.value = "0";
+ 
+    if(form.upnp_mode[0].checked)
+        form.upnpMode.value = "1";
+    else
+        form.upnpMode.value = "2";
+
+    form.upnp[0].disabled = true;
+    form.upnp[1].disabled = true;
+    form.upnp_log[0].disabled = true;
+    form.upnp_log[1].disabled = true;
+    form.upnp_mode[0].disabled = true;
+    form.upnp_mode[1].disabled = true;
+
+    for(i=0;i<form.elements.length;i++)
+      {
+          if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+          {
+              if(i!=0)
+                loc+="&";
+              loc+=form.elements[i].name;
+              loc+="=";
+              loc+=form.elements[i].value;
+          }
+      }
+      lochead+=loc;
+      //var code = 'location="' + lochead + '"';
+      //eval(code);
+      postSubmit(lochead);
+    //form.submit();
+
+}
+/*
+function dom_load(){ do_load(); }
+
+*/
+function dom_load()
+{
+        do_load();
+}
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav4.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(fw_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="advancedsetup_upnp">_(UPnP)_</h1>
+            <form  name="myform" method="POST" action="advancedsetup_upnp.cgi" onSubmit="return do_apply();">
+			<input type="hidden" name="sessionKey" value='<%ejGetOther(sessionKey)%>' >
+                <input name="enblUpnp" type="hidden" value="<%ejGet(enblUpnp)%>" />
+                <input name="upnpLog"  type="hidden" value="<%ejGet(upnpLog)%>"/>
+                <input name="upnpMode"  type="hidden" value="<%ejGet(upnpMode)%>">
+				<p>_(Follow the steps below to enable or disable UPnP (Universal Plug and Play).)_</p>
+				<p><strong>1. _(Set the UPnP state.)_</strong></p>
+				<table width="50%" border="0" cellpadding="0" cellspacing="0">
+				<tr>
+				<td width="30%">&nbsp;&nbsp;&nbsp;_(UPnP)_: </td>
+				<td width="30%"><input name="upnp" id="upnp_enable" type="radio" value="upnp_enable" checked="checked" />
+				_(Enable)_</td>
+				<td width="40%"><input name="upnp" id="upnp_disable" type="radio" value="upnp_disable" />
+					_(Disable)_</td>
+				</tr>
+				<tr>
+				<td width="30%">&nbsp;&nbsp;&nbsp;_(UPnp Log)_: </td>
+				<td width="30%"><input name="upnp_log" id="upnp_log_enable" type="radio" value="upnp_log_enable" checked="checked" />
+				_(Enable)_</td>
+				<td width="40%"><input name="upnp_log" id="upnp_log_disable" type="radio" value="upnp_log_disable" />
+					_(Disable)_</td>
+				</tr>
+				<tr>
+				<td width="30%">&nbsp;&nbsp;&nbsp;_(UPnP Mode)_: </td>
+				<td width="30%"><input name="upnp_mode" id="upnp_mode_read_only" type="radio" value="upnp_mode_read_only" checked="checked" />
+				_(Read only)_</td>
+				<td width="40%"><input name="upnp_mode" id="upnp_mode_read_write" type="radio" value="upnp_mode_read_write" />
+					_(Read write)_</td>
+				</tr>
+				</table>
+				<p>&nbsp;</p>
+				<p><strong>2. _(Click Apply to save changes.)_</strong></p>
+				<p><a class="button1" onclick="do_apply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+			</form>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+
+</SCRIPT>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

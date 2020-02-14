@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>_(Status)_ - _(System Monitor)_ - _(Interface Statistics)_</title>
+  <link href="css/basic.css" rel="stylesheet" type="text/css" />
+  <SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript">
+  </SCRIPT>
+  <script language="JavaScript" src="js/nav.js">
+  </script>
+  <script language="JavaScript" src="js/util.js">
+  </script>
+  <script language="JavaScript" src="js/htmldecode.js"></script>
+  <script language="Javascript">
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function showRule(inf_name, param_list, table)
+{
+
+    /* append in list_table */
+    var newTR = table.insertRow(-1);
+
+    var newTDinf = newTR.insertCell(-1);
+    var newTDspd = newTR.insertCell(-1);
+    var newTDtxp = newTR.insertCell(-1);
+    var newTDrxp = newTR.insertCell(-1);
+    var newTDtxe = newTR.insertCell(-1);
+    var newTDrxe = newTR.insertCell(-1);
+    var newTDtxb = newTR.insertCell(-1);
+    var newTDrxb = newTR.insertCell(-1);
+    var newTDdpb = newTR.insertCell(-1);
+    var newTDtxr = newTR.insertCell(-1);
+    var newTDrxr = newTR.insertCell(-1);
+    var newTDdpr = newTR.insertCell(-1);
+
+    newTDinf.align = "center";
+    newTDspd.align = "center";
+    newTDtxp.align = "center";
+    newTDrxp.align = "center";
+    newTDtxe.align = "center";
+    newTDrxe.align = "center";
+    newTDtxb.align = "center";
+    newTDrxb.align = "center";
+    newTDdpb.align = "center";
+    newTDtxr.align = "center";
+    newTDrxr.align = "center";
+    newTDdpr.align = "center";
+
+    newTDinf.innerHTML = inf_name;
+    newTDspd.innerHTML = param_list[0];
+    if(param_list[0] == 'Disconnected')
+        newTDspd.innerHTML = '_(Disconnected)_';
+    newTDtxp.innerHTML = param_list[1];
+    newTDrxp.innerHTML = param_list[2];
+    newTDtxe.innerHTML = param_list[3];
+    newTDrxe.innerHTML = param_list[4];
+    newTDtxb.innerHTML = param_list[5];
+    newTDrxb.innerHTML = param_list[6];
+    newTDdpb.innerHTML = param_list[7];
+    newTDtxr.innerHTML = param_list[8];
+    newTDrxr.innerHTML = param_list[9];
+    newTDdpr.innerHTML = param_list[10];
+}
+
+  function do_load()
+  {
+    var hsi_status = '<%ejGetOther(infStatis, ewan0)%>';
+    var iptv_status = '<%ejGetOther(infStatis, dsl0)%>';
+    var eth0_status = '<%ejGetOther(infStatis, eth0)%>';
+    var eth1_status = '<%ejGetOther(infStatis, eth1)%>';
+    var eth2_status = '<%ejGetOther(infStatis, eth2)%>';
+    var eth3_status = '<%ejGetOther(infStatis, eth3)%>';
+    //var hpna_status = '<%ejGetOther(infStatis, eth4)%>';
+    var wifi_status = '<%ejGetOther(infStatis, wl0)%>';
+    var has_QTN = htmlDecodeStr("<%ejGet(qtnExist)%>");
+    var wifi5_status = '<%ejGetOther(infStatis, wl1)%>';
+
+    var moca_status = '<%ejGetOther(infStatis, moca0)%>';
+    var sfp_status = '<%ejGetOther(infStatis, ewan1.1)%>';
+
+    var table_id = document.getElementById("interface_list_table");
+    var inf_status = hsi_status.split('/');
+    showRule("_(EWAN)_ ", inf_status, table_id);
+    inf_status = iptv_status.split('/');
+    showRule("_(XDSL)_", inf_status, table_id);
+    inf_status = eth0_status.split('/');
+    showRule("_(Eth LAN#1)_", inf_status, table_id);
+    inf_status = eth1_status.split('/');
+    showRule("_(Eth LAN#2)_", inf_status, table_id);
+    inf_status = eth2_status.split('/');
+    showRule("_(Eth LAN#3)_", inf_status, table_id);
+    inf_status = eth3_status.split('/');
+    showRule("_(Eth LAN#4)_", inf_status, table_id);
+    //inf_status = hpna_status.split('/');
+    //showRule("_(HPNA)_", inf_status, table_id);
+    inf_status = wifi_status.split('/');
+    showRule("_(WiFi - 2.4G)_", inf_status, table_id);
+    if ("1" == has_QTN)
+    {
+        inf_status = wifi5_status.split('/');
+        showRule("_(WiFi - 5G)_", inf_status, table_id);
+    }
+
+    //show MoCA
+    if( board_id.indexOf("M") != -1)
+    {
+    inf_status = moca_status.split('/');
+    showRule("_(MoCA)_", inf_status, table_id);
+    }
+    //show SFP
+    inf_status = sfp_status.split('/');
+    showRule("_(SFP)_", inf_status, table_id);
+
+
+	side_nav("interfacestatistics");
+
+  }
+
+function ApplyReset()
+{
+    var lochead = 'ResetInfStatis.cmd?redirect=modemstatus_interfacestatistics.html&needthankyou=modemstatus_interfacestatistics.html';
+    lochead += '&sessionKey=' + sessionKey;
+    postSubmit(lochead);
+}
+
+function dom_load(){ do_load(); }
+
+  </script>
+</head>
+
+<body>
+<div id="wrapper">
+  <!-- TOP NAV -->
+  <%ejInclude(top_btn_nav1.html)%>
+  <!-- END TOP NAV -->
+  <!-- SIDE NAV -->
+  <%ejInclude(status_left.html)%>
+  <!-- END SIDE NAV -->
+  <!-- MAIN CONTENT AREA -->
+  <div id="content_right">
+    <div id="content_right_header">
+    </div>
+    <div id="content_right_contentarea">
+
+      <h1 class="modemstatus_wanstatus">_(Estimated Interface Statistics)_ </h1>
+      <form>
+<div style="width:660px; overflow-x:auto;margin:auto;">
+<table id="interface_list_table" width="100%" border="0" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+ <tr>
+  <td rowspan=2>
+  _(Interface)_
+  </td>
+  <td rowspan=2 >
+  _(Connect<br>Speed)_<br>(_(Mbps)_)
+  </td>
+  <td colspan=4 >
+  _(Packets)_
+  </td>
+  <td colspan=3>
+  _(Bytes)_<br>
+  (_(MB)_)
+  </td>
+  <td colspan=3>
+  _(Bytes)_<br>
+  (_(MB)_) _(since)_ <a href="#" onclick="ApplyReset();">_(Reset)_</a>
+  </td>
+ </tr>
+ <tr>
+  <td>
+  _(Tx)_
+  </td>
+  <td>
+  _(Rx)_
+  </td>
+  <td>
+  _(Tx<br>Errors)_
+  </td>
+  <td>
+  _(Rx<br>Errors)_
+  </td>
+  <td>
+  _(Tx)_
+  </td>
+  <td>
+  _(Rx)_
+  </td>
+  <td>
+  _(dropped)_
+  </td>
+  <td>
+  _(Tx)_
+  </td>
+  <td>
+  _(Rx)_
+  </td>
+  <td>
+  _(dropped)_
+  </td>
+ </tr>
+</table>
+</div>
+        <!--
+        <p>
+        <a href="#" id="clear_btn" class="btn" onclick="WanStatusClear()"></a>
+        </p>
+        -->
+      </form>
+    </div>
+    <div id="content_right_footer">
+    </div>
+</div>
+<div class="clear_left">
+</div>
+<div id="footer">
+  &nbsp;
+</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

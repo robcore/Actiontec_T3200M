@@ -1,0 +1,446 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(IPv6 Traceroute)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/functions.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<%ejInclude("ipv6_common.html")%>
+
+<script language="Javascript">
+var no_response = 0;
+var menu = 0;
+var comp_val = "";
+
+function refresh_result(values)
+{
+	var form = document.forms[0];
+    var res = "";
+    var table = document.getElementById("result_tbl");
+    var i=0;
+
+	var seg = 0;
+	var tmp = "";
+	var lastRow=1;
+    var tbody1 = table.getElementsByTagName("TBODY")[0];
+
+	document.getElementById("test_off").style.display = "block";
+    document.getElementById("test_on").style.display = "none";
+
+
+	lastRow = tbody1.rows.length;
+	for ( i = lastRow; i > 1 ; i-- )
+	{
+		tbody1.removeChild(tbody1.rows[i-1]);
+	}
+
+	if(values!="")
+    {
+		if(menu == 0)
+		{
+			comp_val = values;
+			menu++;
+		}
+		else if(menu > 0)
+		{
+			if(values.length != comp_val.length)
+			{
+				comp_val = values;
+				menu++;
+			}
+		}
+	    values = values.split('+');
+	    seg = htmlDecodeStr(values[1]);
+	    tmp = htmlDecodeStr(values[0]);
+    }
+
+	if(seg == 1)
+	{
+		setTimeout("http_refresh()", 6000);
+	}
+
+	if(tmp != "" && tmp != "0")
+        res = tmp.split('|');
+
+	if(seg != 1)
+    {
+		document.myform.ipv6_tracerouteSign.value = 0;
+    }
+
+    document.getElementById("url").value = form.elements[0].value;
+
+    if (res != "" && res.length  > 1)
+    {
+		var item_num=1;
+		for(i=0; i<res.length; i++){
+		    var details = res[i].replace(/ ms/g, "_(ms)_").replace(/\*/g, " _(N/A)_").split("  ");
+		    while(details.length<5) details[details.length]="_(N/A)_";
+		    if (details[0]!=item_num  )
+			continue;
+
+		    var host=details[1];
+		    if(isValidIpAddress(host.split(" ")[0]))
+			host=host.split(" ")[0];
+
+		    var tab_details = new Array(5);
+		    tab_details[0]= item_num;
+		    tab_details[1]= "_(N/A)_";
+		    tab_details[2]= "_(N/A)_";
+		    tab_details[3]= "_(N/A)_";
+		    tab_details[4]= host;
+		    var time_index=1;
+		    var dt_index=2;
+		    while (time_index<=3 && dt_index<details.length)
+		    {
+			var ms_index = details[dt_index].indexOf("_(ms)_");
+			if ( ms_index!=-1)
+			{
+			    tab_details[time_index]=details[dt_index].substring(0,ms_index+2);
+			    time_index++;
+			}
+			dt_index++;
+		    }
+
+		    appendTableRow(table, "center", tab_details);
+		    item_num++;
+		}
+    }
+	else
+	{
+		if(seg != 1)
+		{
+			pop_up("_(Unknown host, or the network is currently unavailable.)_",0);
+		}
+	}
+
+	for(; i<5; i++){
+        var details = ["_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_"];
+        appendTableRow(table, "center", details);
+    }
+
+	if(seg != 1)
+    {
+        document.getElementById("simple_result").innerHTML = "_(No Test in Progress)_";
+		document.getElementById("test_off").style.display = "none";
+	document.getElementById("test_on").style.display = "block";
+    }
+	else
+	{
+		document.getElementById("test_off").style.display = "block";
+	document.getElementById("test_on").style.display = "none";
+    }
+}
+
+function do_load()
+{
+    htmlDecode();
+    var form = document.forms[0];
+    var seg = htmlDecodeStr('<%ejGet(ipv6_tracerouteSign)%>');
+    var res = "<%ejGetOther(ipv6_tracerouteResult)%>".split('|');
+    var table = document.getElementById("result_tbl");
+    var i=0;
+
+	var lastRow=1;
+    var tbody1 = table.getElementsByTagName("TBODY")[0];
+
+	lastRow = tbody1.rows.length;
+	for ( i = lastRow; i > 1 ; i-- )
+	{
+		tbody1.removeChild(tbody1.rows[i-1]);
+	}
+
+	side_nav("ipv6_traceroute");
+
+	if(seg == "1" )
+	{
+        document.getElementById("simple_result").innerHTML = '<font color="#006600">_(Test is in progress)_ ...</font>';
+		document.myform.ipv6_tracerouteSign.value = 0;
+		setTimeout("http_refresh()", 2000);
+    }
+
+    document.getElementById("url").value = form.elements[0].value;
+
+    if (res != "" && res.length  > 1)
+    {
+		var item_num=1;
+		for(i=0; i<res.length; i++){
+		    var details = res[i].replace(/ ms/g, "_(ms)_").replace(/\*/g, " _(N/A)_").split("  ");
+		    while(details.length<5) details[details.length]="_(N/A)_";
+		    if (details[0]!=item_num  )
+			continue;
+
+		    var host=details[1];
+		    if(isValidIpAddress(host.split(" ")[0]))
+				host=host.split(" ")[0];
+
+		    var tab_details = new Array(5);
+		    tab_details[0]= item_num;
+		    tab_details[1]= "_(N/A)_";
+		    tab_details[2]= "_(N/A)_";
+		    tab_details[3]= "_(N/A)_";
+		    tab_details[4]= host;
+		    var time_index=1;
+		    var dt_index=2;
+
+		    while (time_index<=3 && dt_index<details.length)
+		    {
+				var ms_index = details[dt_index].indexOf("_(ms)_");
+				if ( ms_index!=-1)
+				{
+				    tab_details[time_index]=details[dt_index].substring(0,ms_index+2);
+				    time_index++;
+				}
+				dt_index++;
+		    }
+
+		    appendTableRow(table, "center", tab_details);
+		    item_num++;
+		}
+    }
+
+    for(; i<5; i++){
+        var details = ["_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_"];
+        appendTableRow(table, "center", details);
+    }
+
+	if(seg != 1)
+    {
+		document.getElementById("test_off").style.display = "none";
+	document.getElementById("test_on").style.display = "block";
+    }
+	else
+	{
+		document.getElementById("test_off").style.display = "block";
+	document.getElementById("test_on").style.display = "none";
+    }
+}
+
+function checkInvalidchar(Address)
+{
+    var s = Address;
+    var num = /^\d+/;
+    var web_rule = /^([A-Za-z0-9]|-)+(\.([A-Za-z0-9]|-)+)*\.[a-z]{2,6}$/;
+    var isIp = false;
+    var isUrl = false;
+
+    if (s=="" || s==null)
+    {
+		tips = "_(You must enter a valid entry.)_";
+		pop_up(tips,0);
+        return false;
+    }
+
+    if (isipv6(s))
+		isIp = true;
+    else
+		isUrl = true;
+
+	tips = "_(The IP Address or URL inserted in step 1 is invalid. You must enter a valid IP Address or URL.)_ ";
+	page = '0';
+
+    if (isIp)
+    {
+		if (isLLA(s))
+		{
+			pop_up(tips,page);
+		    return false;
+		}
+    }
+
+    if (isUrl)
+    {
+		if (!web_rule.test(s))
+		{
+			pop_up(tips,page);
+		    return false;
+		}
+    }
+
+    return true;
+}
+
+function traceTest()
+{
+    var form = document.forms[0];
+    var i = 0;
+    var lochead='ipv6_traceroute.cgi?';
+    var loc="";
+    var key = '<%ejGetOther(encrypt_key, 0)%>';
+
+    if(!checkInvalidchar(document.getElementById("url").value))
+    {
+        return false;
+    }
+
+	document.getElementById("test_off").style.display = "block";
+    document.getElementById("test_on").style.display = "none";
+    form.elements[0].value = document.getElementById("url").value;
+    form.elements[0].disabled = false;
+    form.elements[1].value = 1;
+
+      for(i=0;i<form.elements.length;i++)
+      {
+          if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+          {
+              if(i!=0)
+                loc+="&";
+              loc+=form.elements[i].name;
+              loc+="=";
+              loc+=form.elements[i].value;
+          }
+      }
+
+   loc=encrypt_query(loc,key);
+   lochead+=loc;
+
+   document.getElementById("simple_result").innerHTML = '<font color="#006600">_(Test is in progress)_ ...</font>';
+    if(xmlhttp != null)
+    {
+     xmlhttp.open("POST",lochead,true);
+     xmlhttp.send(null);
+     setTimeout("http_refresh()", 2000);
+    }
+}
+
+function Watch_Dog () {
+	if ( no_response ) {
+		http_refresh();
+	}
+}
+
+function http_refresh()
+{
+	var statusval = "";
+
+	if(xmlhttp != null)
+	{
+		//SW-Bug #127719
+		var curTime = new Date();
+		curTime = curTime.getTime();
+		xmlhttp.open("GET","./ipv6_traceroute_refresh.html?time="+curTime,true);
+		xmlhttp.onreadystatechange =function()
+		{
+		if(xmlhttp.readyState==4)
+            {
+                no_response = 0;
+				document.getElementById("test_off").style.display = "block";
+			document.getElementById("test_on").style.display = "none";
+                statusval = xmlhttp.responseText;
+
+                if(statusval == "")
+                {
+                    setTimeout("http_refresh();", 5000);
+                }
+                else if(statusval.indexOf("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd") != -1)
+                    return;
+                else
+                {
+                    refresh_result(statusval);
+                }
+			}
+        }
+        xmlhttp.send(null);
+        no_response = 1;
+		setTimeout("Watch_Dog();", 5000);
+
+	}
+	return statusval;
+}
+</script>
+</head>
+
+<body onload="do_load()">
+<form name="myform" action="ipv6_traceroute.cgi" method="POST">
+<!--0--><input type="hidden" name="ipv6_hostName" value="<%ejGet(ipv6_hostName)%>" disabled="disabled"/>
+<!--2--><input type="hidden" name="ipv6_tracerouteSign" value="<%ejGet(ipv6_tracerouteSign)%>"/>
+<!--3--><input type="hidden" name="nothankyou" value="1"/>
+<input type="hidden" name="sessionKey" value='<%ejGetOther(sessionKey)%>' >
+	<input type="hidden" name="page" value="ipv6_traceroute.html" />
+</form>
+
+<div id="wrapper">
+<!-- TOP NAV -->
+<%ejInclude(top_btn_nav5.html)%>
+<!-- END TOP NAV -->
+<!-- SIDE NAV -->
+<%ejInclude(adv_left.html)%>
+<!-- END SIDE NAV -->
+
+<!-- MAIN CONTENT AREA -->
+<div id="content_right">
+<div id="content_right_header"></div>
+<div id="content_right_contentarea">
+<h1 class="utilities_traceroute">_(IPv6 Traceroute)_</h1>
+<p>_(Traceroute is used to determine the route taken by packets across a network.)_</p>
+<form>
+	<div class="stepWrapper_header"></div>
+	<div class="stepWrapper">
+	<p><strong>1. _(Enter a URL or IP address in the text box, below.)_ </strong></p>
+	<table>
+	<tr>
+		<td width="150"><label for="url">_(URL or IP)_:</label></td>
+		<td><input type="text" name="url" id="url" size="25" style="height:18px;"/></td>
+	</tr>
+	</table>
+	</div>
+	<div class="stepWrapper_footer"></div>
+
+	<div id="test_off" style="display:block">
+		<div class="stepWrapper_header"></div>
+		<div class="stepWrapper">
+			<div class="stepWrapper greyed_out">
+				<p><strong>2. _(Select test.)_</strong></p>
+				<p><a class="button2" id="btn_test_disable"><span>_(Test)_</span></a></p>
+			</div>
+		</div>
+		<div class="stepWrapper_footer"></div>
+	</div>
+
+	<div id="test_on" style="display:none">
+		<div class="stepWrapper_header"></div>
+		<div class="stepWrapper">
+			<p><strong>2. _(Select test.)_</strong></p>
+			<p><a class="button1" onclick="traceTest()" id="btn_test"><span>_(Test)_</span></a></p>
+		</div>
+		<div class="stepWrapper_footer"></div>
+	</div>
+
+	<br>
+
+	<div class="stepWrapperdark_header"></div>
+	<div class="stepWrapperdark">
+    <table width="48%" border="0" align="center" cellpadding="5" cellspacing="0" class="defa
+ultstyle" style="margin:10px auto 0 auto;">
+        <tr align="center">
+            <th>_(Test Status)_</th>
+        </tr>
+        <tr align="center">
+            <td id="simple_result" text-align="center">_(No Test in Progress)_</td>
+        </tr>
+    </table>
+    <p>&nbsp;</p>
+	<p align="center"><strong>_(Traceroute Results)_</strong></p>
+	<table id="result_tbl" class="defaultstyle">
+	<tr>
+		<th width="50">_(Hop)_</th>
+		<th width="45">_(Time 1)_</th>
+		<th width="45">_(Time 2)_</th>
+		<th width="45">_(Time 3)_</th>
+		<th>_(Host / IP Address)_</th>
+	</tr>
+	</table>
+	</div>
+	<div class="stepWrapperdark_footer"></div>
+</form>
+</div>
+<div id="content_right_footer"></div>
+</div>
+<div id="formHidenDiv"></div>
+<div class="clear_left"></div>
+</div>
+
+</body>
+</html>

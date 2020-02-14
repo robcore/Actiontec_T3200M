@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Status)_ - _(LAN  Services)_ - _(Modem Utilization)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="Javascript">
+
+var total_mem = '<%ejGetOther(modemUtilization, total_memory)%>';
+var mem_usage = '<%ejGetOther(modemUtilization, mem_inuse)%>';
+var max_session_num = '<%ejGetOther(modemUtilization, maximum_session_allowed)%>';
+var tcp_session = '<%ejGetOther(modemUtilization, current_open_tcp)%>';
+var udp_session = '<%ejGetOther(modemUtilization, current_open_udp)%>';
+var tcp_sessions_num = '<%ejGetOther(modemUtilization, current_open_tcp)%>';
+var udp_sessions_num = '<%ejGetOther(modemUtilization, current_open_udp)%>';
+var total_sessions = '<%ejGetOther(modemUtilization, total_open_session)%>';
+var modem_sessions = '<%ejGetOther(modemUtilization, modem_open_session)%>';
+var modem_utlize_log = '<%ejGetOther(modemUtilization, modem_utilize_log)%>';
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function do_load()
+{
+
+    document.getElementById("total_memory").innerHTML = total_mem + "_(MB RAM)_";
+    document.getElementById("mem_inuse").className = "use_status_normal";
+    document.getElementById("mem_inuse").innerHTML = mem_usage +"%";// + " utilization ";
+    // for the qualification by which show the different font is not given, I set it to 95/80/0 myself
+    // if the qualification in spec , change them below
+    if (mem_usage > 95)
+    {
+        document.getElementById("mem_status").className = "overload";
+        document.getElementById("mem_status").innerHTML = "_(Memory Overload)_";
+        document.getElementById("mem_action_recommended").className = "overload";
+        document.getElementById("mem_action_recommended").innerHTML = "_(Disconnect LAN device with large number of open sessions.)_";
+    }
+    else if( mem_usage > 80)
+    {
+        document.getElementById("mem_status").className = "useage_high";
+        document.getElementById("mem_status").innerHTML = "_(Memory Usage High)_";
+        document.getElementById("mem_action_recommended").className = "useage_high";
+        document.getElementById("mem_action_recommended").innerHTML = "_(Check LAN Devices for Viruses)_";
+    }
+    else
+    {
+        document.getElementById("mem_status").className = "use_status_normal";
+        document.getElementById("mem_status").innerHTML = "_(OK)_";
+        document.getElementById("mem_action_recommended").className = "use_action_normal";
+        document.getElementById("mem_action_recommended").innerHTML = "_(NONE)_";
+    }
+
+    document.getElementById("man_session_num").innerHTML = max_session_num;
+    document.getElementById("current_open_tcp").innerHTML = tcp_sessions_num;
+    document.getElementById("current_open_udp").innerHTML = udp_sessions_num;
+    document.getElementById("total_session").className = "use_status_normal";
+    document.getElementById("total_session").innerHTML = total_sessions;
+    document.getElementById("modem_session").innerHTML = modem_sessions;
+
+    // for the qualification by which show the different font is not given, I set it to 70/20/0 myself
+    // if the qualification in spec , change them below
+    if (total_sessions > 4096)
+    {
+        document.getElementById("session_status").className = "overload";
+        document.getElementById("session_status").innerHTML = "_(Session Overload)_";
+        document.getElementById("session_action_recommended").className = "overload";
+        document.getElementById("session_action_recommended").innerHTML = "_(Disconnect LAN device with large number of open sessions.)_";
+    }
+    else if(total_sessions > 2048)
+    {
+        document.getElementById("session_status").className = "useage_high";
+        document.getElementById("session_status").innerHTML = "_(Session Usage High)_";
+        document.getElementById("session_action_recommended").className = "useage_high";
+        document.getElementById("session_action_recommended").innerHTML = "_(Check LAN Devices for Viruses)_";
+
+    }
+    else
+    {
+        document.getElementById("session_status").className = "use_status_normal";
+        document.getElementById("session_status").innerHTML = "_(OK)_";
+        document.getElementById("session_action_recommended").className = "use_action_normal";
+        document.getElementById("session_action_recommended").innerHTML = "_(NONE)_";
+    }
+
+	//highlight the button after user click on it
+	side_nav("modemutilization");
+}
+
+function print_mem_usage_bar()
+{
+    var pict_index;
+    document.write('<img src="images/modemstatus_leftcap.png" width="2" height="14" />');
+    for (pict_index = 0; pict_index<9; pict_index++)
+    {
+        if (pict_index*11 <mem_usage)
+            document.write('<img src="images/modemstatus_active.png" width="9" height="14" />');
+        else
+            document.write('<img src="images/modemstatus_inactive.png" width="9" height="14" />');
+    }
+    document.write('<img src="images/modemstatus_rightcap.png" width="2" height="14" />');
+}
+
+function print_utilize_log()
+{
+    var client_info = modem_utlize_log.split('|');
+    var i = 0;
+    var table = document.getElementById("utilityLog");
+
+    if (client_info != "" )
+    {
+        for ( i = 0; i < client_info.length; i++ )
+        {
+            var client_detail = client_info[i].split('/');
+            document.writeln('<tr align="center" bgcolor="#417BA2" class="smallprint">');
+            document.writeln('  <td><img src="images/icon_computer.png" width="39" height="39" /></td>');
+            if(client_detail[0] == "Unknown")
+                client_detail[0] = "_(Unknown)_";
+            document.writeln('  <td>' + client_detail[0] +'</td>');
+            document.writeln('  <td>' + client_detail[1] +'</td>');
+            document.writeln('  <td>' + client_detail[2] +'</td>');
+            document.writeln('</tr>');
+        }
+    }
+    else
+    {
+        var blank = "_(No Entries Defined)_";
+        appendTableEmptyRow(table, "center", "4", blank);
+    }
+}
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav1.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(status_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+			<h1 class="modemstatus_modemutilitization">_(Modem Utilization)_ </h1>
+
+
+			<table width="85%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+			<tr>
+			    <th width="237"><div align="left"><strong>_(Parameter)_ </strong></div></th>
+			    <th width="183"><div align="left"><strong>_(Status)_ </strong></div></th>
+			</tr>
+			<tr>
+			<td><div align="left">_(Total Memory)_:    </div></td>
+			    <td id="total_memory"><div align="left"></div></td>
+			</tr>
+			<tr>
+			    <td><div align="left">_(Memory Used)_:     </div></td>
+			    <td><span id="mem_inuse"></span></td>
+			</tr>
+			<tr>
+			    <td><div align="left">_(Memory Status)_:    </div></td>
+			    <td><span id="mem_status"></span></td>
+			</tr>
+			<tr>
+			    <td><div align="left">_(Recommended Action)_:    </div></td>
+			    <td id="mem_action_recommended"><div align="left"></div></td>
+			</tr>
+                    <tr>
+                        <td><div align="left">_(Maximum Number of Sessions)_: 	</div></td>
+                        <td id="man_session_num"><div align="left"></div></td>
+                    </tr>
+                    <tr>
+                        <td><div align="left">_(LAN TCP Sessions)_: 	</div></td>
+                        <td id="current_open_tcp"><div align="left"></div></td>
+                    </tr>
+                    <tr>
+                        <td><div align="left">_(LAN UDP Sessions)_: 	</div></td>
+                        <td id="current_open_udp"><div align="left"></div></td>
+                    </tr>
+                    <tr>
+                        <td><div align="left">_(Modem Sessions)_: 	</div></td>
+                        <td id="modem_session"><div align="left"></div></td>
+                    </tr>
+                    <tr>
+                        <td><div align="left">_(Total Open Sessions)_: 	</div></td>
+                        <td><span id="total_session"></span></td>
+                    </tr>
+                    <tr>
+                        <td><div align="left">_(Session Status)_: 	</div></td>
+                        <td><span id="session_status"></span></td>
+                    </tr>
+                    <tr>
+                        <td><div align="left">_(Recommended Action)_: </div></td>
+                        <td id="session_action_recommended"><div align="left"></div></td>
+                    </tr>
+                </table>
+				<p>&nbsp;</p>
+				<h2 class="inlineheader">_(LAN Device Session Log)_ </h2>
+				<table id="utilityLog" width="85%" border="0" align="center" cellpadding="5" cellspacing="0" class="status_style" style="margin:10px auto 0 auto;">
+					<tr align="left">
+						<th width="10%">&nbsp;</th>
+						<th width="30%" style="text-transform:none;">_(Device Name)_ </th>
+						<th width="35%" style="text-transform:none;">_(IP Address)_ </th>
+						<th width="25%" style="text-transform:none;">_(No. of Open Session)_ </th>
+					</tr>
+                    <script>
+                    print_utilize_log();
+                    </script>
+				</table>
+		    <p></p>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

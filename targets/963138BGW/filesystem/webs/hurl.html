@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Welcome)_</title>
+<link href="css/actiontec2.css" rel="stylesheet" type="text/css" />
+<link href="css/hurl.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/functions.js"></script>
+<script type="text/javascript">
+var sessionKey='<%ejGetOther(sessionKey)%>';
+function MM_preloadImages() { //v3.0
+  var d=document; if(d.images){ if(!d.MM_p) d.MM_p=new Array();
+    var i,j=d.MM_p.length,a=MM_preloadImages.arguments; for(i=0; i<a.length; i++)
+    if (a[i].indexOf("#")!=0){ d.MM_p[j]=new Image; d.MM_p[j++].src=a[i];}}
+}
+
+function onApply(form) {
+
+	var loc;
+	if(form.hurl_input[0].checked == true){
+		loc = 'advancedsetup_admin.html';
+		window.location.href=loc;
+	}else if(form.hurl_input[1].checked == true){
+		loc = 'login.cgi?bypassHurl=1';
+        loc += '&sessionKey=' + sessionKey;
+		postSubmit(loc);
+	}else if(form.hurl_input[2].checked == true){
+		loc = 'index.html';
+		window.location.href=loc;
+	}
+}
+
+</script>
+</head>
+<body onLoad="MM_preloadImages('images/menu_1_on.png','images/menu_2_on.png','images/menu_4_on.png','images/menu_5_on.png','images/menu_6_on.png')">
+<form>
+<div id="wrapper">
+	<!-- TOP NAV -->
+	<%ejInclude(top_btn_nav.html)%>
+	<!-- END TOP NAV -->
+	<div id="main_column_homepage">
+		<div id="main_column_header_homepage"></div>
+		<div id="main_column_wrapper_hurl">
+			<!-- HURL -->
+			<div id="hurl_container">
+			<div class="hurl_hdr_title">
+				<p align="center" style="font-family:verdana,arial,helvetica; font-weight:bold; font-size:14px; color:#000;">_(Welcome)_</div>
+			<p id="hurl_q">_(Changing the admin password of the modem enhances network security.)_<br><br>
+			_(Would you like to change the password now?)_</p>
+		        <p id="hurl_q">
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					<input name="hurl_input" id="hurl_input_a" type="radio" checked/>
+					_(Yes)_<br/>
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					<input name="hurl_input" id="hurl_input_b" type="radio"/>
+					_(No)_<br/>
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+					<input name="hurl_input" id="hurl_input_c" type="radio"/>
+					_(Remind me later)_
+              </p>
+			  <p>&nbsp;</p>
+			<p><a class="button1" onClick="onApply(document.forms[0]);" id="btn_apply"><span>_(Apply)_</span></a></p>
+			</div>
+			<!-- END HURL -->
+
+
+
+		</div>
+		<div id="main_column_footer_homepage"></div>
+	</div>
+
+		<div class="clear_left"></div>
+		<div id="footer_homepage">
+		&nbsp;
+		</div>
+	</div>
+
+</div>
+</form>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Routing)_ - _(Dynamic Routing)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+var wanEthStatus_LinkStatus = htmlDecodeStr('<%ejGet(wanEthStatus_LinkStatus)%>');
+var natStatus = '<%ejGetOther(sysInfo, enblNat)%>';
+var wanInfNames_eth = '<%ejGetOther(wanInterfaces, ewan0)%>';
+var wanInfNames_dsl = '<%ejGetOther(wanInterfaces, all)%>';
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+var wanInfNames;
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function do_load()
+{
+    var form = document.myform;
+    var dynamic_routing = '<%ejGetOther(dynamicrouting)%>';
+    var info = dynamic_routing.split(',');
+    var table_length = info.length -1;
+//
+    if((wanInfNames_dsl.split('|').length-1) <= 0) {
+	if(wanEthStatus_LinkStatus=="Up") {
+		wanInfNames = wanInfNames_eth;
+	}
+	else {
+		wanInfNames = wanInfNames_dsl;
+	}
+    }
+    else {
+	wanInfNames = wanInfNames_dsl;
+    }
+//    wanInfNames = '<%ejGetOther(wanInterfaces, all)%>';
+//        alert('wanInfNames='+wanInfNames);
+
+    //handle multiple wan case
+    var currentWan;
+    var currenWanFlag = 0;
+    if(wanInfNames.indexOf("Connected") != -1)
+    {
+        var tempContent = wanInfNames.split('/');
+	if((tempContent.length -1 ) > 0)
+	{
+	    currentWan = tempContent[0];
+	    currenWanFlag = 1;
+	}
+    }
+
+    if (dynamic_routing != "No WAN Interface exist for RIP")
+    {
+        for (var i = 0; i < table_length; i++)
+        {
+	    if(currenWanFlag && info[i].indexOf(currentWan) == -1)
+                continue;
+            var records = info[i].split('|');
+            var col = new Array();
+            col[0] = htmlDecodeStr(records[0]);
+            col[1] = records[1];
+            col[2] = records[2];
+            col[3] = records[3];
+
+            if(col[3] != '0')
+            {
+                switch (col[1])
+                {
+                    case "1" :
+                        form.RIP[0].checked = true;
+                    break;
+                    case "2" :
+                        form.RIP[1].checked = true;
+                    break;
+                    default :
+                    form.RIP[1].checked = true;
+                    break;
+                }
+            }
+            else
+                form.RIP[2].checked = true;
+        }
+    }
+    else
+        form.RIP[2].checked = true;
+
+	//highlight the button after user click on it
+	side_nav("advancedsetup_dynamicrouting");
+}
+
+function applyClick()
+{
+    var form= document.myform;
+    var lst = '';
+    //var loc = 'ripcfg.cmd?action=apply';
+    var lochead = 'ripcfg.cmd?';
+    var loc = 'action=apply';
+
+    var wanInfo = wanInfNames.split('|');
+
+    var length = wanInfo.length - 1;
+
+    if (length <= 0)
+    {
+        alert("_(No Layer 3 WAN Interface exists for RIP.)_");
+        return false;
+    }
+
+    for (var i = 0; i < length; i++)
+    {
+        var records = wanInfo[i].split(':');
+//	var records = wanInfo[i].split('/');  //tmp
+        var wanStatus = new Array();
+        wanStatus[0] = htmlDecodeStr(records[0]);
+        wanStatus[1] = htmlDecodeStr(records[1]);
+
+        if (natStatus != '1')
+        {
+            with (form)
+            {
+                if (RIP[0].checked == true)
+                    lst += wanStatus[1] + '|' + RIP[0].value + '|' + '1' + '|' + '1' + ', ';
+                else if (RIP[1].checked == true)
+                    lst += wanStatus[1] + '|' + RIP[1].value + '|' + '1' + '|' + '1' + ', ';
+                else
+                    lst += wanStatus[1] + '|' + RIP[2].value + '|' + '0' + '|' + '0' + ', ';
+            }
+            loc += '&ripLst=' + lst;
+        loc += '&sessionKey=' + sessionKey;
+            loc += '&needthankyou=advancedsetup_dynamicrouting.html';
+            //var code = 'location="' + loc + '"';
+            //eval(code);
+            loc=encrypt_query(loc,key);
+            lochead+=loc;
+	    postSubmit(lochead);
+        }
+        else
+        {
+            alert("_(RIP  may not be working. Disable NAT to enable RIP.)_");
+            return false;
+        }
+    }
+}
+/*
+function dom_load(){ do_load(); }
+
+*/
+function dom_load()
+{
+        do_load();
+}
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="advancedsetup_dynamicrouting">_(Dynamic Routing (RIP))_</h1>
+                <form name="myform" method="POST" onSubmit="return applyClick();">
+
+               <p> _(If a device is set up behind the modem in the network, consult the documentation that came with the device to see what kind of Dynamic Routing is required.)_</p>
+					<p><strong>1. _(Select the dynamic routing type.)_</strong></p>
+                <p>
+		&nbsp;&nbsp;
+                <input name="RIP" id="rip_ver_1" type="radio" value="1" checked="checked" />
+                _(Version 1)_
+                </p>
+                <p>
+		&nbsp;&nbsp;
+                <input name="RIP" id="rip_ver_2" type="radio" value="2" />
+                _(Version 2)_
+                </p>
+                <p>
+		&nbsp;&nbsp;
+                <input name="RIP" id="rip_ver_off" type="radio" value="0" />
+                _(Off)_
+                </p>
+				<p>&nbsp;</p>
+                <p><strong>2. _(Click Apply to save changes.)_ </strong></p>
+                <p><a class="button1" onclick="applyClick()" id="btn_apply"><span>_(Apply)_</span></a></p>
+                </form>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+
+</SCRIPT>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

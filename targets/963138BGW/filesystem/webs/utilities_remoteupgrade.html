@@ -1,0 +1,388 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Check for new firmware link)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript" SRC="js/util.js" TYPE="text/javascript"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript" SRC="js/nav.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="javascript">
+<!-- hide
+var doing= 0;
+
+//==============================================
+var wait=0;
+var TimeWait=70000;
+var RefreshTime=1000;
+var timeout=(TimeWait/RefreshTime)*10;
+var loadedcolor='red' ;       // PROGRESS BAR COLOR
+var unloadedcolor='#175e8d';     // COLOR OF UNLOADED AREA
+var barheight=15;              // HEIGHT OF PROGRESS BAR IN PIXELS
+var barwidth=320;              // WIDTH OF THE BAR IN PIXELS
+var waitTime=190;               // NUMBER OF SECONDS FOR PROGRESSBAR
+var percent=0;
+var downloadpercent=-1;
+var downloadimagestartflag = 1;
+var flashimagestartflag = 0;
+var Pid=0;
+var ns4=(document.layers)?true:false;
+var ie4=(document.all)?true:false;
+var blocksize=(barwidth-2)/waitTime/10;
+var loaded=0;
+var seconds=0;
+var PBouter;
+var PBdone;
+var PBper;
+var PBbckgnd;
+var Title;
+var txt='';
+if(ns4){
+txt+='<table border=0 cellpadding=0 cellspacing=0><tr><td>';
+txt+='<ilayer name="PBouter" visibility="hide" height="'+barheight+'" width="'+barwidth+'">';
+txt+='<layer width="'+barwidth+'" height="'+barheight+'" top="0" left="0"></layer>';
+txt+='<layer width="'+(barwidth-2)+'" height="'+(barheight-2)+'" bgcolor="'+unloadedcolor+'" top="1" left="1"></layer>';
+txt+='<layer name="PBdone" width="'+(barwidth-2)+'" height="'+(barheight-2)+'" bgcolor="'+loadedcolor+'" top="1" left="1"></layer>';
+txt+='</ilayer>';
+txt+='</td></tr></table>';
+}else{
+txt+='<div id="PBouter" style="position:relative; visibility:hidden; height:'+barheight+'px;">';
+txt+='<div id="title" style="position:absolute; top:0px; left:50px; visibility:hidden;"><font face=verdana size=2>Progress:</font></div>';
+txt+='<div style="position:absolute; top:1px; left:130px; width:'+(barwidth-2)+'px; height:'+(barheight-2)+'px; background-color:'+unloadedcolor+'; font-size:1px;"></div>';
+txt+='<div id="PBdone" style="position:absolute; top:1px; left:130px; width:0px; height:'+(barheight-2)+'px; background-color:'+loadedcolor+'; font-size:1px;"></div>';
+txt+='<div id="PBper" style="position:absolute; top:0px; left:450px; visibility:hidden;"><font face=verdana size=2>%</font></div>';
+txt+='</div>';
+}
+//====================================================
+var show_id= "firmware_updating";
+
+
+function offEl(id) {
+    if (ns4) {
+	document.getElementById(id).style.visibility = "hide";
+    }
+    else
+	document.getElementById(id).style.visibility = "hidden";
+}
+
+function onEl(id) {
+    if (ns4) {
+	document.getElementById(id).style.visibility = "show";
+    }
+    else
+	document.getElementById(id).style.visibility = "visible";
+}
+
+function Blink(){
+    seconds++;
+    if ((seconds % 30) == 0) {
+        onEl(show_id);
+    }
+    else if ((seconds % 30) == 20) {
+        offEl(show_id);
+    }
+}
+
+function refreshSub0()
+{
+    var progress;
+    percent = parseInt(percent/10)*10;
+    downloadpercent = parseInt(downloadpercent/10)*10;
+if (flashimagestartflag == 1)
+{
+    if (percent > 90)
+    {
+        percent = 100;
+
+        clearInterval(Pid);
+        onEl(show_id);
+        document.getElementById("percentage").innerHTML= "<strong>_(Firmware upgrade is complete.)_</strong>";
+        setTimeout('refreshSub();',1000);
+        return;
+    }
+    else
+    {
+        progress =  "<strong>_(Firmware upgrade in progress…)_  " + percent + "%</strong>";
+        document.getElementById("percentage").className = "upgrading_firmware";
+        document.getElementById("percentage").innerHTML= progress;
+        setTimeout('refreshSub0();', RefreshTime);
+    }
+}
+if (downloadimagestartflag == 1)
+{
+	if (downloadpercent > 90)
+    {
+        downloadpercent = 100;
+
+        clearInterval(Pid);
+        onEl(show_id);
+        document.getElementById("percentage").innerHTML= "<strong>_(Firmware download From Internet is complete.)_</strong>";
+		flashimagestartflag = 1;
+		downloadimagestartflag = 0;
+        setTimeout('refreshSub0();',RefreshTime);
+        return;
+    }
+	else if(downloadpercent < 0)
+	{
+        progress =  "<strong>_(Error: Unable to download image from Internet.)_</strong>";
+
+
+        document.getElementById("percentage").className = "upgrading_firmware";
+        document.getElementById("percentage").innerHTML= progress;
+        setTimeout('refreshSub0();', RefreshTime);
+
+	}
+	else if(downloadpercent >=0)
+	{
+		progress =  "<strong>_(You must wait for the image to be downloaded from the Internet.)_ "+downloadpercent+"%</strong>";
+
+
+	    document.getElementById("percentage").className = "upgrading_firmware";
+	    document.getElementById("percentage").innerHTML= progress;
+	    setTimeout('refreshSub0();', RefreshTime);
+	}
+}
+}
+
+function refreshSub1()
+{
+    parent.location.href = "uploadinfo_success.html";
+    return;
+}
+
+function refreshSub()
+{
+	document.getElementById("percentage").className = "connected";
+	document.getElementById("percentage").innerHTML = "<strong>_(The modem is rebooting. After the modem has rebooted, you will be taken back to the Main page.)_</strong>"
+
+	if(wait == 0)
+	{
+	    wait = 1;
+	    setTimeout('refreshSub();', 80000);
+		return;
+	}
+	var ipAddress= htmlDecodeStr('<%ejGetOther(IPInterfaceIPAddress)%>');
+
+	if(ipAddress != '')
+	{
+	    refreshSub1();
+	}
+	else
+	{
+	    setTimeout("refreshSub();", RefreshTime);
+	}
+
+	return;
+}
+
+function refreshPercent()
+{
+    if (xmlhttp != null)
+    {
+        if (timeout <= 0)
+            return;
+        setTimeout("refreshPercent();", RefreshTime);
+        var myDate=new Date();
+        xmlhttp.open("GET","./getUpgradePercent.cgi" + "?" + myDate.getTime(),true);
+
+        xmlhttp.onreadystatechange = function()
+        {
+            if (xmlhttp.readyState == 4)
+            {
+                resp = xmlhttp.responseText;
+                if (resp != "")
+                {
+                    // resp < 0, means httpd restarted, thus firmware upgrading completed
+                    if (parseInt(resp) < 0 && percent != 0)
+                    {
+						refreshSub1();
+                        //percent = 100;
+					}
+                    else
+                    {
+			var value;
+						value = parseInt(resp);
+						if (value >= 100)                                         //downloadimage percent > 100
+						{
+							downloadpercent = value - 100;
+						}
+						else
+						{
+							if (percent <= value)
+							percent = value;
+						}
+                   }
+                }
+				else if(percent >=90 )
+				{
+                        percent = 100;
+				}
+            }
+        }
+        xmlhttp.send(null);
+
+    }
+}
+
+function do_load()
+{
+	//highlight the button after user click on it
+	side_nav("utilities_remoteupgrade");
+}
+
+function upgrade_progress()
+{
+    var per;
+    onEl(show_id);
+    document.getElementById("firmware_updating_tb").style.display="block";
+    document.getElementById("percentage").className = "upgrading_firmware";
+if(downloadimagestartflag == 1)
+{
+    downloadpercent = parseInt(downloadpercent/10)*10;
+
+    if(downloadpercent > 90)
+        per = 100;
+     else
+        per = downloadpercent;
+
+    if(per<100)
+        document.getElementById("percentage").innerHTML= "<strong>_(You must wait for the firmware to be downloaded from the Internet.)_  " + per + "%</strong>";
+    else
+        document.getElementById("percentage").innerHTML= "<strong>_(Firmware download is complete.)_</strong>";
+}
+    Pid = setInterval('Blink()',100);
+	if(per != 100)
+        setTimeout('refreshPercent();', 1000);
+    setTimeout('refreshSub0();', 2000);
+
+}
+
+function upgrade()
+{
+    form = document.myform;
+    form.action = "remoteupgrade.cgi";
+    form.target = "hidepage";
+
+    if ( doing == 0 )  {
+         doing = 1;
+         form.submit();
+         upgrade_progress();
+    }
+    else
+    {
+        alert("_(Upload software is in progress. You must wait until the process is complete.)_");
+        return ;
+    }
+
+}
+
+function doApply()
+{
+    if ( doing == 0 )  {
+      if(confirm("_(Upgrade firmware from Internet? Select OK to continue.)_") )
+      {
+          upgrade();
+      }
+    }
+    else
+    {
+        alert("_(Upload software is in progress. You must wait until the process is complete.)_");
+        return ;
+    }
+}
+
+function getuploadfile(filename)
+{
+}
+
+function browseOver()
+{
+}
+function browseDown()
+{
+}
+function browseOut()
+{
+}
+// done hiding -->
+function dom_load(){ do_load(); }
+</script>
+</head>
+
+<body>
+<iframe id="hidepage" name="hidepage" src="utilities_upgradefirmware_hide.html" width="0" height="0" scrolling=no  border="0" frameborder="0"  ></iframe>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+
+				<h1 class="utilities_upgradefirmware">_(Upgrade firmware from Internet.)_</h1>
+				<p>_(To upgrade image form Internet automatically)_ </p>
+				<div id="firmware_uptodate" style="display:block;">
+				<table border="0" cellspacing="0" cellpadding="0" width="85%" class="defaultstyle" >
+			<tr>
+                    <th  width="15%"></th>
+                    <td width="30%" nowrap><strong>_(Current Firmware Version)_: </strong></td>
+                    <td width="40%"><span class="status_text_big"> <%ejGet(sysVersion)%></span></td>
+                    <th  width="15%"></th>
+                </tr>
+                <tr>
+                    <th  width="15%"></th>
+                    <td width="30%" nowrap><strong>_(New Firmware Version)_: </strong></td>
+                    <td width="40%"><span class="status_text_big"> <%ejGetOther(availableVersion)%></span></td>
+                    <th  width="15%"></th>
+                </tr>
+                </table>
+
+				<p>&nbsp;</p>
+				<!--p class="connected"><strong>Current Firmware Version: <%ejGet(sysVersion)%> </strong></p-->
+					<!--p class="connected"><strong>Firmware is Up to Date! </strong></p-->
+				</div>
+
+				<div id="firmware_notuptodate" style="display:block;">
+                    <form name="myform" method="post" ENCTYPE="multipart/form-data" action='remoteupgrade.cgi'>
+                    <div id="firewareversion" style="display:none">
+                             <p class="notconnected" style="text-decoration:block;"><strong>_(Current Firmware Version)_: <%ejGet(sysVersion)%>(Upgrade Available)</strong></p>
+                             <p class="notconnected" style="text-decoration:block;"><strong>_(Upgrade the firmware, below.)_ </strong></p>
+                    </div>
+				<p><strong>_(Click Upgrade Firmware to begin the upgrade.)_</strong></p>
+				<p><a class="button1" href="#"  onclick="doApply()" id="btn_upgrade"><span>_(Upgrade)_</span></a>
+				<p>
+                    <div id="firmware_updating_tb" style="display:block">
+				<table border="0" cellspacing="0" cellpadding="0" width="85%" class="defaultstyle" >
+				    <tr>
+                        <th width="5%"></th>
+                        <td width="90%">
+                            <div id="firmware_updating" >
+                                <span id="percentage" ><strong>_(Upgrade Status)_:</strong>  _(No Upgrade in Progress)_</span>
+                            </div>
+                        </td>
+                        <th width="5%"></th>
+                        </tr>
+                    </table>
+                     </div>
+					<!--p class="notconnected"  id="firmware_updating" style="text-decoration:block;"><strong>Upgrading Firmware. Please wait.</strong></p>
+                    <div align="center"><script language="JavaScript">document.write(txt);</script>
+                    </div>
+					<p class="connected"  id="firmware_updatecomplete"><strong>Firmware update complete.</strong></p-->
+					<p></p>
+                    </form>
+                </div>
+			</div>
+			<div id="content_right_footer"></div>
+
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

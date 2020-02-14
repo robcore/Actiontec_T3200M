@@ -1,0 +1,269 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Firewall)_ - _(Advanced DMZ)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+var list_dhcp_ip = new Array();
+var list_dhcp_pc = new Array();
+var list_dhcp_mac = new Array();
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var addr = htmlDecodeStr('<%ejGetOther(aDMZ)%>');
+
+function get_host_ip()
+{
+    var host_mac = get_host_mac();
+    var i;
+
+    for (i = 0; i < list_dhcp_mac.length; i++) {
+        if (host_mac == list_dhcp_mac[i])
+            break;
+    }
+    if (i < list_dhcp_ip.length)
+        return list_dhcp_ip[i];
+    else
+        return "";
+}
+
+function get_host_mac()
+{
+    var form = document.forms[0];
+    if(form.lan_device.selectedIndex==0)
+        return form.mac_address.value;
+    return list_dhcp_mac[form.lan_device.selectedIndex-1];
+}
+
+function do_load()
+{
+	side_nav("advancedutilities_advanceddmz");
+    var pcname = "dEfAuLt_NaMe";
+    /* pc list */
+    var hostinfo = '<%ejGetOther(hostinfo)%>';
+    var info = hostinfo.split('|');
+    var form= document.myform;
+    var table = document.getElementById("dmz_table");
+
+    if (info != ''){
+        for (var i = 0; i < info.length; i++) {
+            var details = info[i].split('/');
+            
+            details[0] = htmlDecodeStr(details[0]);
+            details[1] = htmlDecodeStr(details[1]);
+            details[2] = htmlDecodeStr(details[2]);
+
+            list_dhcp_pc[i] = details[0];
+            list_dhcp_ip[i] = details[1];
+            list_dhcp_mac[i] = details[2];
+            /* is not hostname, display mac */
+			details[0] = details[0];
+            if (isValidIpAddress(details[0])) {
+                if (details[2] == addr)
+                {
+                    form.lan_device[i+1] = new Option(details[2], details[0],true);
+				form.lan_device.selectedIndex = i+1;
+                }
+                else
+                    form.lan_device[i+1] = new Option(details[2], details[0]);
+            }
+            else {
+                if (details[2] == addr)
+                {
+                    form.lan_device[i+1] = new Option(details[0], details[0],true);
+                    form.lan_device.selectedIndex = i+1;
+                }
+                else
+                    form.lan_device[i+1] = new Option(details[0], details[0]);
+            }
+	    if (details[2] == addr)
+		pcname = details[0];
+        }
+    }
+
+    if (addr == '') {
+        var blank = "_(No Entries Defined)_";
+        form.dmz[1].checked = true;
+        appendTableEmptyRow(table, "center", "4", blank);
+    }
+    else {
+	var cols = new Array();
+        form.dmz[0].checked = true;
+        form.mac_address.value = addr;
+	cols[0] = '<img src="../images/icon_computer.png" width="39" height="39" />';
+	cols[2] = addr;
+	cols[3] = list_dhcp_ip[form.lan_device.selectedIndex-1];
+	if (pcname == "dEfAuLt_NaMe")
+	    cols[1] = cols[3];
+	else
+	    cols[1] = pcname;
+
+        cols[4] = '<a class="button1" onClick=doRemove("'+ addr + '") style="text-decoration:none" id="btn_remove"><span>_(Remove)_</span></a>'; //remove button
+    if(cols[1] == undefined)
+        cols[1] = "_(N/A)_";
+    if(cols[3] == undefined)
+        cols[3] = "_(N/A)_";
+    appendTableRow(table, "center", cols);
+
+    }
+    onClickEnable();
+}
+
+function onClickEnable()
+{
+    var form = document.myform;
+    if (form.dmz[0].checked == true) {
+	form.lan_device.disabled = false;
+	form.mac_address.disabled = false;
+    } else if (form.dmz[1].checked == true) {
+	form.lan_device.disabled = true;
+	form.mac_address.disabled = true;
+    }
+}
+
+function inDMZ()
+{
+    var ip_dmz = '<%ejGetOther(dmzHost)%>';
+
+    if (ip_dmz != "") {
+        return true;
+    }
+
+    return false;
+}
+
+function btnApply() {
+    var form = document.myform;
+    var mac = get_host_mac();
+    var loc = 'admz.cmd?';
+    if(form.dmz[0].checked)
+    {
+        if (inDMZ()) {
+            alert ("_(The modem is already in DMZ Hosting mode.)_");
+            return false;
+        }
+
+        if (!mac)
+        {
+            alert ("_(You must select a LAN device.)_");
+            return false;
+        }
+
+        if (isValidMacAddress(mac) == false) {
+            alert("_(The DMZ Host's MAC address is invalid.)_");
+            return false;
+        }
+
+        //Check the duplicated rule
+        if(addr == mac)
+        {
+            alert("_(This rule you are adding is already existed!)_");
+            return false;
+        }
+    }
+
+    with ( form ) {
+        if (dmz[0].checked == true)
+        {
+            loc += 'address=' + mac;
+            dmz[0].disabled = false;
+        }
+        else if (dmz[1].checked == true)
+        {
+            loc += 'address=';
+            dmz[1].disabled = false;
+        }
+    }
+    loc += '&sessionKey=' + sessionKey;
+        loc += '&needthankyou=advancedsetup_advanceddmz.html';
+    //var code = 'location="' + loc + '"';
+    //eval(code);
+	postSubmit(loc);
+}
+
+function doRemove(mac) {
+    var loc = 'admz.cmd?';
+    loc += 'address=';
+    loc += '&sessionKey=' + sessionKey;
+    loc += '&needthankyou=advancedsetup_advanceddmz.html';
+    //var code = 'location="' + loc + '"';
+    //eval(code);
+	postSubmit(loc);
+}
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav4.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+   <%ejInclude(fw_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="advancedsetup_dmzhosting">_(Advanced DMZ)_</h1>
+				<form name="myform" onSubmit="return false;">
+					<p>_(Advanced DMZ enables a LAN device to use the modem's WAN IP address as its own. Advanced DMZ also places the device outside the modem's network firewall.)_</p>
+					<p>_(Placing a network device in Advanced DMZ mode poses a security risk. The device will be vulnerable to outside intrusion.)_ </p>
+					<p><strong>1. _(Set the Advanced DMZ state.)_ </strong> </p>
+					<p>&nbsp;&nbsp;&nbsp;&nbsp;_(Advanced DMZ)_:
+						<input name="dmz" type="radio" value="on" id="on" onClick="onClickEnable();"/>
+						  _(Enable)_
+						<input name="dmz" type="radio" value="off" id="off" onClick="onClickEnable();" checked="checked"/>
+						  _(Disable)_</p>
+					<p><strong>2. _(Select a device.)_</strong></p>
+					<table border="0" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td>&nbsp;&nbsp;&nbsp;_(Select Device)_:</td>
+                                                <td>&nbsp;</td>
+                                                <td>_(Enter MAC Address)_:</td>
+                                            </tr>
+                                            <tr>
+                                                 <td>&nbsp;&nbsp;
+                                                     <select name="lan_device" id="lan_device" onchange="document.forms[0].mac_address.disabled=document.forms[0].lan_device.selectedIndex>0">
+                                                     <option>_(Manually enter the MAC Address)_</option>
+				                     </select>
+                                                 </td>
+                                                 <td>&nbsp;</td>
+                                                 <td>
+                                                     <input type="text" name="mac_address" id="mac_address" size="25" />
+                                                 </td>
+                                            </tr>
+                                        </table>
+					<p><strong>3. _(Click Apply to save changes.)_ </strong></p>
+					<p><a  class="button1" onClick='btnApply()' id="btn_apply"><span>_(Apply)_</span></a></p>
+				        <p>&nbsp;</p>
+                                        <p align="center"><strong>_(Advanced DMZ Device)_</strong></p>
+				        <table id="dmz_table" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;">
+                                          <tr>
+                                            <th width="39" height="28" align="center">&nbsp;</th>
+                                            <th width="102">_(Device Name)_</th>
+                                            <th width="101">_(MAC Address)_</th>
+                                            <th width="101">_(IP Address)_</th>
+                                            <th width="87">_(Edit)_</th>
+                                         </tr>
+                                       </table>
+
+				</form>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<script language="javascript">
+var user_id='<%ejGet(userID)%>';
+</script>
+<div id="left_column">
+	<div id="left_column_header"></div>
+	<div id="left_column_content">
+			<ul id="subnav">
+
+			<li><a href="#" class="link" onClick="return goThere('wirelesssetup_basic.html');">_(Wireless Settings)_</a></li>
+			<ul>
+				<li><a  href="#" id="basicsettings" class="link" onClick="return goThere('wirelesssetup_basic.html');">_(Basic Settings)_</a></li>
+				<li><a  href="#" id="channel" class="link" onClick="return goThere('wirelesssetup_advanced.html');">_(Advanced Settings)_</a></li>
+				<li><a  href="#" id="wps_page" class="link" onClick="return goThere('wirelesssetup_wps.html');">_(WPS)_</a></li>
+				<li><a  href="#" id="mac_contrl" class="link" onClick="return goThere('wirelesssetup_wirelessmacauthentication.html');">_(MAC Address Control)_</a></li>
+			<script language="javascript">
+				if (user_id==3)
+				{
+					document.write("<li><a  href=\"#\" onClick=\"return goThere('wirelesssetup_wds.html');\" id=\"wds\" class=\"link\">_(WDS)_</a></li>");
+				}
+			</script>
+				<li><a  href="#" id="wirelesssetup_band_steering" class="link" onClick="return goThere('wirelesssetup_band_steering.html');">_(SmartSteering&#8482)_</a></li>
+				<li><a  href="#" id="optiktv_service" class="link" onClick="return goThere('wirelesssetup_optiktv.html');">_(OptikTV Service)_</a></li>			
+			</ul>
+			</ul>
+	</div>
+		<div id="left_column_footer"></div>
+</div>

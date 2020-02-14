@@ -1,0 +1,1312 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <title>_(Wireless Setup)_ - _(MAC Address Control)_</title>
+  <link href="css/basic.css" rel="stylesheet" type="text/css" />
+  <script language="JavaScript" src="js/functions.js" type="text/javascript"></script>
+  <script language="JavaScript" src="js/nav.js"></script>
+  <script language="JavaScript" src="js/util.js"></script>
+  <script language="JavaScript" src="js/htmldecode.js"></script>
+  <script language="Javascript">
+  var syncNvram = htmlDecodeStr('<%ejGetWl(wlSyncNvram)%>');
+
+  // Globle vars definition
+  var wlIndex = '<%ejGetOther(wlBandFrequency)%>';// initial default selection of band frequency.
+  var gv_cssid = htmlDecodeStr('<%ejGetWl(glbSsidChanged)%>');
+  var has_QTN = htmlDecodeStr("<%ejGet(qtnExist)%>");
+
+  var isMACFilterPresent = '<%ejGetWlFilterMssidMacPresent(3)%>';
+  //var gv_apEnabled = new Array(4);
+  var ssid_num=4;
+  var ssidOpt=5;
+  var gv_ssid = new Array(4);
+  var gv_FltMacMode = new Array(4);
+  var gv_FltMacMode_org = new Array(4);
+  var gv_FltMacAddr_tmp = new Array(4);
+  var gv_FltMacAddr = new Array(4);
+  var gv_WlFilterMssidMacList = new Array(4);
+  var gv_WlMssidMacList = new Array(4);
+
+  var bandSteeringState = htmlDecodeStr("<%ejGetWl(wlAbsEnable)%>");
+  var sessionKey='<%ejGetOther(sessionKey)%>';
+  var wlChipOk = htmlDecodeStr("<%ejGetWl(wlChipOk_wl0)%>");
+
+  //
+  function init_orig_vars()
+  {
+      var i = wlIndex;
+      gv_cssid = 0;
+      var allSsid = 2;
+      /*
+      if(wlIndex == "1")
+          allSsid = 3;
+          */
+      gv_FltMacMode[ssid_num] = "";
+
+      for (var j=0; j<allSsid; j++)
+      {
+          gv_FltMacMode[j] = document.getElementById("uiPostFltMacMode_"+i+"_"+j).value;
+          gv_FltMacMode_org[j] = document.getElementById("uiPostFltMacMode_"+i+"_"+j).value;
+          gv_FltMacAddr[j] = document.getElementById("uiPostFltMacAddr_"+i+"_"+j).value;
+          if(gv_FltMacMode[ssid_num] == "")
+          {
+              gv_FltMacMode[ssid_num] = gv_FltMacMode[j];
+          }
+          else if(gv_FltMacMode[ssid_num] != gv_FltMacMode[j])
+          {
+              gv_FltMacMode[ssid_num] = "disabled";
+          }
+      }
+
+      if(i == "0")
+      {
+          gv_ssid[0] = htmlDecodeStr("<%ejGetWl(wlSsid_wl0v0)%>");
+          gv_ssid[1] = htmlDecodeStr("<%ejGetWl(wlSsid_wl0v1)%>");
+          gv_ssid[2] = htmlDecodeStr("<%ejGetWl(wlSsid_wl0v2)%>");
+          gv_ssid[3] = htmlDecodeStr("<%ejGetWl(wlSsid_wl0v3)%>");
+          gv_WlFilterMssidMacList[0] = '<%ejGetWlFilterMssidMac(0,0)%>';
+          gv_WlFilterMssidMacList[1] = '<%ejGetWlFilterMssidMac(1,0)%>';
+          gv_WlFilterMssidMacList[2] = '<%ejGetWlFilterMssidMac(2,0)%>';
+          gv_WlFilterMssidMacList[3] = '<%ejGetWlFilterMssidMac(3,0)%>';
+          gv_WlMssidMacList[0] = '<%ejGetWlMssidMacList(0,0)%>';
+          gv_WlMssidMacList[1] = '<%ejGetWlMssidMacList(1,0)%>';
+          gv_WlMssidMacList[2] = '<%ejGetWlMssidMacList(2,0)%>';
+          gv_WlMssidMacList[3] = '<%ejGetWlMssidMacList(3,0)%>';
+      }
+      else
+      {
+          gv_ssid[0] = htmlDecodeStr("<%ejGetWl(wlSsid_wl1v0)%>");
+          gv_ssid[1] = htmlDecodeStr("<%ejGetWl(wlSsid_wl1v1)%>");
+          gv_ssid[2] = htmlDecodeStr("<%ejGetWl(wlSsid_wl1v2)%>");
+          gv_ssid[3] = htmlDecodeStr("<%ejGetWl(wlSsid_wl1v3)%>");
+          gv_WlFilterMssidMacList[0] = '<%ejGetWlFilterMssidMac(0,1)%>';
+          gv_WlFilterMssidMacList[1] = '<%ejGetWlFilterMssidMac(1,1)%>';
+          gv_WlFilterMssidMacList[2] = '<%ejGetWlFilterMssidMac(2,1)%>';
+          gv_WlFilterMssidMacList[3] = '<%ejGetWlFilterMssidMac(3,1)%>';
+          gv_WlMssidMacList[0] = '<%ejGetWlMssidMacList(0,1)%>';
+          gv_WlMssidMacList[1] = '<%ejGetWlMssidMacList(1,1)%>';
+          gv_WlMssidMacList[2] = '<%ejGetWlMssidMacList(2,1)%>';
+          gv_WlMssidMacList[3] = '<%ejGetWlMssidMacList(3,1)%>';
+      }
+      gv_WlMssidMacList[4] = gv_WlMssidMacList[0]+gv_WlMssidMacList[1]+gv_WlMssidMacList[2]+gv_WlMssidMacList[3];
+/*
+      if(wlIndex == "1")
+      {
+          gv_ssid[4] = gv_ssid[0] + "|" + gv_ssid[1]+"|" + gv_ssid[2];
+      }
+      else
+      {
+          gv_ssid[4] = gv_ssid[0] + "|" + gv_ssid[1]+"|" + gv_ssid[2]+"|" + gv_ssid[3];
+      }
+*/
+          gv_ssid[4] = gv_ssid[0] + "|" + gv_ssid[1];
+      document.getElementById("id_mac_table_div_0").innerHTML = "<table id='id_mac_table0' border='0' align='center' cellpadding='5' cellspacing='0' class='defaultstyle' style='margin:10px 40px 0 auto;' width='80%'>\
+          <tr>\
+            <th align='center'>&nbsp;</th>\
+            <th>_(DEVICE NAME)_</th>\
+            <th>_(IP ADDRESS)_</th>\
+            <th>_(MAC ADDRESS)_</th>\
+            <th>_(ACCESS)_</th>\
+            <th>_(EDIT)_</th>\
+          </tr>"+gv_WlFilterMssidMacList[0]+"</table>";
+
+      document.getElementById("id_mac_table_div_1").innerHTML = "<table id='id_mac_table1' border='0' align='center' cellpadding='5' cellspacing='0' class='defaultstyle' style='margin:10px 40px 0 auto;' width='80%'>\
+          <tr>\
+            <th align='center'>&nbsp;</th>\
+            <th>_(DEVICE NAME)_</th>\
+            <th>_(IP ADDRESS)_</th>\
+            <th>_(MAC ADDRESS)_</th>\
+            <th>_(ACCESS)_</th>\
+            <th>_(EDIT)_</th>\
+          </tr>"+gv_WlFilterMssidMacList[1]+"</table>";
+
+      document.getElementById("id_mac_table_div_2").innerHTML = "<table id='id_mac_table2' border='0' align='center' cellpadding='5' cellspacing='0' class='defaultstyle' style='margin:10px 40px 0 auto;' width='80%'>\
+          <tr>\
+            <th align='center'>&nbsp;</th>\
+            <th>_(DEVICE NAME)_</th>\
+            <th>_(IP ADDRESS)_</th>\
+            <th>_(MAC ADDRESS)_</th>\
+            <th>_(ACCESS)_</th>\
+            <th>_(EDIT)_</th>\
+          </tr>"+gv_WlFilterMssidMacList[2]+"</table>";
+
+      document.getElementById("id_mac_table_div_3").innerHTML = "<table id='id_mac_table3' border='0' align='center' cellpadding='5' cellspacing='0' class='defaultstyle' style='margin:10px 40px 0 auto;' width='80%'>\
+          <tr>\
+            <th align='center'>&nbsp;</th>\
+            <th>_(DEVICE NAME)_</th>\
+            <th>_(IP ADDRESS)_</th>\
+            <th>_(MAC ADDRESS)_</th>\
+            <th>_(ACCESS)_</th>\
+            <th>_(EDIT)_</th>\
+          </tr>"+gv_WlFilterMssidMacList[3]+"</table>";
+
+      document.getElementById("id_wlclientlist0").innerHTML = "&nbsp;&nbsp;\
+              <select name='mac_address' id='id_mac_address_0' onchange='onChangeMac(0)' style='width:190px;'>\
+                <option value=''>_(Manually Enter MAC)_</option>"+gv_WlMssidMacList[0]+"</select>";
+
+      document.getElementById("id_wlclientlist1").innerHTML = "&nbsp;&nbsp;\
+              <select name='mac_address' id='id_mac_address_1' onchange='onChangeMac(1)' style='width:190px;'>\
+                <option value=''>_(Manually Enter MAC)_</option>"+gv_WlMssidMacList[1]+"</select>";
+
+      document.getElementById("id_wlclientlist2").innerHTML = "&nbsp;&nbsp;\
+              <select name='mac_address' id='id_mac_address_2' onchange='onChangeMac(2)' style='width:190px;'>\
+                <option value=''>_(Manually Enter MAC)_</option>"+gv_WlMssidMacList[2]+"</select>";
+
+      document.getElementById("id_wlclientlist3").innerHTML = "&nbsp;&nbsp;\
+              <select name='mac_address' id='id_mac_address_3' onchange='onChangeMac(3)' style='width:190px;'>\
+                <option value=''>_(Manually Enter MAC)_</option>"+gv_WlMssidMacList[3]+"</select>";
+
+      document.getElementById("id_wlclientlist4").innerHTML = "&nbsp;&nbsp;\
+              <select name='mac_address' id='id_mac_address_4' onchange='onChangeMac(4)' style='width:190px;'>\
+                <option value=''>_(Manually Enter MAC)_</option>"+gv_WlMssidMacList[4]+"</select>";
+  }
+
+  function uiset_section_wlIndex()
+  {
+      if (wlIndex == "0" || has_QTN == "0") // swith to 2.4G
+      {
+          document.getElementById("id_wl_5").checked = false;
+          if (has_QTN == "0")
+              document.getElementById("id_wl_5").disabled = true;
+          document.getElementById("id_wl_2").checked = true;
+      }
+      else
+      {
+          document.getElementById("id_wl_5").checked = true;
+          document.getElementById("id_wl_2").checked = false;
+      }
+      if(wlChipOk == "0")
+          document.getElementById("id_wl_2").disabled = true;
+  }
+
+  function loadSsidOption()
+  {
+      document.getElementById("id_ssid").innerHTML = "";
+      document.getElementById("id_ssid")[0] = new Option(gv_ssid[0], "0");
+      document.getElementById("id_ssid")[1] = new Option(gv_ssid[1], "1");
+      /*
+      document.getElementById("id_ssid")[2] = new Option(gv_ssid[2], "2");
+      if(wlIndex == "0")
+      {
+          document.getElementById("id_ssid")[3] = new Option(gv_ssid[3], "3");
+          document.getElementById("id_ssid")[4] = new Option("_(ALL SSIDs)_", "4");
+      }
+      else
+      {
+          document.getElementById("id_ssid")[3] = new Option("_(ALL SSIDs)_", "4");
+      }
+      */
+      document.getElementById("id_ssid")[2] = new Option("_(ALL SSIDs)_", "4");
+  }
+
+  // Set section of ssid
+  function uiset_section_select_ssid()
+  {
+      loadSsidOption();
+      //select
+      document.getElementById("id_ssid").value = gv_cssid;
+  }
+
+  function uiset_section_select_authen_state()
+  {
+      if (gv_FltMacMode[gv_cssid] == "deny" || gv_FltMacMode[gv_cssid] == "allow")
+      {
+          document.getElementById("id_mac_authentication_enable").checked = true;
+          document.getElementById("id_mac_authentication_disable").checked = false;
+      }
+      else
+      { //"disabled"
+          document.getElementById("id_mac_authentication_enable").checked = false;
+          document.getElementById("id_mac_authentication_disable").checked = true;
+      }
+
+      if(bandSteeringState == 1)
+      {
+          document.getElementById("id_mac_authentication_enable").checked = false;
+          document.getElementById("id_mac_authentication_disable").checked = true;
+          document.getElementById("id_mac_authentication_enable").disabled = true;
+          document.getElementById("id_mac_authentication_disable").disabled = true;
+      }
+  }
+
+  function uiset_section_select_allow_deny()
+  {
+      if (gv_FltMacMode[gv_cssid] == "deny")
+      {
+          document.getElementById("id_allow_devices_accept").checked = false;
+          document.getElementById("id_allow_devices_deny").checked = true;
+
+          document.getElementById("id_allow_devices_accept").disabled = false;
+          document.getElementById("id_allow_devices_deny").disabled = false;
+      }
+      else if(gv_FltMacMode[gv_cssid] == "allow")
+      {
+          document.getElementById("id_allow_devices_accept").checked = true;
+          document.getElementById("id_allow_devices_deny").checked = false;
+
+          document.getElementById("id_allow_devices_accept").disabled = false;
+          document.getElementById("id_allow_devices_deny").disabled = false;
+      }
+      else
+      { //"disabled"
+          document.getElementById("id_allow_devices_accept").checked = false;
+          document.getElementById("id_allow_devices_deny").checked = false;
+
+          document.getElementById("id_allow_devices_accept").disabled = true;
+          document.getElementById("id_allow_devices_deny").disabled = true;
+      }
+  }
+
+  //4. input mac
+  function uiset_section_mac()
+  {
+      //id_manual_mac_address
+      for (var i=0;i<ssidOpt;i++)
+      {
+          if (gv_cssid == i)
+          {
+              document.getElementById("id_table_mac_"+i).style.display = "block";
+          }
+          else
+          {
+              document.getElementById("id_table_mac_"+i).style.display = "none";
+          }              
+      }
+      if (gv_FltMacMode[gv_cssid] == "deny" || gv_FltMacMode[gv_cssid] == "allow")
+      {
+          document.getElementById("id_mac_address_"+gv_cssid).disabled = false;
+          document.getElementById("id_manual_mac_address_"+gv_cssid).disabled = false;
+          //
+          onChangeMac(gv_cssid);
+      }
+      else
+      {
+          document.getElementById("id_mac_address_"+gv_cssid).disabled = true;
+          document.getElementById("id_manual_mac_address_"+gv_cssid).disabled = true;
+      }
+  }
+
+  //5. mac list
+  function uiset_section_mac_list()
+  {
+//      document.getElementById("id_mac_table_div_3").style.display = "none";
+      for (var i=0;i<ssid_num;i++)
+      {
+          if (gv_cssid == i)
+          {
+              document.getElementById("id_mac_table_div_"+i).style.display = "block";
+          }
+          else
+              document.getElementById("id_mac_table_div_"+i).style.display = "none";
+      }
+      if (gv_cssid == ssid_num)
+          document.getElementById("id_mac_table_all_div").style.display = "block";
+      else
+          document.getElementById("id_mac_table_all_div").style.display = "none";
+  }
+
+  //
+  function uiset_section_all()
+  {
+      uiset_section_wlIndex();
+      uiset_section_select_ssid();
+      uiset_section_select_authen_state();
+      uiset_section_select_allow_deny();
+      uiset_section_mac();
+      uiset_section_mac_list();
+  }
+
+  function onSelectWlIndex()
+  {
+      if (document.getElementById("id_wl_2").checked)
+      {
+          wlIndex = "0";
+      }
+      else if (document.getElementById("id_wl_5").checked)
+      {
+          wlIndex = "1";
+      }
+
+      init_orig_vars();
+      draw_ssid_all_table();
+      uiset_section_all();
+      check_auth_state();
+  }
+
+  ////On's
+  function onSelectSSID()
+  {
+      gv_cssid = parseInt(document.getElementById("id_ssid").value);
+      uiset_section_all();
+      check_auth_state();
+  }
+
+  //On's
+  function onSelectState()
+  {
+      if (document.getElementById("id_mac_authentication_enable").checked)
+      {
+          if (gv_FltMacMode[gv_cssid] == "deny" || gv_FltMacMode[gv_cssid] == "allow")
+          {
+              //
+          }
+          else
+          {
+              gv_FltMacMode[gv_cssid] = "deny";
+          }
+      }
+      else if (document.getElementById("id_mac_authentication_disable").checked)
+      {
+          if (gv_FltMacMode[gv_cssid] == "deny" || gv_FltMacMode[gv_cssid] == "allow")
+          {
+              gv_FltMacMode[gv_cssid] = "disabled";
+          }
+      }
+      uiset_section_all();
+  }
+
+  //
+  function onClickAllowDeny()
+  {
+      if (document.getElementById("id_allow_devices_accept").checked)
+      {
+          gv_FltMacMode[gv_cssid] = "allow";
+      }
+      else if (document.getElementById("id_allow_devices_deny").checked)
+      {
+          gv_FltMacMode[gv_cssid] = "deny";
+      }
+      uiset_section_all();
+  }
+
+  //
+  function onChangeMac(ssididx)
+  {
+      if (document.getElementById("id_mac_address_"+ssididx).selectedIndex == 0)
+      {
+          document.getElementById("id_manual_mac_address_"+ssididx).disabled = false;
+          document.getElementById("id_auto_mac_address_"+ssididx).className = "";
+      }
+      else
+      {
+          document.getElementById("id_manual_mac_address_"+ssididx).disabled = true;
+          document.getElementById("id_auto_mac_address_"+ssididx).className = "greyed_out";
+      }
+  }
+
+  function checkMACAddress(mac)
+  {
+      if (gv_FltMacMode_org[gv_cssid] == gv_FltMacMode[gv_cssid])
+      {
+
+          if (mac.length == 0)
+          {
+              alert("_(The MAC address entered is not valid. Enter a valid MAC address using the sample MAC address provided below the MAC address insertion box.)_");
+              return false;
+          }
+      }
+      else
+      {
+          if (mac.length == 0 )
+          {
+              if (isMACFilterPresent != 0)
+                  return true;
+              else
+              {
+                  alert("_(The MAC address entered is not valid. Enter a valid MAC address using the sample MAC address provided below the MAC address insertion box.)_");
+                  return false;
+              }
+          }
+      }
+
+      if (mac.match("^[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}$") == null)
+      {
+          alert("_(The MAC address entered is not valid. Enter a valid MAC address using the sample MAC address provided below the MAC address insertion box.)_");
+          return false;
+      }
+      else
+      {
+          if(gv_cssid == ssid_num)
+          {
+              var list = document.getElementById("id_mac_table_all").getElementsByTagName("td");
+          }
+          else
+              var list = document.getElementById("id_mac_table"+gv_cssid).getElementsByTagName("td");
+          for (var i=0; i<list.length; i++)
+          {
+              if (mac.toUpperCase() == list[i].innerHTML.toUpperCase())
+              {
+                  alert("_(This MAC address is already in the list.)_");
+                  return false;
+              }
+          }
+          return true;
+      }
+  }
+
+  function checkAllowedMACEmpty()
+  {
+      if (gv_FltMacMode[gv_cssid] == "allow")
+      {
+          var list = document.getElementById("id_mac_table"+gv_cssid).getElementsByTagName("td");
+          for (var i=0; i<list.length; i++)
+          {
+              //alert("list"+i+" is "+list[i].innerHTML);
+              if (list[i].innerHTML.toUpperCase().match("^[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}$") != null)
+              {
+                  return true;
+              }
+          }
+          alert("_(Add a MAC address to the list.)_");
+          return false;
+      }
+      else
+          return true;
+  }
+
+  //
+  function disable_input_all()
+  {
+      document.getElementById("id_ssid").disabled = true;
+      document.getElementById("id_mac_authentication_enable").disabled = true;
+      document.getElementById("id_mac_authentication_disable").disabled = true;
+      document.getElementById("id_allow_devices_accept").disabled = true;
+      document.getElementById("id_allow_devices_deny").disabled = true;
+      for (var i=0; i<ssid_num; i++)
+      {
+          document.getElementById("id_mac_address_"+i).disabled = true;
+          document.getElementById("id_manual_mac_address_"+i).disabled = true;
+      }
+  }
+
+function checkMACcharter(str)
+{
+    var len = str.length/2;
+    var tmp  = new Array(6);
+    var Macchar;
+
+    for(var i=0;i<len;i++)
+    {
+        tmp[i] = str.substring(i*2,(i*2)+2);
+    }
+    Macchar = tmp.join(":");
+    return Macchar;
+}
+  //
+function onClickAdd()
+{
+    var i = wlIndex;
+
+    if (document.getElementById("id_mac_address_"+gv_cssid).selectedIndex == 0)
+    {
+         gv_FltMacAddr_tmp[gv_cssid] = document.getElementById("id_manual_mac_address_"+gv_cssid).value;
+    }
+    else
+    {
+        gv_FltMacAddr_tmp[gv_cssid] = document.getElementById("id_mac_address_"+gv_cssid).options[document.getElementById("id_mac_address_"+gv_cssid).selectedIndex].value;
+    }
+
+    if (document.getElementById("id_mac_authentication_enable").checked && (gv_FltMacMode_org[gv_cssid]!="disabled" 
+        || (gv_FltMacMode_org[gv_cssid]=="disabled" && gv_FltMacAddr_tmp[gv_cssid]!="")))
+    {
+        if (gv_FltMacMode[gv_cssid] != "allow" && gv_FltMacMode[gv_cssid] != "deny")
+        {
+            alert("_(You must enable MAC authentication state.)_");
+            return false;
+        }
+
+        // determin MAC
+        if (document.getElementById("id_mac_address_"+gv_cssid).selectedIndex == 0)
+        {
+            gv_FltMacAddr[gv_cssid] = document.getElementById("id_manual_mac_address_"+gv_cssid).value;
+        }
+        else
+        {
+            gv_FltMacAddr[gv_cssid] = document.getElementById("id_mac_address_"+gv_cssid).options[document.getElementById("id_mac_address_"+gv_cssid).selectedIndex].value;
+        }
+
+        // check MAC
+        gv_FltMacAddr[gv_cssid] = gv_FltMacAddr[gv_cssid].replace(/\-/ig,":");
+
+        if(gv_FltMacAddr[gv_cssid].length == 12)
+            gv_FltMacAddr[gv_cssid] = checkMACcharter(gv_FltMacAddr[gv_cssid]);
+
+        gv_FltMacAddr[gv_cssid] = gv_FltMacAddr[gv_cssid].substr(0, 17);
+        if (!checkMACAddress(gv_FltMacAddr[gv_cssid]))
+        {
+            return false;
+        }
+    }
+
+    // Add submit
+    for (var j=0;j<ssidOpt;j++)
+    {
+        if (j == gv_cssid)
+        {
+            document.getElementById("uiPostAPEnabled_"+i+"_"+j).disabled = true;
+            document.getElementById("uiPostSSID_"+i+"_"+j).disabled = false;
+            document.getElementById("uiPostSSID_"+i+"_"+j).value = gv_ssid[j];
+            document.getElementById("uiPostFltMacMode_"+i+"_"+j).disabled = false;
+            document.getElementById("uiPostFltMacMode_"+i+"_"+j).value = gv_FltMacMode[j];
+            document.getElementById("uiPostFltMacAddr_"+i+"_"+j).disabled = false;
+            document.getElementById("uiPostFltMacAddr_"+i+"_"+j).value = gv_FltMacAddr[j];
+        }
+        else
+        {
+            document.getElementById("uiPostAPEnabled_"+i+"_"+j).disabled = true;
+            document.getElementById("uiPostSSID_"+i+"_"+j).disabled = true;
+            document.getElementById("uiPostFltMacMode_"+i+"_"+j).disabled = true;
+            document.getElementById("uiPostFltMacAddr_"+i+"_"+j).disabled = true;
+        }
+    }
+
+    if (document.getElementById("id_mac_authentication_enable").checked)
+    {
+        document.getElementById("uiPostAction_"+i).disabled = false;
+        document.getElementById("uiPostAction_"+i).value = "add";
+        document.getElementById("uiPostSsidIdx_"+i).disabled = false;
+        document.getElementById("uiPostSsidIdx_"+i).value = gv_cssid;
+    }
+    else
+    {
+        document.getElementById("uiPostAction_"+i).disabled = true;
+        //document.getElementById("uiPostAction").value = "add";
+        document.getElementById("uiPostSsidIdx_"+i).disabled = true;
+        //document.getElementById("uiPostSsidIdx").value = gv_cssid;
+    }
+
+    if (document.getElementById("id_mac_authentication_enable").checked && gv_FltMacMode_org[gv_cssid]=="disabled" 
+        && gv_FltMacAddr_tmp[gv_cssid]=="")
+    {
+        document.getElementById("uiPostAction_"+i).disabled = false;
+        document.getElementById("uiPostAction_"+i).value = "OnlyEnblFlt";
+        document.getElementById("uiPostFltMacMode_"+i+"_"+gv_cssid).disabled = false;
+        if(document.getElementById("id_allow_devices_accept").checked==true && document.getElementById("id_allow_devices_deny").checked==false)
+            document.getElementById("uiPostFltMacMode_"+i+"_"+gv_cssid).value = "allow";
+        else if(document.getElementById("id_allow_devices_accept").checked==false && document.getElementById("id_allow_devices_deny").checked==true)
+            document.getElementById("uiPostFltMacMode_"+i+"_"+gv_cssid).value = "deny";
+        else
+            document.getElementById("uiPostFltMacMode_"+i+"_"+gv_cssid).value = "deny";
+        document.getElementById("uiPostFltMacAddr_"+i+"_"+gv_cssid).disabled = true;
+    }
+
+    disable_input_all();
+    do_submit();
+    return true;
+}
+
+function do_add_elements()
+{
+    var form = document.forms[0];
+    var i=0;
+    var loc="";
+    var ssid_beg;
+    var ssid_end;
+    var radio_beg;
+    var radio_end;
+
+    for(i=0;i<form.elements.length;i++)
+    {
+        if(form.elements[i].value == "ssid_beg_"+wlIndex+"_"+gv_cssid)
+        {
+            ssid_beg = i;
+        }
+        else if(form.elements[i].value == "ssid_end_"+wlIndex+"_"+gv_cssid)
+        {
+            ssid_end = i;
+        }
+        else if(form.elements[i].value == "radio_beg_"+wlIndex)
+        {
+            radio_beg = i;
+        }
+        else if(form.elements[i].value == "radio_end_"+wlIndex)
+        {
+            radio_end = i;
+            break;
+        }
+    }
+
+    for(i=ssid_beg+1;i<ssid_end;i++)
+    {
+        if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+        {
+            loc+="&";
+            loc+=form.elements[i].name;
+            loc+="=";
+            loc+=form.elements[i].value;
+        }
+    }
+
+    for(i=radio_beg+1;i<radio_end;i++)
+    {
+        if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+        {
+            loc+="&";
+            loc+=form.elements[i].name;
+            loc+="=";
+            loc+=form.elements[i].value;
+        }
+    }
+    return loc;
+}
+
+  function do_submit()
+  {
+      var lochead='wirelesssetup_wirelessmacauthentication.wl?';
+      var loc="";
+      var key = '<%ejGetOther(encrypt_key, 0)%>';
+
+      loc += 'wlSetBandMode='+wlIndex;
+      loc += '&glbSsidChanged='+gv_cssid;
+      if(wlIndex == "1")
+      {
+          loc += '&wlquantenna_mac_control_setup=1';
+      }
+      loc += do_add_elements();
+	  loc += '&sessionKey=' + sessionKey;
+      loc += '&needthankyou=1';
+      //alert('loc='+loc);
+      //return false;
+      loc=encrypt_query(loc,key);
+      lochead+=loc;
+      // var code = 'location="' + lochead + '"';
+      //eval(code);
+      postSubmit(lochead);
+      //     form.submit();
+      return true;
+  }
+
+
+  function onClickDelete(macAddress, idx)
+  {
+      macAddress = htmlDecodeStr(macAddress);
+      var i = idx;
+      var form = document.forms[0];
+      var lochead='wirelesssetup_wirelessmacauthentication.wl?';
+      var loc="";
+
+      // determin MAC
+      gv_FltMacAddr[gv_cssid] = macAddress;
+
+      // Delete submit
+      for (var j=0;j<ssidOpt;j++)
+      {
+          if (j == gv_cssid)
+          {
+              document.getElementById("uiPostAPEnabled_"+i+"_"+j).disabled = true;
+              document.getElementById("uiPostSSID_"+i+"_"+j).disabled = false;
+              document.getElementById("uiPostSSID_"+i+"_"+j).value = gv_ssid[j];
+          /* fix bug #15418 'Remove' will affect the type of access */
+              if (1)
+                  document.getElementById("uiPostFltMacMode_"+i+"_"+j).disabled = true;
+              else
+              {
+                  document.getElementById("uiPostFltMacMode_"+i+"_"+j).disabled = false;
+                  document.getElementById("uiPostFltMacMode_"+i+"_"+j).value = gv_FltMacMode[j];
+              }
+              document.getElementById("uiPostFltMacAddr_"+i+"_"+j).disabled = false;
+              document.getElementById("uiPostFltMacAddr_"+i+"_"+j).value = gv_FltMacAddr[j];
+          }
+          else
+          {
+              document.getElementById("uiPostAPEnabled_"+i+"_"+j).disabled = true;
+              document.getElementById("uiPostSSID_"+i+"_"+j).disabled = true;
+              document.getElementById("uiPostFltMacMode_"+i+"_"+j).disabled = true;
+              document.getElementById("uiPostFltMacAddr_"+i+"_"+j).disabled = true;
+          }
+      }
+      document.getElementById("uiPostAction_"+i).disabled = false;
+      document.getElementById("uiPostAction_"+i).value = "remove";
+      document.getElementById("uiPostSsidIdx_"+i).disabled = false;
+      document.getElementById("uiPostSsidIdx_"+i).value = gv_cssid;
+
+      disable_input_all();
+      do_submit();
+      return true;
+  }
+
+  function draw_ssid_all_table()
+  {
+      var table_tr = new Array();
+      var tb_len = new Array();
+      var result = (gv_FltMacMode[0] == gv_FltMacMode[1]);
+      /*
+      var bool_2 = (gv_FltMacMode[0] == gv_FltMacMode[2]);
+      var bool_3 = (gv_FltMacMode[0] == gv_FltMacMode[3]);
+      var result;
+
+      if(wlIndex == "1")
+          result = bool_1 && bool_2;
+      else
+          result = bool_1 && bool_2 && bool_3;
+*/
+      if (result)
+      {
+          //get start records.
+          table = document.getElementById("id_mac_table0");
+          tb_len = table.getElementsByTagName("tr").length;
+          for(j=1; j<tb_len; j++)
+          {
+              table_tr[j-1] = table.rows[j].innerHTML;
+          }
+
+          //filter the records
+          var tmp_ssid_num = 2;
+          /*
+          if(wlIndex == "1")
+              tmp_ssid_num = ssid_num-1;
+          else
+              tmp_ssid_num = ssid_num;
+          */
+          for (i=1; i<tmp_ssid_num; i++)
+          {
+              table = document.getElementById("id_mac_table" + i);
+              var len = table.getElementsByTagName("tr").length;
+              for(j=0; j<tb_len-1; j++)
+              {
+                  for(k=1; k<len; k++)
+                  {
+                      if (table_tr[j] == table.rows[k].innerHTML)
+                      break;
+                  }
+                  if (k == len)
+                  table_tr[j] = "";
+              }
+          }
+
+          if (table_tr.length < 1) return;
+          if (table_tr[0].indexOf("_(No Entries Defined)_") != -1)
+              return;
+          var has_entry = 0;
+          for (i=0; i<table_tr.length; i++)
+          {
+              if (table_tr[i] != "")
+              {
+                  has_entry = 1;
+                  break;
+              }
+          }
+          if (has_entry == 0) return;
+
+          table = document.getElementById("id_mac_table_all");
+          while ( table.getElementsByTagName("tr").length >= 2)
+          table.deleteRow(1);
+
+          var details = new Array();
+          var output = new Array();
+          for(j=0; j<tb_len-1; j++)
+          {
+              if (table_tr[j] != "")
+              {
+                  /* damned, IE does not support this ...
+                  var tr = table.insertRow(-1);
+                  tr.innerHTML = table_tr[j];
+                  */
+                  /* some browsers (eg: ie7) use <TD>, the others use <td>, turn all to lowercase */
+                  table_tr[j] = table_tr[j].replace(/td>/ig, "td>");
+                  details = table_tr[j].split("</td>");
+
+                  for (i=0,k=0; i<details.length; i++)
+                  {
+                       /* different browser has different behavior, ignore the empty td */
+                       if (details[i].match(/^\W*$/)) continue;
+                       output[k++] = details[i].replace(/<td>(.*)/i, "$1");
+                  }
+                  appendTableRow(table, "center", output);
+              }
+          }
+      }
+  }
+
+function check_auth_state()
+{
+    /* The mac list should be empty if the function is disabled */
+    if (document.getElementById("id_mac_authentication_disable").checked == true)
+    {
+        var table_tmp;
+        var blank = "_(No Entries Defined)_";
+        var rows_len;
+        var n;
+        switch (gv_cssid)
+        {
+            case 0: // Host ssid
+                table_tmp = document.getElementById("id_mac_table0");
+                break;
+            case 1: // Guest ssid
+                table_tmp = document.getElementById("id_mac_table1");
+                break;
+            case 2: // Third ssid
+                table_tmp = document.getElementById("id_mac_table2");
+                break;
+            case 3: // 
+                table_tmp = document.getElementById("id_mac_table3");
+                break;
+            case 4: // ALL ssid
+                table_tmp = document.getElementById("id_mac_table_all");
+                break;
+            default :
+                break;
+        }
+        rows_len = table_tmp.rows.length;
+        for (n = rows_len; n > 1; n--)
+        {
+            table_tmp.deleteRow(n-1);
+        }
+        appendTableEmptyRow(table_tmp, "center", "5", blank);
+        return;
+    }
+}
+  //
+  function do_load()
+  {
+      htmlDecode();
+      if (has_QTN == "0")
+      {
+          wlIndex = "0";
+      }
+      init_orig_vars();
+      draw_ssid_all_table();
+      uiset_section_all();
+      check_auth_state();
+
+      if(bandSteeringState == 1)
+      {
+          document.getElementById("btn_apply").setAttribute("class", "button2");
+          document.getElementById("btn_apply").setAttribute("onclick", "");
+          alert("_(Wireless MAC Authentication is not available because the SmartSteering function is active.)_");
+      }
+      //highlight the button after user click on it
+      side_nav("mac_contrl");
+  }
+
+  function do_apply()
+  {
+      onClickAdd();
+  }
+
+  function dom_load()
+  {
+      do_load();
+  }
+
+  </script>
+  </head>
+
+<body id=wirelesssetup_wirelessmacauthentication>
+<div id="wrapper">
+  <!-- TOP NAV -->
+  <%ejInclude(top_btn_nav3.html)%>
+  <!-- END TOP NAV -->
+  <!-- SIDE NAV -->
+  <%ejInclude(wireless_left.html)%>
+  <!-- END SIDE NAV -->
+  <!-- MAIN CONTENT AREA -->
+  <div id="content_right">
+    <div id="content_right_header">
+    </div>
+    <div id="content_right_contentarea">
+      <h1 class="wirelesssetup_wirelessmacauthentication">_(Wireless MAC Authentication)_  </h1>
+      <p>
+      _(Limit access to the modem by using the MAC address of specific wireless devices.)_
+      </p>
+      <form name="mainform" action="wirelesssetup_wirelessmacauthentication.wl" method="POST" onSubmit="return do_apply();">
+        <input type="hidden" name="ssid_beg_0_0"    value="ssid_beg_0_0"  id="ssid_beg_0_0">
+        <input type="hidden" name="wlEnbl_wl0v0"           value="<%ejGetWl(wlEnbl_wl0v0)%>"       id="uiPostAPEnabled_0_0">
+        <input type="hidden" name="wlSsid_wl0v0"           value=""                                id="uiPostSSID_0_0">
+        <input type="hidden" name="wlFltMacMode_wl0v0"     value="<%ejGetWl(wlFltMacMode_wl0v0)%>" id="uiPostFltMacMode_0_0">
+        <input type="hidden" name="wlFltMacAddr_wl0v0"     value=""                                id="uiPostFltMacAddr_0_0">
+        <input type="hidden" name="ssid_end_0_0"    value="ssid_end_0_0"  id="ssid_end_0_0">
+
+        <input type="hidden" name="ssid_beg_0_1"    value="ssid_beg_0_1"  id="ssid_beg_0_1">
+        <input type="hidden" name="wlEnbl_wl0v1"           value="<%ejGetWl(wlEnbl_wl0v1)%>"       id="uiPostAPEnabled_0_1">
+        <input type="hidden" name="wlSsid_wl0v1"           value=""                                id="uiPostSSID_0_1">
+        <input type="hidden" name="wlFltMacMode_wl0v1"     value="<%ejGetWl(wlFltMacMode_wl0v1)%>" id="uiPostFltMacMode_0_1">
+        <input type="hidden" name="wlFltMacAddr_wl0v1"     value=""                                id="uiPostFltMacAddr_0_1">
+        <input type="hidden" name="ssid_end_0_1"    value="ssid_end_0_1"  id="ssid_end_0_1">
+
+        <input type="hidden" name="ssid_beg_0_2"    value="ssid_beg_0_2"  id="ssid_beg_0_2">
+        <input type="hidden" name="wlEnbl_wl0v2"           value="<%ejGetWl(wlEnbl_wl0v2)%>"       id="uiPostAPEnabled_0_2">
+        <input type="hidden" name="wlSsid_wl0v2"           value=""                                id="uiPostSSID_0_2">
+        <input type="hidden" name="wlFltMacMode_wl0v2"     value="<%ejGetWl(wlFltMacMode_wl0v2)%>" id="uiPostFltMacMode_0_2">
+        <input type="hidden" name="wlFltMacAddr_wl0v2"     value=""                                id="uiPostFltMacAddr_0_2">
+        <input type="hidden" name="ssid_end_0_2"    value="ssid_end_0_2"  id="ssid_end_0_2">
+
+        <input type="hidden" name="ssid_beg_0_3"    value="ssid_beg_0_3"  id="ssid_beg_0_3">
+        <input type="hidden" name="wlEnbl_wl0v3"           value="<%ejGetWl(wlEnbl_wl0v3)%>"       id="uiPostAPEnabled_0_3">
+        <input type="hidden" name="wlSsid_wl0v3"           value=""                                id="uiPostSSID_0_3">
+        <input type="hidden" name="wlFltMacMode_wl0v3"     value="<%ejGetWl(wlFltMacMode_wl0v3)%>" id="uiPostFltMacMode_0_3">
+        <input type="hidden" name="wlFltMacAddr_wl0v3"     value=""                                id="uiPostFltMacAddr_0_3">
+        <input type="hidden" name="ssid_end_0_3"    value="ssid_end_0_3"  id="ssid_end_0_3">
+
+        <input type="hidden" name="ssid_beg_0_4"    value="ssid_beg_0_4"  id="ssid_beg_0_4">
+        <input type="hidden" name="wlEnbl_wl0v4"           value="<%ejGetWl(wlEnbl_wl0v4)%>"       id="uiPostAPEnabled_0_4">
+        <input type="hidden" name="wlSsid_wl0v4"           value=""                                id="uiPostSSID_0_4">
+        <input type="hidden" name="wlFltMacMode_wl0v4"     value="<%ejGetWl(wlFltMacMode_wl0v4)%>" id="uiPostFltMacMode_0_4">
+        <input type="hidden" name="wlFltMacAddr_wl0v4"     value=""                                id="uiPostFltMacAddr_0_4">
+        <input type="hidden" name="ssid_end_0_4"    value="ssid_end_0_4"  id="ssid_end_0_4">
+
+        <input type="hidden" name="ssid_beg_1_0"    value="ssid_beg_1_0"  id="ssid_beg_1_0">
+        <input type="hidden" name="wlEnbl_wl1v0"           value="<%ejGetWl(wlEnbl_wl1v0)%>"       id="uiPostAPEnabled_1_0">
+        <input type="hidden" name="wlSsid_wl1v0"           value=""                                id="uiPostSSID_1_0">
+        <input type="hidden" name="wlFltMacMode_wl1v0"     value="<%ejGetWl(wlFltMacMode_wl1v0)%>" id="uiPostFltMacMode_1_0">
+        <input type="hidden" name="wlFltMacAddr_wl1v0"     value=""                                id="uiPostFltMacAddr_1_0">
+        <input type="hidden" name="ssid_end_1_0"    value="ssid_end_1_0"  id="ssid_end_1_0">
+
+        <input type="hidden" name="ssid_beg_1_1"    value="ssid_beg_1_1"  id="ssid_beg_1_1">
+        <input type="hidden" name="wlEnbl_wl1v1"           value="<%ejGetWl(wlEnbl_wl1v1)%>"       id="uiPostAPEnabled_1_1">
+        <input type="hidden" name="wlSsid_wl1v1"           value=""                                id="uiPostSSID_1_1">
+        <input type="hidden" name="wlFltMacMode_wl1v1"     value="<%ejGetWl(wlFltMacMode_wl1v1)%>" id="uiPostFltMacMode_1_1">
+        <input type="hidden" name="wlFltMacAddr_wl1v1"     value=""                                id="uiPostFltMacAddr_1_1">
+        <input type="hidden" name="ssid_end_1_1"    value="ssid_end_1_1"  id="ssid_end_1_1">
+
+        <input type="hidden" name="ssid_beg_1_2"    value="ssid_beg_1_2"  id="ssid_beg_1_2">
+        <input type="hidden" name="wlEnbl_wl1v2"           value="<%ejGetWl(wlEnbl_wl1v2)%>"       id="uiPostAPEnabled_1_2">
+        <input type="hidden" name="wlSsid_wl1v2"           value=""                                id="uiPostSSID_1_2">
+        <input type="hidden" name="wlFltMacMode_wl1v2"     value="<%ejGetWl(wlFltMacMode_wl1v2)%>" id="uiPostFltMacMode_1_2">
+        <input type="hidden" name="wlFltMacAddr_wl1v2"     value=""                                id="uiPostFltMacAddr_1_2">
+        <input type="hidden" name="ssid_end_1_2"    value="ssid_end_1_2"  id="ssid_end_1_2">
+
+        <input type="hidden" name="ssid_beg_1_3"    value="ssid_beg_1_3"  id="ssid_beg_1_3">
+        <input type="hidden" name="wlEnbl_wl1v3"           value="<%ejGetWl(wlEnbl_wl1v3)%>"       id="uiPostAPEnabled_1_3">
+        <input type="hidden" name="wlSsid_wl1v3"           value=""                                id="uiPostSSID_1_3">
+        <input type="hidden" name="wlFltMacMode_wl1v3"     value="<%ejGetWl(wlFltMacMode_wl1v3)%>" id="uiPostFltMacMode_1_3">
+        <input type="hidden" name="wlFltMacAddr_wl1v3"     value=""                                id="uiPostFltMacAddr_1_3">
+        <input type="hidden" name="ssid_end_1_3"    value="ssid_end_1_3"  id="ssid_end_1_3">
+
+        <input type="hidden" name="ssid_beg_1_4"    value="ssid_beg_1_4"  id="ssid_beg_1_4">
+        <input type="hidden" name="wlEnbl_wl1v4"           value="<%ejGetWl(wlEnbl_wl1v4)%>"       id="uiPostAPEnabled_1_4">
+        <input type="hidden" name="wlSsid_wl1v4"           value=""                                id="uiPostSSID_1_4">
+        <input type="hidden" name="wlFltMacMode_wl1v4"     value="<%ejGetWl(wlFltMacMode_wl1v4)%>" id="uiPostFltMacMode_1_4">
+        <input type="hidden" name="wlFltMacAddr_wl1v4"     value=""                                id="uiPostFltMacAddr_1_4">
+        <input type="hidden" name="ssid_end_1_4"    value="ssid_end_1_4"  id="ssid_end_1_4">
+
+        <input type="hidden" name="radio_beg_0"    value="radio_beg_0"  id="radio_beg_0">
+        <input type="hidden" name="action_wl0"    value="" id="uiPostAction_0">
+        <input type="hidden" name="wlSsidIdx_wl0" value="" id="uiPostSsidIdx_0">
+        <input type="hidden" name="wlSyncNvram_wl0" value="1" id="uiPostwlSyncNvram_0">
+        <input type="hidden" name="radio_end_0"    value="radio_end_0"  id="radio_end_0">
+
+        <input type="hidden" name="radio_beg_1"    value="radio_beg_1"  id="radio_beg_1">
+        <input type="hidden" name="action_wl1"    value="" id="uiPostAction_1">
+        <input type="hidden" name="wlSsidIdx_wl1" value="" id="uiPostSsidIdx_1">
+        <input type="hidden" name="wlSyncNvram_wl1" value="1" id="uiPostwlSyncNvram_1">
+        <input type="hidden" name="radio_end_1"    value="radio_end_1"  id="radio_end_1">
+
+        <table width="85%" border="0" cellpadding="0" cellspacing="0"  style="margin:0 auto;">
+          <tr>
+            <td width="35%" style="text-align:left"><strong>_(Frequency)_:</strong></td>
+            <td width="10%" style="text-align:left"><input name="wireless_index" id="id_wl_5" type="radio" onClick="onSelectWlIndex();" />
+             _(5G)_ </td>
+            <td width="55%" style="text-align:left"><input name="wireless_index" id="id_wl_2" type="radio" onClick="onSelectWlIndex();" />
+             _(2.4G)_ </td>
+          </tr>
+        </table>
+        <p>
+        <strong>1. _(Select SSID from the pull down menu.)_</strong>
+        </p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;_(SSID)_:
+        <select name="ssid" id="id_ssid" onchange="onSelectSSID();">
+          <option id="id_ssid_0" value="SSID_1">_(SSID)_ 1</option>
+          <option id="id_ssid_1" value="SSID_2">_(SSID)_2</option>
+          <!--          <option id="id_ssid_2" value="SSID_3">_(SSID)_3</option>  --!>
+          <option id="id_ssid_2" value="SSID_all">_(ALL SSIDs)_</option>
+        </select>
+        </p>
+        <p>
+          <strong>2. _(Set MAC authentication state.)_</strong>
+        </p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;_(Mac Authentication)_:
+        <input name="mac_authentication" id="id_mac_authentication_enable" type="radio" value="enable" checked="checked" onclick="onSelectState()" />
+       _(Enable)_        <input name="mac_authentication" id="id_mac_authentication_disable" type="radio" value="disable" onclick="onSelectState()" />
+        _(Disable)_
+        </p>
+        <p>
+        <strong>3. _(Select Allow device list or Deny device list.)_</strong>
+        </p>
+        <table border="0">
+          <tr>
+            <td width="161">&nbsp;
+              <input name="allow_devices" id="id_allow_devices_accept" type="radio" value="accept" checked="checked" onclick="onClickAllowDeny();" />
+              _(Allow device list)_</td>
+            <td width="329">_(Denies all devices except those added in step 4.)_</td>
+          </tr>
+          <tr>
+            <td>&nbsp;
+              <input name="allow_devices" id="id_allow_devices_deny" type="radio" value="deny" onclick="onClickAllowDeny();" />
+              _(Deny device list)_</td>
+            <td>_(Allows all devices except those added in step 4.)_</td>
+          </tr>
+          <tr>
+           <td>&nbsp;</td>
+           <td>&nbsp;</td>
+          </tr>
+        </table>
+        <p>
+        <strong>4. _(Enter the MAC address of the wireless LAN device.)_</strong>
+        </p>
+        <!--0-->
+        <div id="id_table_mac_0" style="display:none;">
+        <table border="0" cellspacing="0" cellpadding="0" id="table_mac_0">
+          <tr>
+        <td width="205">&nbsp;&nbsp;&nbsp;_(Select MAC Address)_:</td>
+        <td width="22">&nbsp;</td>
+        <td width="263">_(Manually Add MAC Address)_:</td>
+        <td width="10">&nbsp;</td>
+          </tr>
+          <tr>
+            <td id="id_wlclientlist0">&nbsp;&nbsp;
+              <select name="mac_address" id="id_mac_address_0" onchange="onChangeMac(0)" style="width:190px;">
+                <option value="">_(Manually Enter MAC)_</option>
+                <%ejGetWlMssidMacList(0,0)%>
+              </select>
+            </td>
+            <td>_(or)_</td>
+<!--                 <tr id="id_auto_mac_address_0" > -->
+<!--                    <td width="172">Manually Add MAC Address:                    </td> -->
+            <td id="id_auto_mac_address_0">
+              <input name="manual_mac_address" id="id_manual_mac_address_0" type="text" size="25" style="height:16px;"/>
+            </td>
+            <td>&nbsp;</td>
+            <!--td><a href="#" class="add_btn" style="margin:0;" onclick="onClickAdd();"></a></td-->
+          </tr>
+          <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td colspan="2" class="smallprint">(_(Sample MAC Address)_: 00:20:e0:00:41:00)</td>
+          </tr>
+        </table>
+        </div>
+        <!--1-->
+        <div id="id_table_mac_1" style="display:none;">
+        <table border="0" cellspacing="0" cellpadding="0" id="table_mac_1">
+          <tr>
+           <td width="205">&nbsp;&nbsp;&nbsp;_(Select MAC Address)_:</td>
+           <td width="22">&nbsp;</td>
+           <td width="263">_(Manually Add MAC Address)_:</td>
+           <td width="10">&nbsp;</td>
+          </tr>
+          <tr>
+            <td id="id_wlclientlist1">&nbsp;&nbsp;
+              <select name="mac_address" id="id_mac_address_1" onchange="onChangeMac(1)" style="width:190px;">
+                <option value="">_(Manually Enter MAC)_</option>
+                <%ejGetWlMssidMacList(1,0)%>
+              </select>
+            </td>
+            <td>_(or)_</td>
+<!--                <tr id="id_auto_mac_address_1">
+                    <td width="172">Manually Add MAC Address:                    </td> -->
+            <td id="id_auto_mac_address_1">
+              <input name="manual_mac_address" id="id_manual_mac_address_1" type="text" size="25" style="height:16px;"/>
+            </td>
+            <td>&nbsp;</td>
+            <!--td><a href="#" class="add_btn" style="margin:0;" onclick="onClickAdd();"></a></td-->
+          </tr>
+          <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td colspan="2" class="smallprint">(_(Sample MAC Address)_: 00:20:e0:00:41:00)</td>
+          </tr>
+        </table>
+        </div>
+        <!--2-->
+        <div id="id_table_mac_2" style="display:none;">
+        <table border="0" cellspacing="0" cellpadding="0" id="table_mac_2">
+          <tr>
+            <td width="205">&nbsp;&nbsp;&nbsp;_(Select MAC Address)_:</td>
+            <td width="22">&nbsp;</td>
+            <td width="263">_(Manually Add MAC Address)_:</td>
+            <td width="10">&nbsp;</td>
+          </tr>
+          <tr>
+            <td id="id_wlclientlist2">&nbsp;&nbsp;              <select name="mac_address" id="id_mac_address_2" onchange="onChangeMac(2)" style="width:190px;">                <option selected="selected" value="">Manually Enter MAC</option></select></td>
+            <td>or</td>
+<!--                <tr id="id_auto_mac_address_1">
+                    <td width="172">Manually Add MAC Address:                    </td> -->
+            <td id="id_auto_mac_address_2">
+              <input name="manual_mac_address" id="id_manual_mac_address_2" size="25" style="height:16px;" type="text">
+            </td>
+            <td>&nbsp;</td>
+            <!--td><a href="#" class="add_btn" style="margin:0;" onclick="onClickAdd();"></a></td-->
+          </tr>
+          <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td colspan="2" class="smallprint">(_(Sample MAC Address)_: 00:20:e0:00:41:00)</td>
+          </tr>
+        </table>
+        </div>
+        <!--3-->
+        <div id="id_table_mac_3" style="display:none;">
+        <table id="table_mac_3" cellpadding="0" cellspacing="0" border="0">
+          <tbody><tr>
+            <td width="205">&nbsp;&nbsp;&nbsp;Select MAC Address:</td>
+            <td width="22">&nbsp;</td>
+            <td width="263">Manually Add MAC Address:</td>
+            <td width="10">&nbsp;</td>
+          </tr>
+          <tr>
+            <td id="id_wlclientlist3">&nbsp;&nbsp;              <select name="mac_address" id="id_mac_address_3" onchange="onChangeMac(3)" style="width:190px;">                <option selected="selected" value="">Manually Enter MAC</option></select></td>
+            <td>or</td>
+<!--                <tr id="id_auto_mac_address_1">
+                    <td width="172">Manually Add MAC Address:                    </td> -->
+            <td id="id_auto_mac_address_3">
+              <input name="manual_mac_address" id="id_manual_mac_address_3" size="25" style="height:16px;" type="text">
+            </td>
+            <td>&nbsp;</td>
+            <!--td><a href="#" class="add_btn" style="margin:0;" onclick="onClickAdd();"></a></td-->
+          </tr>
+          <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td colspan="2" class="smallprint">(Sample MAC Address: 00:20:e0:00:41:00)</td>
+          </tr>
+        </tbody></table>
+        </div>
+        <div id="id_table_mac_4" style="display:none;">
+        <table border="0" cellspacing="0" cellpadding="0" id="table_mac_4">
+          <tr>
+           <td width="205">&nbsp;&nbsp;&nbsp;_(Select MAC Address)_:</td>
+           <td width="22">&nbsp;</td>
+           <td width="263">_(Manually Add MAC Address)_:</td>
+           <td width="10">&nbsp;</td>
+          </tr>
+          <tr>
+            <td id="id_wlclientlist4">&nbsp;&nbsp;
+              <select name="mac_address" id="id_mac_address_4" onchange="onChangeMac(4)" style="width:190px;">
+                <option value="">_(Manually Enter MAC)_</option>
+                <%ejGetWlMssidMacList(4,0)%>
+              </select>
+            </td>
+            <td>_(or)_</td>
+<!--                <tr id="id_auto_mac_address_3">
+                    <td width="172">Manually Add MAC Address:                    </td>
+-->            <td id="id_auto_mac_address_4">
+              <input name="manual_mac_address" id="id_manual_mac_address_4" type="text" size="25" style="height:16px;"/>
+            </td>
+            <td>&nbsp;</td>
+            <!--td><a href="#" class="add_btn" style="margin:0;" onclick="onClickAdd();"></a></td-->
+          </tr>
+          <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td colspan="2" class="smallprint">(_(Sample MAC Address)_: 00:20:e0:00:41:00)</td>
+          </tr>
+        </table>
+        </div>
+        &nbsp;&nbsp;
+        <p>
+        <strong>5. _(Click Apply to save changes.)_</strong>
+        </p>
+        <p><a class="button1" onclick="do_apply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+        <p align="center"><strong>_(MAC Authentication Device List)_ </strong></p>
+        <div id="id_mac_table_div_0" style="display:none;">
+        <table id="id_mac_table0" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px 40px 0 auto;" width="80%">
+          <tr>
+            <th align="center">&nbsp;</th>
+            <th>_(DEVICE NAME)_</th>
+            <th>_(IP ADDRESS)_</th>
+            <th>_(MAC ADDRESS)_</th>
+            <th>_(ACCESS)_</th>
+            <th>_(EDIT)_</th>
+          </tr>
+          <%ejGetWlFilterMssidMac(0,0)%>
+          <!--
+          <tr align="center">
+            <td><img src="images/icon_computer.png" width="39" height="39" /></td>
+            <td>myComputer</td>
+            <td>1.2.3.4</td>
+            <td>3e-5d-00-32-e0-41</td>
+            <td>
+              <span class="access_allowed">
+              Access&nbsp;Allowed
+              </span>
+            </td>
+            <td><a href="#" class="remove_btn"></a></td>
+          </tr>
+          <tr align="center">
+            <td><img src="images/icon_computer.png" width="39" height="39" /></td>
+            <td>myComputer</td>
+            <td>1.2.3.4</td>
+            <td>3e-5d-00-32-e0-41</td>
+            <td>
+              <span class="access_denied">
+              Access&nbsp;Denied
+              </span>
+            </td>
+            <td><a href="#" class="remove_btn"></a></td>
+          </tr>
+          -->
+        </table>
+        </div>
+        <!--No.2-->
+        <div id="id_mac_table_div_1" style="display:none;">
+        <table id="id_mac_table1" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px 40px 0 auto;" width="80%">
+          <tr>
+            <th align="center">&nbsp;</th>
+            <th>_(DEVICE NAME)_</th>
+            <th>_(IP ADDRESS)_</th>
+            <th>_(MAC ADDRESS)_ </th>
+            <th>_(ACCESS)_</th>
+            <th>_(EDIT)_</th>
+          </tr>
+          <%ejGetWlFilterMssidMac(1,0)%>
+        </table>
+        </div>
+        <!--No.3-->
+        <div id="id_mac_table_div_2" style="display:none;">
+        <table id="id_mac_table2" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px 40px 0 auto;" width="80%">
+          <tr>
+            <th align="center">&nbsp;</th>
+            <th>_(DEVICE NAME)_</th>
+            <th>_(IP ADDRESS)_</th>
+            <th>_(MAC ADDRESS)_</th>
+            <th>_(ACCESS)_</th>
+            <th>_(EDIT)_</th>
+          </tr>
+          <%ejGetWlFilterMssidMac(2,0)%>
+        </table>
+        </div>
+        <!--No.4-->
+        <div id="id_mac_table_div_3" style="display:none;">
+        <table id="id_mac_table3" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px 40px 0 auto;" width="80%">
+          <tr>
+            <th align="center">&nbsp;</th>
+            <th>_(DEVICE NAME)_</th>
+            <th>_(IP ADDRESS)_</th>
+            <th>_(MAC ADDRESS)_ </th>
+            <th>_(ACCESS)_</th>
+            <th>_(EDIT)_</th>
+          </tr>
+          <%ejGetWlFilterMssidMac(3,0)%>
+        </table>
+        </div>
+        <!--No.ALL-->
+        <div id="id_mac_table_all_div" style="display:none;">
+        <table id="id_mac_table_all" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px 40px 0 auto;" width="80%">
+          <tr>
+            <th align="center">&nbsp;</th>
+            <th>_(DEVICE NAME)_</th>
+            <th>_(IP ADDRESS)_</th>
+            <th>_(MAC ADDRESS)_ </th>
+            <th>_(ACCESS)_</th>
+            <th>_(EDIT)_</th>
+          </tr>
+          <tr align="center"><td colspan="6">_(No Entries Defined)_</td></tr>
+        </table>
+        </div>
+      <p></p>
+      </form>
+    </div>
+    <div id="content_right_footer">
+    </div>
+  </div>
+  <div class="clear_left">
+  </div>
+  <div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

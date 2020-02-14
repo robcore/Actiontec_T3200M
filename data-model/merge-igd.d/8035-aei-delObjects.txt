@@ -1,0 +1,11 @@
+#
+# Del the existing standard or broadcom objects 
+#
+# See 0000-README.txt for more details
+#
+
+deleteObj InternetGatewayDevice.X_BROADCOM_COM_SELT_TEST.
+deleteObj InternetGatewayDevice.XMPP.
+deleteObj InternetGatewayDevice.X_BROADCOM_COM_EthernetOam.Ieee8021agCfg.LoopbackDiagnostics.
+deleteObj InternetGatewayDevice.X_BROADCOM_COM_EthernetOam.Ieee8021agCfg.LinktraceDiagnostics.
+deleteObj InternetGatewayDevice.Device.GatewayInfo.

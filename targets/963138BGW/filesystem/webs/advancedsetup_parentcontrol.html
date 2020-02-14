@@ -1,0 +1,931 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Blocking/Filtering)_ - _(Parental Controls)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var devinfo='<%ejGetOther(sysInfo,DevInfo)%>';
+var devinfo_list=devinfo.split("|");
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var pc_policy="<%ejGetOther(parentControlPolicy)%>"
+var pc_enable = "<%ejGetOther(parentControlEnable)%>"
+pc_host_info=htmlDecodeStr("<%ejGetOther(parentControlHostInfo)%>");
+pc_rules_info=htmlDecodeStr("<%ejGetOther(parentControlRules)%>");
+//pc_rules_info="all//Restrict/www.google.com/0/8:00 AM/9:00 PM/Everyday|00:00:00:00:00:03/Bob-BlackBerry/Restrict/www.youtube.com/1/8:00 AM/9:00 PM/Mondays";
+var hostinfo = htmlDecodeStr('<%ejGetOther(hostinfoAll)%>');
+//var hostinfo = 'Unknown/192.168.1.200/e0:cb:4e:fc:36:0b/Ethernet/Static/1/0|iPhone/192.168.1.64/7c:01:91:9f:46:26/Ethernet/DHCP/0';
+var pc_rules_list = pc_rules_info.split("|").map(function(x){return x.split("/")});
+var pc_hosts_list = pc_host_info.split("|").map(function(x){return x.split("/")});
+var hosts = hostinfo.split("|").map(function(x){return x.split("/")});
+var add_flag=0;
+var ruleDeviceName="";
+var ruleDeviceMac="";
+var modify_ruleID="";
+if(pc_rules_info.length==0)
+{
+    pc_rules_list.length=0;
+}
+if(pc_host_info.length==0)
+{
+    pc_hosts_list.length=0;
+}
+if(hostinfo.length==0)
+{
+    hosts.length=0;
+}
+for(k=0;k<hosts.length;k++)
+{
+    if(pc_host_info.indexOf(hosts[k][2])==-1)
+    {
+        pc_hosts_list.push([hosts[k][0],hosts[k][2],'0']);
+    }
+}
+
+function setAsChild(index)
+{
+    pc_hosts_list[index][2]='1';
+}
+function setAsParent(index)
+{
+    pc_hosts_list[index][2]='0';
+}
+
+function scrollToElement(element) {
+  var el = document.getElementById(element);
+  var yPos = el.getClientRects()[0].top;
+  var yScroll = window.scrollY;
+  var interval = setInterval(function() {
+    yScroll -= 10;
+    window.scroll(0, yScroll);
+    if (el.getClientRects()[0].top >= 0) {
+      clearInterval(interval);
+    }
+  }, 5);
+}
+
+function set_device(name,mac)
+{
+    add_flag=1;
+    modify_ruleID="";
+    ruleDeviceName=name;
+    ruleDeviceMac=mac;
+    document.getElementById("id_add_title_2").innerHTML="<h3>(_(Apply only to)_" +" "+ mac +")</h3>";
+    document.getElementById("id_add_form").style.display ="inline";
+    scrollToElement("id_add_title_2");
+}
+
+function set_children()
+{
+    add_flag=1;
+    modify_ruleID="";
+    ruleDeviceName="all";
+    ruleDeviceMac="all";
+    document.getElementById("id_add_title_2").innerHTML="<h3>(_(Apply to all CHILD devices)_)</h3>";
+    document.getElementById("id_add_form").style.display ="inline";
+    scrollToElement("id_add_title_2");
+}
+
+function list_pc_rules_table(isAllow)
+{
+    var i,j;
+    var count=0;
+    for(i=0; i<pc_rules_list.length;i++)
+    {
+        if(isAllow==pc_rules_list[i][2]) count++;
+    }
+    if(count > 0)
+    {
+        document.writeln("    <table class=\"status_style\" style=\"margin: 10px auto 0pt;\" align=\"center\" border=\"0\" cellpadding=\"5\" cellspacing=\"0\" width=\"95%\" >");
+        document.writeln("                <tbody>");
+        for(i=0; i<pc_rules_list.length;i++)
+        {
+           if(isAllow !=pc_rules_list[i][2]) continue;
+           document.writeln("<tr><td>"+((pc_rules_list[i][0]=="all")?"all CHILD devices":pc_rules_list[i][0]) +"</td>");
+           document.writeln("    <td>" + pc_rules_list[i][3] + "</td>");
+           if(pc_rules_list[i][4] == '1')
+           {
+               document.writeln("   <td>_(Always)_</td>");
+           }
+           else
+           {
+               var start = pc_rules_list[i][5];
+               var end = pc_rules_list[i][6];
+               var strSep=":";
+               var str00, str11;
+
+               if(start.length == 3)
+               {
+                   str11=start.substring(0,1);
+                   str00=start.substring(1,start.length);
+                   start=str11+strSep+str00;
+               }
+               else if(start.length == 4)
+               {
+                   str11=start.substring(0,2);
+                   str00=start.substring(2,start.length);
+                   start=str11+strSep+str00;
+               }
+               else
+               {
+                   start ="0:00";
+               }
+
+               if(end.length == 3)
+               {
+                   str11=end.substring(0,1);
+                   str00=end.substring(1,end.length);
+                   end=str11+strSep+str00;
+               }
+               else if(end.length == 4)
+               {
+                   str11=end.substring(0,2);
+                   str00=end.substring(2,end.length);
+                   end=str11+strSep+str00;
+               }
+               else
+               {
+                   end="0:00";
+               }
+               document.writeln("   <td>_(From)_ " + start + " _(To)_ " + end + "</td>" );
+           }
+           document.writeln("     <td>_(On)_ " + pc_rules_list[i][7] +"</td>" );
+           document.writeln("     <td>");
+           document.writeln("     <a href='#' class='button1' type='button' onClick=\"removeRule("+ pc_rules_list[i][10] +");\" style='text-decoration:none;'><span>_(Remove)_</span></a>");
+           document.writeln("     </td>");
+           document.writeln("</tr>");
+       }
+
+       document.writeln("          </tbody></table>");
+   }
+}
+
+function changeDeviceName(newName,i)
+{
+    pc_hosts_list[i][0]=newName;
+}
+
+function show_pc_hosts_table()
+{
+    var i,j;
+    for (i=0;i<pc_hosts_list.length;i++)
+    {
+        document.write("<tr>  <td class=\"pc_table_lineL col1\">" + '<input type="text" onchange="changeDeviceName(this.value,' + i + ')" ' + 'value = ' + pc_hosts_list[i][0] +"></td>");
+        document.write("        <td class=\"pc_table_lineC col2\">" + pc_hosts_list[i][1] +"</td>");
+        document.write("        <td class=\"pc_table_lineC col3\">");
+        document.write("        <div class=\"pc_table_lineS\"><input type=\"radio\" name=\"radio"+i +"\" onclick=\"setAsChild("+i+");\"" + ((pc_hosts_list[i][2]=='1')?"checked":"") +" >_(CHILD)_</div>");
+        document.write("        <div class=\"pc_table_lineS\"><input type=\"radio\" name=\"radio"+i+"\" onclick=\"setAsParent("+i+");\"" + ((pc_hosts_list[i][2]=='0')?"checked":"") +" >_(PARENT)_</div>");
+        document.write("      </td>");
+        document.write("      <td class=\"pc_table_lineC col4\">");
+        document.write("      <a href='#' class='button1' type='button' onClick=\"set_device('" +pc_hosts_list[i][0]+ "','" +pc_hosts_list[i][1]+ "');\" style='text-decoration:none;'><span>_(Set Device Rule)_</span></a>");
+        document.write("      </td>");
+        if(i==0)
+        {
+            document.write("      <td class=\"pc_table_lineC col5\" rowspan=\""+pc_hosts_list.length +"\">");
+            document.write("       <a href='#' class='button1' type='button' onClick=\"set_children();\" style='text-decoration:none;'><span>_(Set Childs Rule)_</span></a>");
+// <input type=\"button\" class='button1'  onclick=\"set_children();\" value=\"Set Childs&#39; Restrictions\" >");
+            document.write("      </td>");
+        }
+        document.write("</tr>");
+    }
+}
+
+/**
+ * isValidDate(str)
+ * @param string str value yyyy-mm-dd
+ * @return boolean true or false
+ * IF date is valid return true
+ */
+function isValidDate(str){
+	// STRING FORMAT yyyy-mm-dd
+	if(str=="" || str==null){return false;}								
+	
+	// m[1] is year 'YYYY' * m[2] is month 'MM' * m[3] is day 'DD'					
+	var m = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+	
+	// STR IS NOT FIT m IS NOT OBJECT
+	if( m === null || typeof m !== 'object'){return false;}				
+	
+	// CHECK m TYPE
+	if (typeof m !== 'object' && m !== null && m.size!==3){return false;}
+				
+	var ret = true; //RETURN VALUE						
+	var thisYear = new Date().getFullYear(); //YEAR NOW
+        var thisMonth= new Date().getMonth() + 1;
+        var thisDate = new Date().getDate();
+
+	var minYear = 2016; //MIN YEAR
+	
+	// YEAR CHECK
+	if( (m[1].length < 4) || m[1] < thisYear ){return false;}
+        
+	// MONTH CHECK			
+        if( (m[2].length < 2) || m[2] < 1 || m[2] > 12){return  false;}
+        if( (thisYear==m[1]) && (m[2] < thisMonth) ) { return false; }
+	// DAY CHECK
+	if( (m[3].length < 2) || m[3] < 1 || m[3] > 31){return false;}
+        if( (thisYear==m[1])  && (m[2] == thisMonth) && (m[3] < thisDate) ) { return false;}
+ 
+
+    var dtMonth = m[2];
+    var dtDay= m[3];
+    var dtYear = m[1];
+    if ((dtMonth==4 || dtMonth==6 || dtMonth==9 || dtMonth==11) && dtDay ==31) 
+    {
+        return false;
+    }
+    else if (dtMonth == 2) 
+    {
+        var isleap = (dtYear % 4 == 0 && (dtYear % 100 != 0 || dtYear % 400 == 0));
+        if (dtDay> 29 || (dtDay ==29 && !isleap)) 
+            return false;
+    }
+	return ret;			
+}
+
+function setStateById(id,state)
+{
+    document.getElementById(id).disabled = state;
+}
+
+function PC_switch()
+{
+    updateTag();
+}
+
+function updateTag()
+{
+    var lochead = 'updateTag.cmd?';
+    var loc = '';
+    var i;
+    for(i=0; i<pc_hosts_list.length;i++)
+    {
+        if(i>0) loc += '&';
+        loc += 'parentControlTag' + i + '=' + (pc_hosts_list[i][0] + '/' + pc_hosts_list[i][1] + '/' + pc_hosts_list[i][2]);
+    }
+    loc += '&pc_enable=' + pc_enable;
+    loc += '&pc_policy=' + pc_policy;
+    loc += '&needthankyou=advancedsetup_parentcontrol.html';
+    loc += '&sessionKey=' + sessionKey;
+    lochead+=loc;
+    postSubmit(lochead);
+}
+
+function removeRule(ruleID)
+{
+    var lochead = 'setParentControlRule.cmd?action=remove';
+    var loc = '&ruleID=' + ruleID;
+    loc += '&needthankyou=advancedsetup_parentcontrol.html';
+    loc += '&sessionKey=' + sessionKey;
+    lochead+=loc;
+    postSubmit(lochead);
+
+}
+
+function modifyRule(ruleID)
+{
+    var lochead = 'setParentControlRule.cmd?action=modify&ruleID='+ruleID;
+    var loc = '&ruleDeviceName=' + ruleDeviceName+"&ruleDeviceMac="+ruleDeviceMac;
+    if (document.getElementById('RA_restrict').checked)
+    {
+        loc += "&restrictOrAllow=Restrict"
+    }else
+    {
+        loc += "&restrictOrAllow=Allow"
+    }
+
+    if (document.getElementById('AT_allpages').checked)
+    {
+        loc += "&webpage=All Webpages"
+    }else
+    {
+        loc += "&webpage="+document.getElementById('AT_webpage').value;
+    }
+    if (document.getElementById('isAlways').checked)
+    {
+        loc += "&isAlways=1"
+        loc += "&startTime=800"
+        loc += "&endTime=2000"
+    }else
+    {
+        loc += "&isAlways=0"
+        loc += "&startTime="+document.getElementById('startTime').value;
+        loc += "&endTime="+document.getElementById('endTime').value;
+    }
+
+    if (document.getElementById('EO_1').checked)
+    {
+        loc += "&days=Everyday"
+    }else if (document.getElementById('EO_2').checked)
+    {
+        loc += "&days="+ document.getElementById('EO_2_1').value;
+    }
+    else
+    {
+        if(isValidDate(document.getElementById('EO_3').value)==false)
+        {
+            alert("_(Please correct the Date)_");
+            return ;
+        }
+        loc += "&days=" + document.getElementById('EO_3').value;
+    }
+
+
+
+    loc += '&needthankyou=advancedsetup_parentcontrol.html';
+    loc += '&sessionKey=' + sessionKey;
+    lochead+=loc;
+    postSubmit(lochead);
+
+
+}
+
+function do_apply()
+{
+    if(add_flag==0)
+    {
+        updateTag();
+        return;
+    }
+    addRule();
+}
+function addRule()
+{
+    var lochead = 'setParentControlRule.cmd?action=add';
+    var loc = '&ruleDeviceName=' + ruleDeviceName+"&ruleDeviceMac="+ruleDeviceMac;
+    var i;
+    for(i=0; i<pc_hosts_list.length;i++)
+    {
+        loc += '&parentControlTag' + i + '=' + (pc_hosts_list[i][0] + '/' + pc_hosts_list[i][1] + '/' + pc_hosts_list[i][2]);
+    }
+    loc += '&pc_enable=' + pc_enable;
+    loc += '&pc_policy=' + pc_policy;
+    if(pc_policy=="Allow")
+    {
+        loc += "&restrictOrAllow=Allow"
+    }else
+    {
+        loc += "&restrictOrAllow=Restrict"
+    }
+
+    if (document.getElementById('AT_allpages').checked)
+    {
+        loc += "&webpage=All Webpages"
+    }else
+    {
+        loc += "&webpage="+document.getElementById('AT_webpage').value;
+    }
+    if (document.getElementById('isAlways').checked)
+    {
+        loc += "&isAlways=1"
+        loc += "&startTime=800"
+        loc += "&endTime=2000"
+    }else
+    {
+        loc += "&isAlways=0"
+        loc += "&startTime="+document.getElementById('startTime').value;
+        loc += "&endTime="+document.getElementById('endTime').value;
+    }
+
+    if (document.getElementById('EO_1').checked)
+    {
+        loc += "&days=Everyday"
+    }else if (document.getElementById('EO_2').checked)
+    {
+        loc += "&days="+ document.getElementById('EO_2_1').value;
+    }
+    else
+    {
+        if(isValidDate(document.getElementById('EO_3').value)==false)
+        {
+            alert("_(Please correct the Date)_");
+            return ;
+        }
+        loc += "&days=" + document.getElementById('EO_3').value;
+    }
+
+
+
+    loc += '&needthankyou=advancedsetup_parentcontrol.html';
+    loc += '&sessionKey=' + sessionKey;
+    lochead+=loc;
+    postSubmit(lochead);
+
+}
+function edit_rule(index)
+{
+    modify_ruleID=pc_rules_list[index][10];
+    if(pc_rules_list[index][2] == "Restrict")
+    {
+        document.getElementById('RA_restrict').checked = true;
+    }else
+    {
+        document.getElementById('RA_allow').checked = true;
+    }
+    if(pc_rules_list[index][3] == "All Webpages")
+    {
+        document.getElementById('AT_allpages').checked = true;
+        setStateById('AT_webpage',true);
+    }else
+    {
+        document.getElementById('AT_webpage1').checked = true;
+        document.getElementById('AT_webpage').value = pc_rules_list[index][3];
+        setStateById('AT_webpage',false);
+    }
+    if(pc_rules_list[index][4] == "1")
+    {
+        document.getElementById('isAlways').checked=true;
+        setStateById('startTime',true);
+        setStateById('endTime',true);
+    }
+    else
+    {
+        document.getElementById('isNotAlways').checked=true;
+        setStateById('startTime',false);
+        setStateById('endTime',false);
+
+        var sel= document.getElementById('startTime');
+        for(var i = 0; i < sel.options.length;  ++i) {
+           if(sel.options[i].value  == pc_rules_list[index][5]) {
+               sel.selectedIndex = i;
+               break;
+           }
+       }
+       var sel= document.getElementById('endTime');
+        for(var i = 0; i < sel.options.length;  ++i) {
+           if(sel.options[i].value  == pc_rules_list[index][6]) {
+               sel.selectedIndex = i;
+               break;
+           }
+       }
+    }
+    if(pc_rules_list[index][7] == "Everyday")
+    {
+        document.getElementById('EO_1').checked=true;
+        setStateById('EO_2_1',true);
+        setStateById('EO_3',true);
+    }else if (pc_rules_list[index][7] == "Schooldays" ||
+              pc_rules_list[index][7] == "Weekends" ||
+              pc_rules_list[index][7] == "Mondays" ||
+              pc_rules_list[index][7] == "Tuesdays" ||
+              pc_rules_list[index][7] == "Wednesdays" ||
+              pc_rules_list[index][7] == "Thursdays" ||
+              pc_rules_list[index][7] == "Fridays" ||
+              pc_rules_list[index][7] == "Saturdays" ||
+              pc_rules_list[index][7] == "Sundays")
+   {
+       document.getElementById('EO_2').checked=true;
+       setStateById('EO_2_1',false);
+       setStateById('EO_3',true);
+       var sel = document.getElementById('EO_2_1');
+       for(var i = 0; i < sel.options.length;  ++i) {
+           if(sel.options[i].value  == pc_rules_list[index][7]) {
+               sel.selectedIndex = i;
+               break;
+           }
+       }
+   }else
+   {
+       document.getElementById('EO_4').checked=true;
+       document.getElementById('EO_3').value=pc_rules_list[index][7];
+       setStateById('EO_2_1',true);
+       setStateById('EO_3',false);     
+   }
+
+}
+function save_rule()
+{
+    if(modify_ruleID=="")
+    {
+        addRule();
+    }else
+    {
+        modifyRule(modify_ruleID);
+    }
+}
+
+function do_load()
+{
+    if(pc_enable=='1')
+    {
+       document.getElementById("parent_control_enable_div").style.display ="inline";
+       document.getElementById("parent_control_disable_div").style.display ="none";
+       document.getElementById("parent_control_enable").checked=true;
+    }else{
+       document.getElementById("parent_control_enable_div").style.display ="none";
+       document.getElementById("parent_control_disable_div").style.display ="inline";
+       document.getElementById("parent_control_disable").checked=true;
+    }
+    if(pc_policy=="Allow")
+    {
+       document.getElementById("allow_list_span").style.display ="inline";
+       document.getElementById("restrict_list_span").style.display ="none";
+       document.getElementById("id_allow_url_accept").checked=true;
+       document.getElementById("id_add_title_1").innerHTML="<h3>_(Add allow rule)_</h3>"
+    }else{
+       document.getElementById("allow_list_span").style.display ="none";
+       document.getElementById("restrict_list_span").style.display ="inline";
+       document.getElementById("id_allow_url_deny").checked=true;
+       document.getElementById("id_add_title_1").innerHTML="<h3>_(Add restrict rule)_</h3>"
+    }
+    document.getElementById("id_add_form").style.display ="none";
+    document.getElementById("current_device_id").innerHTML=devinfo_list[0];
+    side_nav("advancedsetup_parentcontrol");
+}
+
+function onClickAllowDeny(ch)
+{
+    if(ch=="1")
+    {
+       document.getElementById("allow_list_span").style.display ="inline";
+       document.getElementById("restrict_list_span").style.display ="none";
+       document.getElementById("id_add_title_1").innerHTML="<h3>_(Add allow rule)_</h3>"
+       pc_policy="Allow";
+    }else{
+       document.getElementById("allow_list_span").style.display ="none";
+       document.getElementById("restrict_list_span").style.display ="inline";
+       document.getElementById("id_add_title_1").innerHTML="<h3>_(Add restrict rule)_</h3>"
+       pc_policy="Restrict";
+    }
+    document.getElementById("id_add_form").style.display ="none";
+    add_flag=0;
+}
+
+function onSelectState(ch)
+{
+    if(ch=='1')
+    {
+       document.getElementById("parent_control_enable_div").style.display ="inline";
+       document.getElementById("parent_control_disable_div").style.display ="none";
+       pc_enable='1';
+    }else{
+       document.getElementById("parent_control_enable_div").style.display ="none";
+       document.getElementById("parent_control_disable_div").style.display ="inline";
+       pc_enable='0';
+    }
+    document.getElementById("id_add_form").style.display ="none";
+    add_flag=0;
+}
+
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+        <h1>_(Parental Controls Configuration)_</h1>
+        <p> _(Your)_ <span id="current_device_id"></span> _(Residential Gateway allows you to control the access)_<br>
+            _(to the Internet for all the devices in your home in three easy steps)_:<br>
+        <h2>_(Controls for minors)_:</h2>
+        <p>
+            1. _(Tag some devices as CHILD)_.<br>
+            2. _(Create time restrictions for all CHILD devices)_.<br>
+            3. _(Create webpage restrictions for all CHILD devices)_.<br>
+        </p>
+        <h2>_(Controls for adults)_:</h2>
+        <p>
+            _(Devices not tagged as CHILD are considered PARENT and not subject to those controls)_.<br>
+        </p>
+        <h2>_(Controls per device)_:</h2>
+        <p>
+            1. _(Select a target device)_.<br>
+            2. _(Create time restrictions for that particular device)_.<br>
+            3. _(Create webpage restrictions for that particular device)_.<br>
+                 
+        </p>
+        <br>
+        <p>
+        _(The controls per device take priority over the CHILD controls)_.<br>
+        </p>
+        
+        <p>
+          <strong>1. _(Set Parental Control state)_.</strong>
+        </p>
+          <table border="0">
+          <tr>
+            <td width="161">&nbsp;
+            <input name="parent_control" id="parent_control_enable" type="radio" value="enable" checked="checked" onclick="onSelectState(1)" />
+       Enable       &nbsp;&nbsp;&nbsp;&nbsp; <input name="parent_control" id="parent_control_disable" type="radio" value="disable" onclick="onSelectState(0)" />
+        Disable
+            </td>
+          </tr>
+          </table>
+        </p>
+        <div id="parent_control_enable_div">
+        <p>
+        <strong>2. _(Set Allow URL access list or Restrict URL access list)_.</strong>
+        </p>
+        <table border="0">
+          <tr>
+            <td width="161">&nbsp;
+              <input name="allow_url" id="id_allow_url_accept" type="radio" value="accept" checked="checked" onclick="onClickAllowDeny(1);" />
+              _(Allow URL access list)_</td>
+            <td width="329">_(Restrict all URLs access except those added in step 3)_.</td>
+          </tr>
+          <tr>
+            <td>&nbsp;
+              <input name="allow_url" id="id_allow_url_deny" type="radio" value="deny" onclick="onClickAllowDeny(0);" />
+              _(Restrict URL access list)_</td>
+            <td>_(Allow all URLs access except those added in step 3)_.</td>
+          </tr>
+          <tr>
+           <td>&nbsp;</td>
+           <td>&nbsp;</td>
+          </tr>
+        </table>
+        <p>
+        <strong>3. _(Add Parental Control rule)_.</strong>
+        </p>
+
+        <table class="status_style" style="margin: 10px auto 0pt;" align="center" border="0" cellpadding="5" cellspacing="0" width="95%">
+            <thead>
+                <tr>
+                    <th width="110" align="left">_(Client Device)_</th>
+                    <th width="100" align="left">_(MAC Address)_</th>
+                    <th width="100" align="left">_(Control Tag)_</th>
+                    <th width="130" align="left">_(Internet Access Controls)_</th>
+                    <th width="120" align="left">_(Parental Controls)_</th>
+                </tr>
+            </thead>
+                            <script language="javascript">
+                                show_pc_hosts_table();
+                            </script>
+        </table>
+        <div id="id_add_form">
+        <br><br>
+
+        <span id="id_add_title_1"></span><span id="id_add_title_2"></span>
+               <table table class="status_style" style="margin: 10px auto 0pt;" align="center" border="0" cellpadding="5" cellspacing="0" width="95%">                                                 
+                   <tbody><tr>                                                 
+                       <td>                                                 
+                           <input type="radio" name="AT" id="AT_allpages" checked="" onclick=setStateById('AT_webpage',true)>_(All Webpages)_<br>                                                 
+                           <input type="radio" name="AT" id="AT_webpage1" onclick=setStateById('AT_webpage',false)>_(This Webpage)_:<br>                                                 
+                           <input type="text" id="AT_webpage" placeholder="www.example.com" class="font100" disabled>      
+                           <br>&nbsp;                                           
+                       </td>                                                 
+                       <td>                                                 
+                           <input type="radio" name="AF" id="isAlways" checked="" onclick="setStateById('startTime',true);setStateById('endTime',true)">_(Always)_<br>                                                 
+                           <input type="radio" name="AF" id="isNotAlways" onclick="setStateById('startTime',false);setStateById('endTime',false)">                                                 
+                                                              _(From)_ <select name="fromtime" id="startTime" disabled                                                              
+                                                              <option value="0">12:00 AM</>                                                 
+                                                              <option value="100">1:00 AM</>                                                 
+                                                              <option value="115">1:15 AM</>                                                 
+                                                              <option value="130">1:30 AM</>                                                 
+                                                              <option value="145">1:45 AM</>                                                 
+                                                              <option value="200">2:00 AM</>                                                 
+                                                              <option value="215">2:15 AM</>                                                 
+                                                              <option value="230">2:30 AM</>                                                 
+                                                              <option value="245">2:45 AM</>                                                 
+                                                              <option value="300">3:00 AM</>                                                 
+                                                              <option value="315">3:15 AM</>                                                 
+                                                              <option value="330">3:30 AM</>                                                 
+                                                              <option value="345">3:45 AM</>                                                 
+                                                              <option value="400">4:00 AM</>                                                 
+                                                              <option value="415">4:15 AM</>                                                 
+                                                              <option value="430">4:30 AM</>                                                 
+                                                              <option value="445">4:45 AM</>                                                 
+                                                              <option value="500">5:00 AM</>                                                 
+                                                              <option value="515">5:15 AM</>                                                 
+                                                              <option value="530">5:30 AM</>                                                 
+                                                              <option value="545">5:45 AM</>                                                 
+                                                              <option value="600">6:00 AM</>                                                 
+                                                              <option value="615">6:15 AM</>                                                 
+                                                              <option value="630">6:30 AM</>                                                 
+                                                              <option value="645">6:45 AM</>                                                 
+                                                              <option value="700">7:00 AM</>                                                 
+                                                              <option value="715">7:15 AM</>                                                 
+                                                              <option value="730">7:30 AM</>                                                 
+                                                              <option value="745">7:45 AM</>                                                 
+                                                              <option value="800">8:00 AM</>                                                 
+                                                              <option value="815">8:15 AM</>                                                 
+                                                              <option value="830">8:30 AM</>                                                 
+                                                              <option value="845">8:45 AM</>                                                 
+                                                              <option value="900">9:00 AM</>                                                 
+                                                              <option value="915">9:15 AM</>                                                 
+                                                              <option value="930">9:30 AM</>                                                 
+                                                              <option value="945">9:45 AM</>                                                 
+                                                              <option value="1000">10:00 AM</>                                                 
+                                                              <option value="1015">10:15 AM</>                                                 
+                                                              <option value="1030">10:30 AM</>                                                 
+                                                              <option value="1045">10:45 AM</>                                                 
+                                                              <option value="1100">11:00 AM</>                                                 
+                                                              <option value="1115">11:15 AM</>                                                 
+                                                              <option value="1130">11:30 AM</>                                                 
+                                                              <option value="1145">11:45 AM</>                                                 
+                                                              <option value="1200" selected="selected">12:00 PM</>                                                 
+                                                              <option value="1215">12:15 PM</>                                                 
+                                                              <option value="1230">12:30 PM</>                                                 
+                                                              <option value="1245">12:45 PM</>                                                 
+                                                              <option value="1300">1:00 PM</>                                                 
+                                                              <option value="1315">1:15 PM</>                                                 
+                                                              <option value="1330">1:30 PM</>                                                 
+                                                              <option value="1345">1:45 PM</>                                                 
+                                                              <option value="1400">2:00 PM</>                                                 
+                                                              <option value="1415">2:15 PM</>                                                 
+                                                              <option value="1430">2:30 PM</>                                                 
+                                                              <option value="1445">2:45 PM</>                                                 
+                                                              <option value="1500">3:00 PM</>                                                 
+                                                              <option value="1515">3:15 PM</>                                                 
+                                                              <option value="1530">3:30 PM</>                                                 
+                                                              <option value="1545">3:45 PM</>                                                 
+                                                              <option value="1600">4:00 PM</>                                                 
+                                                              <option value="1615">4:15 PM</>                                                 
+                                                              <option value="1630">4:30 PM</>                                                 
+                                                              <option value="1645">4:45 PM</>                                                 
+                                                              <option value="1700">5:00 PM</>                                                 
+                                                              <option value="1715">5:15 PM</>                                                 
+                                                              <option value="1730">5:30 PM</>                                                 
+                                                              <option value="1745">5:45 PM</>                                                 
+                                                              <option value="1800">6:00 PM</>                                                 
+                                                              <option value="1815">6:15 PM</>                                                 
+                                                              <option value="1830">6:30 PM</>                                                 
+                                                              <option value="1845">6:45 PM</>                                                 
+                                                              <option value="1900">7:00 PM</>                                                 
+                                                              <option value="1915">7:15 PM</>                                                 
+                                                              <option value="1930">7:30 PM</>                                                 
+                                                              <option value="1945">7:45 PM</>                                                 
+                                                              <option value="2000">8:00 PM</>                                                 
+                                                              <option value="2015">8:15 PM</>                                                 
+                                                              <option value="2030">8:30 PM</>                                                 
+                                                              <option value="2045">8:45 PM</>                                                 
+                                                              <option value="2100">9:00 PM</>                                                 
+                                                              <option value="2115">9:15 PM</>                                                 
+                                                              <option value="2130">9:30 PM</>                                                 
+                                                              <option value="2145">9:45 PM</>                                                 
+                                                              <option value="2200">10:00 PM</>                                                 
+                                                              <option value="2215">10:15 PM</>                                                 
+                                                              <option value="2230">10:30 PM</>                                                 
+                                                              <option value="2245">10:45 PM</>                                                 
+                                                              <option value="2300">11:00 PM</>                                                 
+                                                              <option value="2315">11:15 PM</>                                                 
+                                                              <option value="2330">11:30 PM</>                                                 
+                                                              <option value="2345">11:45 PM</option>                                                 
+                                                              </select>                                                 
+                                                              <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_(To)_ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<select name="endtime" id="endTime" disabled>                                                 
+                                                              <option value="0">12:00 AM</>                                                 
+                                                              <option value="100">1:00 AM</>                                                 
+                                                              <option value="115">1:15 AM</>                                                 
+                                                              <option value="130">1:30 AM</>                                                 
+                                                              <option value="145">1:45 AM</>                                                 
+                                                              <option value="200">2:00 AM</>                                                 
+                                                              <option value="215">2:15 AM</>                                                 
+                                                              <option value="230">2:30 AM</>                                                 
+                                                              <option value="245">2:45 AM</>                                                 
+                                                              <option value="300">3:00 AM</>                                                 
+                                                              <option value="315">3:15 AM</>                                                 
+                                                              <option value="330">3:30 AM</>                                                 
+                                                              <option value="345">3:45 AM</>                                                 
+                                                              <option value="400">4:00 AM</>                                                 
+                                                              <option value="415">4:15 AM</>                                                 
+                                                              <option value="430">4:30 AM</>                                                 
+                                                              <option value="445">4:45 AM</>                                                 
+                                                              <option value="500">5:00 AM</>                                                 
+                                                              <option value="515">5:15 AM</>                                                 
+                                                              <option value="530">5:30 AM</>                                                 
+                                                              <option value="545">5:45 AM</>                                                 
+                                                              <option value="600">6:00 AM</>                                                 
+                                                              <option value="615">6:15 AM</>                                                 
+                                                              <option value="630">6:30 AM</>                                                 
+                                                              <option value="645">6:45 AM</>                                                 
+                                                              <option value="700">7:00 AM</>                                                 
+                                                              <option value="715">7:15 AM</>                                                 
+                                                              <option value="730">7:30 AM</>                                                 
+                                                              <option value="745">7:45 AM</>                                                 
+                                                              <option value="800">8:00 AM</>                                                 
+                                                              <option value="815">8:15 AM</>                                                 
+                                                              <option value="830">8:30 AM</>                                                 
+                                                              <option value="845">8:45 AM</>                                                 
+                                                              <option value="900">9:00 AM</>                                                 
+                                                              <option value="915">9:15 AM</>                                                 
+                                                              <option value="930">9:30 AM</>                                                 
+                                                              <option value="945">9:45 AM</>                                                 
+                                                              <option value="1000">10:00 AM</>                                                 
+                                                              <option value="1015">10:15 AM</>                                                 
+                                                              <option value="1030">10:30 AM</>                                                 
+                                                              <option value="1045">10:45 AM</>                                                 
+                                                              <option value="1100">11:00 AM</>                                                 
+                                                              <option value="1115">11:15 AM</>                                                 
+                                                              <option value="1130">11:30 AM</>                                                 
+                                                              <option value="1145">11:45 AM</>                                                 
+                                                              <option value="1200" selected="selected">12:00 PM</>                                                 
+                                                              <option value="1215">12:15 PM</>                                                 
+                                                              <option value="1230">12:30 PM</>                                                 
+                                                              <option value="1245">12:45 PM</>                                                 
+                                                              <option value="1300">1:00 PM</>                                                 
+                                                              <option value="1315">1:15 PM</>                                                 
+                                                              <option value="1330">1:30 PM</>                                                 
+                                                              <option value="1345">1:45 PM</>                                                 
+                                                              <option value="1400">2:00 PM</>                                                 
+                                                              <option value="1415">2:15 PM</>                                                 
+                                                              <option value="1430">2:30 PM</>                                                 
+                                                              <option value="1445">2:45 PM</>                                                 
+                                                              <option value="1500">3:00 PM</>                                                 
+                                                              <option value="1515">3:15 PM</>                                                 
+                                                              <option value="1530">3:30 PM</>                                                 
+                                                              <option value="1545">3:45 PM</>                                                 
+                                                              <option value="1600">4:00 PM</>                                                 
+                                                              <option value="1615">4:15 PM</>                                                 
+                                                              <option value="1630">4:30 PM</>                                                 
+                                                              <option value="1645">4:45 PM</>                                                 
+                                                              <option value="1700">5:00 PM</>                                                 
+                                                              <option value="1715">5:15 PM</>                                                 
+                                                              <option value="1730">5:30 PM</>                                                 
+                                                              <option value="1745">5:45 PM</>                                                 
+                                                              <option value="1800">6:00 PM</>                                                 
+                                                              <option value="1815">6:15 PM</>                                                 
+                                                              <option value="1830">6:30 PM</>                                                 
+                                                              <option value="1845">6:45 PM</>                                                 
+                                                              <option value="1900">7:00 PM</>                                                 
+                                                              <option value="1915">7:15 PM</>                                                 
+                                                              <option value="1930">7:30 PM</>                                                 
+                                                              <option value="1945">7:45 PM</>                                                 
+                                                              <option value="2000">8:00 PM</>                                                 
+                                                              <option value="2015">8:15 PM</>                                                 
+                                                              <option value="2030">8:30 PM</>                                                 
+                                                              <option value="2045">8:45 PM</>                                                 
+                                                              <option value="2100">9:00 PM</>                                                 
+                                                              <option value="2115">9:15 PM</>                                                 
+                                                              <option value="2130">9:30 PM</>                                                 
+                                                              <option value="2145">9:45 PM</>                                                 
+                                                              <option value="2200">10:00 PM</>                                                 
+                                                              <option value="2215">10:15 PM</>                                                 
+                                                              <option value="2230">10:30 PM</>                                                 
+                                                              <option value="2245">10:45 PM</>                                                 
+                                                              <option value="2300">11:00 PM</>                                                 
+                                                              <option value="2315">11:15 PM</>                                                 
+                                                              <option value="2330">11:30 PM</>                                                 
+                                                              <option value="2345">11:45 PM</option>                                                 
+                                                              </select>                                                 
+
+                           <p></p>                                                 
+                       </td>                                                 
+                       <td>                                                 
+                           <input type="radio" name="EO" id="EO_1" checked="" onclick="setStateById('EO_2_1',true);setStateById('EO_3',true)">_(Everyday)_<br>                                                 
+                           <input type="radio" name="EO" id="EO_2" onclick="setStateById('EO_2_1',false);setStateById('EO_3',true)">_(On)_
+                           <select id="EO_2_1" class="font100" disabled>                                                 
+                               <option value='Schooldays'>_(Schooldays)_</option>                                                 
+                               <option value='Weekends'>_(Weekends)_</option>                                                 
+                               <option value='Mondays'>_(Mondays)_</option>                                                 
+                               <option value='Tuesdays'>_(Tuesdays)_</option>                                                 
+                               <option value='Wednesdays'>_(Wednesdays)_</option>                                                 
+                               <option value='Thursdays'>_(Thursdays)_</option>                                                 
+                               <option value='Fridays'>_(Fridays)_</option>                                                 
+                               <option value='Saturdays'>_(Saturdays)_</option>                                                 
+                               <option value='Sundays'>_(Sundays)_</option>                                                 
+                           </select>                                                 
+                           <br>                                                 
+                           <input type="radio" name="EO" id="EO_4" onclick="setStateById('EO_2_1',true);setStateById('EO_3',false)">_(This Date)_
+                           <input type="text" id="EO_3" class="font100" disabled><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(YYYY-MM-DD)
+                       </td>                                                 
+                                              
+                   </tr>                                                 
+               </tbody></table> 
+           <br><br>
+               </div>
+               <p><strong>4.  _(Click Apply to save changes.)_ </strong></p>
+               <p><a class="button1" onclick="do_apply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+
+               <span id="allow_list_span">                                                
+               <p><h3>_(Existing Allow Rules)_</h3>
+               <script language="JavaScript">
+                    list_pc_rules_table("Allow");
+               </script>
+               </span>
+               <span id="restrict_list_span">
+               <p><h3>_(Existing Restrict Rules)_</h3>
+               <script language="JavaScript">
+                    list_pc_rules_table("Restrict");
+               </script>
+               </span>
+               </div>
+               <div id="parent_control_disable_div">
+               <p><strong>2.  _(Click Apply to save changes.)_ </strong></p>
+               <p><a class="button1" onclick="PC_switch();" id="btn_apply"><span>_(Apply)_</span></a></p>
+               </div>
+
+ 
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

@@ -1,0 +1,844 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(IP Address)_ - _(LAN IP Settings)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript" SRC="js/util.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript" type="text/javascript">
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var key = '<%ejGetOther(encrypt_key, 0)%>';
+var state = htmlDecodeStr('<%ejGet(lanRefresh)%>');
+//if ( state == '1' ) {
+//   var loc = 'advancedsetup_lanipaddress_info.cgi?lanRefresh=0';
+   //var lochead = 'advancedsetup_lanipaddress_info.cgi?';
+   //var loc = 'lanRefresh=0';
+//   loc += '&sessionKey=' + sessionKey;
+//loc=encrypt_query(loc,key);
+//lochead+=loc;
+//   var code = 'location="' + loc + '"';
+//   eval(code);
+//postSubmit(lochead);
+//}
+
+var dhcpStart = htmlDecodeStr('<%ejGetOther(enblDhcpSrvStatus, Default_StartIP)%>');
+var dhcpEnd = htmlDecodeStr('<%ejGetOther(enblDhcpSrvStatus, Default_EndIP)%>');
+var dhcpMask = htmlDecodeStr('<%ejGetOther(enblDhcpSrvStatus, Default_SubnetMask)%>');
+var leasedTime = '<%ejGetOther(enblDhcpSrvStatus, Default_dhcpLeasedTime)%>';
+
+var landnsType1 = htmlDecodeStr('<%ejGetOther(sysInfo, landnsType1)%>'); if ( landnsType1 == '&nbsp' || landnsType1 == '') landnsType1 = 'dynamic';
+var landnsType2 = htmlDecodeStr('<%ejGetOther(sysInfo, landnsType2)%>'); if ( landnsType2 == '&nbsp' || landnsType2 == '') landnsType2 = 'dynamic';
+var dns1 = htmlDecodeStr('<%ejGetOther(sysInfo, landnsPrimary)%>'); if ( dns1 == '&nbsp' ) dns1 = '';
+var dns2 = htmlDecodeStr('<%ejGetOther(sysInfo, landnsSecondary)%>'); if ( dns2 == '&nbsp' ) dns2 = '';
+
+var proto = '<%ejGetOther(sysInfo, noBrPrtcl)%>';
+var ipExt = '<%ejGetOther(sysInfo, pppIpExtension)%>';
+var dhcpEnbl = '<%ejGetOther(enblDhcpSrvStatus, Default_enable)%>';
+var ipAddress= htmlDecodeStr('<%ejGetOther(IPInterfaceIPAddress)%>');
+var ethSubnetMask2 = htmlDecodeStr('<%ejGetOther(IPInterfaceSubnetMask)%>');
+var DHCPServerConfigurable = '<%ejGetOther(enblDhcpSrvStatus, Default_DHCPServerConfigurable)%>';
+
+function do_load()
+{
+	hide_dhcpServerState();
+	with ( document.forms[0] ) {
+		ethIpAddress.value = htmlDecodeStr('<%ejGetOther(IPInterfaceIPAddress)%>');
+		ethSubnetMask.value = htmlDecodeStr('<%ejGetOther(IPInterfaceSubnetMask)%>');
+
+		if ( dhcpEnbl == '1' )
+			enableDhcpSrv(1);
+		else
+			enableDhcpSrv(0);
+		if (DHCPServerConfigurable == '0')
+		{
+			dhcp_server[0].disabled = true;
+			dhcp_server[1].disabled = true;
+			dhcpEthStart.disabled = true;
+			dhcpEthEnd.disabled = true;
+			dhcpSubnetMask.disabled = true;
+			day.disabled = true;
+			hour.disabled = true;
+			minute.disabled = true;
+			dns_dynamic.disabled = true;
+			dns_static.disabled = true;
+			dnsPrimary.disabled = true;
+			dnsSecondary.disabled = true;
+		}
+	}
+
+	//highlight the button after user click on it
+	side_nav("advancedsetup_lanipdhcpsettings");
+}
+
+function setDhcpAddresses(lanIp) {
+	with ( document.forms[0] ) {
+		if ( isValidIpAddress(lanIp) == false ) {
+			alert("_(The Modem IP Address is invalid.)_");
+			return false;
+		}
+
+		addrParts = lanIp.split('.');
+		if ( addrParts.length != 4 ) {
+			alert("_(The Modem IP Address is invalid.)_");
+			return false;
+		}
+
+		t1 = parseInt(addrParts[3]) + 1;
+		if (dhcpStart!= '' && t1 > 255) {
+			alert("_(The last portion of the IP address must be less than 255 for Enabled DHCP Server.)_");
+			return false;
+		}
+
+		dhcpStart= dhcpEnd= "";
+		for (i = 0; i < 3; i++) {
+			dhcpStart= dhcpStart+ addrParts[i] + ".";
+			dhcpEnd= dhcpEnd+ addrParts[i] + ".";
+		}
+		if (t1==255)
+		{
+		dhcpStart=dhcpStart+"1";
+		dhcpEnd=dhcpEnd+"253";
+
+		}
+		else
+		{
+		dhcpStart= dhcpStart+ t1;
+		dhcpEnd= dhcpEnd+ 254;
+		}
+
+		return true;
+	}
+}
+
+/*
+ *  Input   IpAddr: ip's address such as "192.168.0.1"
+ *  Return  1:  the ip is in the range: 0~127.255.255.255
+ *          2:  the ip is in the range: 128~192.255.255.255
+ *          3:  the ip is in the range: 193~238.255.255.255
+ *          4:  the ip is in the range: 225~240.255.255.255  muticast ip Address
+ *          5:  the ip is in the range: 240~255.255.255.255  broadcast ip Address
+ */
+function checkIPType(IpAddr)
+{
+    var val = IpAddr.split('.');
+    var byte1_val = parseInt(val[0]);
+    if (byte1_val < 128)
+        return 1;
+    else if (byte1_val < 192)
+        return 2;
+    else if (byte1_val < 224)
+        return 3;
+    else if (byte1_val < 240)
+        return 4;
+    else
+        return 5;
+}
+
+function onApply()
+{
+    var form = document.forms[0];
+    if(form.ethIpAddress.value == htmlDecodeStr("<%ejGetOther(IPInterfaceIPAddress)%>") && form.ethSubnetMask.value == htmlDecodeStr("<%ejGetOther(IPInterfaceSubnetMask)%>") )
+        return ;
+
+    if ( isValidIpAddress(form.ethIpAddress.value) == false ||
+            checkIPType(form.ethIpAddress.value) > 3) // the lan ip must not  muticast ip  or broadcast ip
+    {
+        alert("_(The Modem IP Address is invalid.)_");
+        return false;
+    }
+    if ( isValidSubnetMask(form.ethSubnetMask.value) == false || form.ethSubnetMask.value == '255.255.255.255') {
+        alert("_(The Modem Subnet Mask is invalid.)_");
+        return false;
+    }
+    if ( checkNet(form.ethIpAddress.value, form.ethSubnetMask.value) == false) {
+        return false;
+    }
+
+	if(checkipadd(1) == false)
+		return false;
+    if(confirm("_(Click OK to change the LAN IP address and Subnet Mask and reboot the modem.)_") )
+    {
+        //need to reboot
+        //var loc = 'advancedsetup_lanipdhcpsettings.cgi?';
+        //var loc = 'advancedsetup_lanipaddress_info.cgi?';
+	var lochead = 'advancedsetup_lanipaddress_info.cgi?';
+	var loc = '';
+        with ( document.forms[0] ) {
+            if ( setDhcpAddresses(ethIpAddress.value) == false )
+            {
+                return false;
+            }
+
+            //leasedTime = countDhcpLeasedTime(day.value, hour.value, minute.value);
+            loc += 'ethIpAddress_tmp=' + ethIpAddress.value;
+            loc += '&dhcpEthStart_tmp=' + dhcpStart;
+            loc += '&dhcpEthEnd_tmp=' + dhcpEnd;
+            loc += '&ethSubnetMask_tmp=' + ethSubnetMask.value;
+            loc += '&nothankyou=1';
+
+/*
+            loc += 'ethIpAddress=' + ethIpAddress.value;
+            loc += '&dhcpEthStart=' + dhcpStart;
+            loc += '&dhcpEthEnd=' + dhcpEnd;
+            loc += '&ethSubnetMask=' + ethSubnetMask.value;
+            loc += '&nothankyou=1';
+*/
+        }
+        loc += '&sessionKey=' + sessionKey;
+        //var code = 'location="' + loc + '"';
+        //eval(code);
+        loc=encrypt_query(loc,key);
+        lochead+=loc;
+        postSubmit(lochead);
+    }
+    else
+        window.location.reload();
+}
+
+function checkNet(lanip, lanMask)
+{
+    var enblDhcpSrv1 = htmlDecodeStr('<%ejGetWl(enblDhcpSrv1)%>');
+    var enblDhcpSrv2 = htmlDecodeStr('<%ejGetWl(enblDhcpSrv2)%>');
+    var enblDhcpSrv3 = htmlDecodeStr('<%ejGetWl(enblDhcpSrv3)%>');
+    var ethIpAddress1 = htmlDecodeStr('<%ejGetWl(ethIpAddress1)%>');
+    var ethIpAddress2 = htmlDecodeStr('<%ejGetWl(ethIpAddress2)%>');
+    var ethIpAddress3 = htmlDecodeStr('<%ejGetWl(ethIpAddress3)%>');
+    var dhcpSubnetMask1 = htmlDecodeStr('<%ejGetWl(dhcpSubnetMask1)%>');
+    var dhcpSubnetMask2 = htmlDecodeStr('<%ejGetWl(dhcpSubnetMask2)%>');
+    var dhcpSubnetMask3 = htmlDecodeStr('<%ejGetWl(dhcpSubnetMask3)%>');
+    // when the result of the compareSubNet() is 100, that is the two net is not belong to each other.
+    if (enblDhcpSrv1 == 1){
+        if (compareSubNet(lanip, lanMask, ethIpAddress1, dhcpSubnetMask1) != 100){
+            alert("_(The current IP settings conflict with settings of Multiple SSID 1.)_");
+            return false;
+        }
+    }
+    if (enblDhcpSrv2 == 1){
+        if (compareSubNet(lanip, lanMask, ethIpAddress2, dhcpSubnetMask2) != 100){
+            alert("_(The current IP settings conflict with the settings of Multiple SSID 2.)_");
+            return false;
+        }
+    }
+    if (enblDhcpSrv3 == 1){
+        if (compareSubNet(lanip, lanMask, ethIpAddress3, dhcpSubnetMask3) != 100){
+            alert("_(The current IP settings conflict with the settings of Multiple SSID 3.)_");
+            return false;
+        }
+    }
+    return true;
+}
+
+function enableDhcpSrv(is_enable)
+{
+	with ( document.forms[0] ) {
+		if (is_enable == 1) {
+			dhcp_server[0].checked = true;
+
+			//show DHCP Server settings
+			dhcpEthStart.value = dhcpStart;
+			dhcpEthEnd.value = dhcpEnd;
+			dhcpSubnetMask.value = dhcpMask;
+
+			//show DHCP Server Leased Time
+			day.value = parseInt(leasedTime/(24*60));
+			hour.value = parseInt((leasedTime%(24*60))/60);
+			minute.value = (leasedTime%(24*60))%60;
+
+			//show all DNS settings
+			if (landnsType1 == 'dynamic') { //Dynamic
+				dns11[1].checked = true;
+				dnsPrimary.value = '';
+				dnsPrimary.disabled = true;
+			} else if (landnsType1 == 'static'){ //Static
+				dns11[2].checked =  true;
+				dnsPrimary.disabled = false;
+				dnsPrimary.value = dns1;
+			}else{								//Default
+				dns11[0].checked = true;
+				dnsPrimary.value = ipAddress;
+				dnsPrimary.disabled = true;
+			}
+
+			//show all DNS settings
+			if (landnsType2 == 'dynamic') { //Dynamic
+				dns22[1].checked = true;
+				dnsSecondary.value = '';
+				dnsSecondary.disabled = true;
+			} else if (landnsType2 == 'static'){ //Static
+				dns22[2].checked =  true;
+				dnsSecondary.disabled = false;
+				if (dns2 == '0.0.0.0')
+					dnsSecondary.value = '';
+				else
+					dnsSecondary.value = dns2;
+			}else{								//Default
+				dns22[0].checked = true;
+				dnsSecondary.value = ipAddress;
+				dnsSecondary.disabled = true;
+			}
+
+		//	if (adjust_dhcp_settings.checked == false)
+		//		grayDhcpSettings(1);
+		} else {
+			dhcp_server[1].checked = true;
+			showHideSteps('step1_enabled','step1_disabled');
+		}
+	}
+}
+
+function dhcpServerClick()
+{
+	with ( document.forms[0] ) {
+		if(dhcp_server[0].checked == true) {
+			enableDhcpSrv(1);
+			showHideSteps('step1_disabled','step1_enabled');
+		}
+		else {
+			showHideSteps('step1_enabled','step1_disabled');
+		}
+	}
+}
+
+//gray or bright all DHCP Server settings
+function grayDhcpSettings(is_gray)
+{
+	with ( document.forms[0] ) {
+		if (is_gray) {
+			dhcpEthStart.disabled = true;
+			dhcpEthEnd.disabled = true;
+			dhcpSubnetMask.disabled = true;
+			day.disabled = true;
+			hour.disabled = true;
+			minute.disabled = true;
+			dns11[0].disabled = true;
+			dns11[1].disabled = true;
+			dns11[2].disabled = true;
+			dns22[0].disabled = true;
+			dns22[1].disabled = true;
+			dns22[2].disabled = true;
+			dnsPrimary.disabled = true;
+			dnsSecondary.disabled = true;
+		} else {
+			dhcpEthStart.disabled = false;
+			dhcpEthEnd.disabled = false;
+			dhcpSubnetMask.disabled = false;
+			day.disabled = false;
+			hour.disabled = false;
+			minute.disabled = false;
+			dns11[0].disabled = false;
+			dns11[1].disabled = false;
+			dns11[2].disabled = false;
+			dns22[0].disabled = false;
+			dns22[1].disabled = false;
+			dns22[2].disabled = false;
+			radioClick(0);
+		}
+	}
+}
+
+function radioClick(dnsIndex)
+{
+	with ( document.forms[0] ) {
+		if (dnsIndex==0 || dnsIndex==1)
+		{
+			if (dns11[0].checked == true) {
+				dnsPrimary.value = ipAddress;
+				dnsPrimary.disabled = true;
+			} else if (dns11[1].checked == true) {
+				dnsPrimary.value = '';
+				dnsPrimary.disabled = true;
+			} else {
+				dnsPrimary.disabled = false;
+		if (dns1 == '0.0.0.0')
+					dnsPrimary.value = '';
+				else
+					dnsPrimary.value = dns1;
+		}
+		}
+		if (dnsIndex==0 || dnsIndex==2)
+		{
+			if (dns22[0].checked == true) {
+				dnsSecondary.value = ipAddress;
+				dnsSecondary.disabled = true;
+			} else if (dns22[1].checked == true) {
+				dnsSecondary.value = '';
+				dnsSecondary.disabled = true;
+			}else {
+				dnsSecondary.disabled = false;
+		if (dns2 == '0.0.0.0')
+					dnsSecondary.value = '';
+				else
+					dnsSecondary.value = dns2;
+			}
+		}
+	}
+}
+
+function checkClick()
+{
+	with ( document.forms[0] ) {
+		if (adjust_dhcp_settings.checked == true)
+			grayDhcpSettings(0);
+		else
+			grayDhcpSettings(1);
+	}
+}
+
+function isEndGTEStart(EndIp, StartIp)
+{
+	addrEnd = EndIp.split('.');
+    addrStart = StartIp.split('.');
+	E = parseInt(addrEnd[3]) + 1;
+	S = parseInt(addrStart[3]) + 1;
+	if (E < S)
+		return false;
+
+	return true;
+}
+
+function countDhcpLeasedTime(day, hour, minute)
+{
+	var dhcpLeasedTime; //unit is minute
+
+	dhcpLeasedTime = parseInt(day) * 24 * 60 + parseInt(hour) * 60 + parseInt(minute);
+
+	return dhcpLeasedTime;
+}
+
+function onApply2()
+{
+	if (DHCPServerConfigurable == '0')
+		return;
+    //var loc = 'advancedsetup_lanipdhcpsettings.cgi?';
+    var lochead = 'advancedsetup_lanipdhcpsettings.cgi?';
+    //var lochead = 'advancedsetup_lanipaddress.cgi?';
+    var loc = '';
+
+	with ( document.forms[0] ) {
+        var optikTVenbl = '<%ejGetOther(enblOptikTVStatus)%>';
+        if(optikTVenbl == '1' && dhcp_server[1].checked == true){
+            alert("_(You can't disable DHCP server because the Optik TV is enabled.)_");
+            return;
+        }
+
+		if (dhcp_server[1].checked == true) {
+			loc += 'enblDhcpSrv=0';
+		} else {
+			loc += 'enblDhcpSrv=1';
+            if (isValidIpAddress(dhcpEthStart.value) == false ||
+                    compareSubNet(dhcpEthStart.value, ethSubnetMask2, ipAddress, ethSubnetMask2) != 0)
+            {
+                alert("_(The Beginning IP Address is invalid. You must enter a valid IP address.)_");
+                return;
+            }
+            if (comparetIpAddr(dhcpEthStart.value, ipAddress) == 0)
+            {
+                alert("_(The Beginning IP Address cannot be the same as the LAN IP address of the modem. You must enter a beginning IP address that is different from the LAN IP address.)_");
+                return;
+            }
+            if (isValidIpAddress(dhcpEthEnd.value) == false ||
+                    compareSubNet(dhcpEthEnd.value, ethSubnetMask2, ipAddress, ethSubnetMask2) != 0 ||
+                    comparetIpAddr(dhcpEthStart.value, dhcpEthEnd.value) > 0)
+            {
+                alert("_(The Ending IP Address is invalid. You must enter a valid Ending IP address.)_");
+                return;
+            }
+            if (isValidSubnetMask(dhcpSubnetMask.value) == false ||
+                    compareSubNet(dhcpEthStart.value, dhcpSubnetMask.value, dhcpEthEnd.value, dhcpSubnetMask.value) != 0 ||
+                    compareSubNet(ethSubnetMask2, ethSubnetMask2, dhcpSubnetMask.value, dhcpSubnetMask.value) > 0) {
+                alert("_(The Subnet Mask is invalid.  You must enter a valid Subnet Mask.)_");
+                return;
+            }
+            if (compareSubNet(ipAddress, ethSubnetMask2, dhcpEthStart.value, dhcpSubnetMask.value) > 0)
+            {
+                alert("_(The Subnet of the Beginning IP Address does not belong to the Subnet of LAN IP Address.You must change either the Beginning IP Address or the Subnet Mask.)_");
+                return;
+            }
+
+            if (compareSubNet(ipAddress, ethSubnetMask2, dhcpEthEnd.value, dhcpSubnetMask.value) > 0)
+            {
+                alert("_(The Subnet of the Ending IP Address does not belong to the Subnet of LAN IP Address.You must change either the Ending IP Address or the Subnet Mask.)_");
+                return;
+            }
+
+			if(checkipadd(2) == false)
+				return;
+            loc += '&dhcpEthStart=' + dhcpEthStart.value;
+            loc += '&dhcpEthEnd=' + dhcpEthEnd.value;
+            loc += '&dhcpSubnetMask=' + dhcpSubnetMask.value;
+
+            if ( day.value == '' || !isNumber(day.value) || day.value > 365 ) {
+                alert("_(The Day of DHCP Server Leased Time is invalid. You must enter a number between 0 and 365.)_");
+                return;
+            }
+            if ( hour.value == '' || !isNumber(hour.value) || hour.value > 24 ) {
+                alert("_(The Hour of DHCP Server Leased Time is invalid. You must enter a  number between 0 and 24.)_");
+                return;
+            }
+            if ( minute.value == '' || !isNumber(minute.value) || minute.value > 60 ) {
+                alert("_(The Minute of DHCP Server Leased Time is invalid. You must enter a number between 0 and 60.)_");
+                return;
+            }
+            if (day.value == 0 && hour.value == 0 && minute.value == 0) {
+                alert("_(The DHCP Server Leased Time can not be zero. Please enter valid time)_");
+                return;
+            }
+
+            leasedTime = countDhcpLeasedTime(day.value, hour.value, minute.value);
+            loc += '&dhcpLeasedTime=' + leasedTime;
+
+            if (dns11[2].checked == true) {
+                loc += '&landnsType1=' + 'static';
+                if (dnsPrimary.value != '') {
+                    if (isValidIpAddress(dnsPrimary.value) == false) {
+                    alert("_(DNS server IP address 1 and/or 2 is invalid. You must enter a valid DNS Server IP Address.)_");
+                    return;
+                }
+                loc += '&landnsPrimary=' + dnsPrimary.value;
+                } else {
+                    loc += '&landnsPrimary=0.0.0.0';
+                }
+            } else{
+                if (dns11[0].checked == true) {
+                    loc += '&landnsType1=' + 'default';
+                        loc += '&landnsPrimary=' + ethIpAddress.value;
+                } else {
+                    loc += '&landnsType1=' + 'dynamic';
+                        loc += '&landnsPrimary=' + '0.0.0.0';
+                }
+            }
+            if (dns22[2].checked == true) {
+                loc += '&landnsType2=' + 'static';
+                if (dnsSecondary.value != '') {
+                    if (isValidIpAddress(dnsSecondary.value) == false) {
+                        alert("_(DNS server IP address 1 and/or 2 is invalid. You must enter a valid DNS Server IP Address.)_");
+                        return;
+                    }
+                    loc += '&landnsSecondary=' + dnsSecondary.value;
+                } else
+                    loc += '&landnsSecondary=' + '0.0.0.0';
+            } //end of dns static
+            else {
+                if (dns22[1].checked == true){ //dynamic
+                    loc += '&landnsType2=' + 'dynamic';
+                        loc += '&landnsSecondary=' + '0.0.0.0';
+                } else {
+                    loc += '&landnsType2=' + 'default';
+                        loc += '&landnsSecondary=' + ethIpAddress.value;
+                }
+            }
+            loc += '&dnsRefresh=1'; // for SNMP refresh
+		} //end of if dhcp_server
+	} //end of with
+
+    loc += '&sessionKey=' + sessionKey;
+    //var code = 'location="' + loc + '"';
+    //eval(code);
+    loc +='&nothankyou=0';
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+    postSubmit(lochead);
+}
+
+function comparetIpAddr(ipaddr_start, ipaddr_end)
+{
+    var sip = ipaddr_start.split('.');
+    sip=sip[0]*256*256*256+sip[1]*256*256+sip[2]*256+sip[3]*1;
+
+    var eip = ipaddr_end.split(".")
+    eip=eip[0]*256*256*256+eip[1]*256*256+eip[2]*256+eip[3]*1;
+
+    if (sip < eip)
+        return -1;
+    else if(eip == sip)
+        return 0;
+    else
+        return 1;
+}
+
+function checkipadd(targ)
+{
+	with (document.forms[0])
+	{
+		var nIPInterfaceIPAddress = IPAddressToNumber(ethIpAddress.value);
+		var nSubnetMask = IPAddressToNumber(ethSubnetMask.value);
+		var nNetworkAddress = nSubnetMask & nIPInterfaceIPAddress;
+		var nBroadcastAddress = nNetworkAddress | ~nSubnetMask;
+
+		if (nIPInterfaceIPAddress <= nNetworkAddress || nIPInterfaceIPAddress >= nBroadcastAddress)
+		{
+			alert("_(The modem's IP address cannot be the same as the network address or the broadcast address.)_");
+			return false;
+		}
+
+		if(targ == 2)
+		{
+			var nMinAddress = IPAddressToNumber(dhcpEthStart.value);
+			var nMaxAddress = IPAddressToNumber(dhcpEthEnd.value);
+			var nDHCPSubnetMask = IPAddressToNumber(dhcpSubnetMask.value);
+			var nDHCPNetworkAddress = nDHCPSubnetMask & nIPInterfaceIPAddress;
+			var nDHCPBroadcastAddress = nDHCPNetworkAddress | ~nDHCPSubnetMask;
+
+			if (nDHCPNetworkAddress != (nDHCPSubnetMask & nMinAddress) || nDHCPNetworkAddress != (nDHCPSubnetMask & nMaxAddress))
+			{
+				alert("_(The modem IP address, Beginning IP Address, and Ending IP Address are not in the same network.)_");
+				return false;
+			}
+
+			if (nMinAddress <= nDHCPNetworkAddress || nMinAddress >= nDHCPBroadcastAddress)
+			{
+				alert("_(The Beginning IP address cannot be the same as the LAN IP address of the modem. You must enter a Beginning IP address different than the LAN IP address.)_");
+				return false;
+			}
+
+			if (nMaxAddress <= nDHCPNetworkAddress || nMaxAddress >= nDHCPBroadcastAddress)
+			{
+				alert("_(The Ending IP Address cannot be the same as the network address or the broadcast address.)_");
+				return false;
+			}
+
+			if (nIPInterfaceIPAddress == nMinAddress)
+			{
+				alert("_(The Beginning IP address cannot be the same as the LAN IP address of the modem. You must enter a Beginning IP address different than the LAN IP address.)_");
+				return false;
+			}
+
+			if (nIPInterfaceIPAddress > nMinAddress && nIPInterfaceIPAddress <= nMaxAddress)
+			{
+				alert("_(The modem's IP address cannot be between the Beginning IP Address and the Ending IP Address.)_");
+				return false;
+			}
+		}
+	}
+}
+
+function IPAddressToNumber(IPAddress)
+{
+	var v = IPAddress.split(".");
+	var Number = 0;
+
+	for (var i = 0; i < v.length; i++)
+	{
+		Number <<= 8;
+		Number += parseInt(v[i]);
+	}
+	return Number;
+}
+function hide_dhcpServerState(){
+	var user_id=htmlDecodeStr('<%ejGet(userID)%>');
+	if(user_id!=3){
+		document.getElementById("part1").style.display = "none";
+		document.getElementById("part2").innerHTML = "<strong>1</strong>";
+		document.getElementById("part3").innerHTML = "<strong>2</strong>";
+		document.getElementById("part4").innerHTML = "<strong>3</strong>";
+		document.getElementById("part5").innerHTML = "<strong>4</strong>";
+	}
+}
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+			<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+				<h1 class="advancedsetup_lanipdhcpsettings">_(LAN IP And DHCP Settings)_</h1>
+				<form>
+					<p>_(Actiontec recommends that you keep the current default LAN IP address of the modem. Any changes made to the LAN IP address will reset some of the other settings on the modem. Do not proceed without understanding the technical impact of changing these settings.)_</p>
+					<p><strong>1. _(To make changes, enter the new IP address or Subnet Mask of the modem in the field below.)_ </strong></p>
+					<table border="0" cellspacing="0" cellpadding="0">
+						<tr>
+							<td width="150">&nbsp;&nbsp;&nbsp;_(Modem IP Address)_: </td>
+							<td><input name="ethIpAddress" id="ethIpAddress" type="text" maxlength="15" style="height:18px;"/></td>
+						</tr>
+						<tr>
+							<td width="150">&nbsp;&nbsp;&nbsp;_(Modem Subnet Mask)_:</td>
+							<td><input name="ethSubnetMask" id="ethSubnetMask" type="text" maxlength="15" style="height:18px;"/></td>
+						</tr>
+					</table>
+					<p>&nbsp;</p>
+					<p><strong>2. _(Click Apply and Reboot to save your changes.)_</strong></p>
+					<p><a class="button1" onclick="onApply()" id="btn_apply_reboot"><span>_(Apply and Reboot)_</span></a></p>
+<!-- -------------------------------------------- -->
+					<p>&nbsp;</p>
+					<p>_(The modem will automatically assign an IP address to each device in your network.)_ </p>
+					<div id="part1">
+					<p><strong>1. _(Set the DHCP server state.)_ </strong></p>
+					<table border="0" cellpadding="0" cellspacing="0">
+						<tr>
+							<td width="110">&nbsp;&nbsp;&nbsp;_(DHCP Server)_:</td>
+							<td width="87"><input name="dhcp_server" id="dhcp_server_on" type="radio" value="dhcp_server_on" checked="checked" onclick="dhcpServerClick()"/>      _(Enable)_</td>
+							<td width="165"><input name="dhcp_server" id="dhcp_server_off" type="radio" value="dhcp_server_off" onclick="dhcpServerClick()"/>      _(Disable)_</td>
+						</tr>
+					</table>
+					<p>&nbsp;</p>
+					</div>
+					<div id="step1_disabled" class="greyed_out" style="display:none;">
+					<p><strong>2. _(Set the IP addressing values.)_ </strong></p>
+					<table border="0" cellspacing="0" cellpadding="0">
+						<tr>
+							<td width="155">&nbsp;&nbsp;&nbsp;_(Beginning IP Address)_:</td>
+							<td><input type="text" disabled="disabled" class="greyed_out_textfield"/></td>
+						</tr>
+							<td width="155">&nbsp;&nbsp;&nbsp;_(Ending IP Address)_: </td>
+							<td><input type="text" disabled="disabled" class="greyed_out_textfield"/></td>
+						</tr>
+						<tr>
+							<td width="155">&nbsp;&nbsp;&nbsp;_(Subnet Mask)_: </td>
+							<td><input type="text" disabled="disabled" class="greyed_out_textfield"/></td>
+						</tr>
+					</table>
+					<p>&nbsp;</p>
+					<p><strong>3. _(Set the DHCP server lease time.)_ </strong></p>
+					<table border="0" cellspacing="0" cellpadding="0">
+						<tr>
+							<td width="177" nowrap="nowrap">&nbsp;&nbsp;&nbsp;_(DHCP Server Lease Time)_:</td>
+							<td width="97" nowrap="nowrap"><input  type="text" disabled="disabled" class="greyed_out_textfield"   size="5" />                        _(Day(s))_</td>
+						<td width="100" nowrap="nowrap"><input  type="text" disabled="disabled" class="greyed_out_textfield"  size="5" />                          _(Hours)_</td>
+						<td width="136"><input  type="text" disabled="disabled" class="greyed_out_textfield"  size="5" />
+                          _(Minutes)_</td>
+						</tr>
+					</table>
+					<p>&nbsp;</p>
+					<p><strong>4. _(Set the DNS values.)_ </strong></p>
+					<table border="0" cellpadding="0" cellspacing="0">
+						<tr>
+							<td width="120">&nbsp;&nbsp;&nbsp;_(DNS Server 1)_:</td>
+						</tr>
+
+						<tr>
+							<td  nowrap="nowrap"  colspan="2">&nbsp;&nbsp;
+							<input  type="radio" disabled="disabled" value="radiobutton"/>  <span id="subrf23">_(DNS relay performed by Gateway (Default))_ </span></td>
+						</tr>
+
+						<tr>
+							<td nowrap="nowrap" colspan="2">&nbsp;&nbsp;
+							<input  type="radio" disabled="disabled" value="radiobutton"/>  <span id="subrf24">_(DNS directly from WAN connection)_ </span></td>
+						</tr>
+
+						<tr>
+							<td colspan="2">&nbsp;&nbsp;
+							<input  type="radio" disabled="disabled" value="radiobutton"/>                      _(Statically Assigned)_</td>
+						<td><input type="text" disabled="disabled" class="greyed_out_textfield"/></td>
+						</tr>
+
+                        <tr>
+							<td width="120">&nbsp;&nbsp;&nbsp;_(DNS Server 2)_:</td>
+						</tr>
+
+						<tr>
+							<td  nowrap="nowrap"  colspan="2">&nbsp;&nbsp;
+							<input  type="radio" disabled="disabled" value="radiobutton"/>  <span id="subrf25">_(DNS relay performed by Gateway (Default))_ </span></td>
+						</tr>
+
+						<tr>
+							<td nowrap="nowrap" colspan="2">&nbsp;&nbsp;
+							<input  type="radio" disabled="disabled" value="radiobutton"/>  <span id="subrf26">_(DNS directly from WAN connection)_</span></td>
+						</tr>
+
+						<tr>
+							<td colspan="2">&nbsp;&nbsp;
+							<input  type="radio" disabled="disabled" value="radiobutton"/> _(Statically Assigned)_</td>
+						<td><input type="text" disabled="disabled" class="greyed_out_textfield"/></td>
+						</tr>
+					</table>
+					</div>
+					<div id="step1_enabled">
+					<p><strong><span id="part2"><strong>2</strong></span>. _(Set the IP addressing values.)_ </strong></p>
+					<table border="0" cellspacing="0" cellpadding="0">
+						<tr>
+							<td width="155">&nbsp;&nbsp;&nbsp;_(Beginning IP Address)_:</td>
+							<td><input name="dhcpEthStart" id="dhcpEthStart" type="text" maxlength="15" style="height:18px;"/></td>
+						</tr>
+						<tr>
+							<td width="155">&nbsp;&nbsp;&nbsp;_(Ending IP Address)_: </td>
+							<td><input name="dhcpEthEnd" id="dhcpEthEnd" type="text" maxlength="15" style="height:18px;"/></td>
+						</tr>
+						<tr>
+							<td width="155">&nbsp;&nbsp;&nbsp;_(Subnet Mask)_: </td>
+							<td><input name="dhcpSubnetMask" id="dhcpSubnetMask" type="text" maxlength="15" style="height:18px;"/></td>
+						</tr>
+					</table>
+					<p>&nbsp;</p>
+					<p><strong><span id="part3"><strong>3</strong></span>. _(Set the DHCP server lease time.)_ </strong></p>
+					<table border="0" cellspacing="0" cellpadding="0">
+						<tr>
+							<td width="177" nowrap="nowrap">&nbsp;&nbsp;&nbsp;_(DHCP Server Lease Time)_:</td>
+							<td width="97" nowrap="nowrap"><input  type="text" name="day" id="day" size="5" maxlength="5" style="height:18px;"/>                        _(Day(s))_</td>
+							<td width="100" nowrap="nowrap"><input  type="text" name="hour" id="hour" size="5" maxlength="5" style="height:18px;"/>                          _(Hours)_</td>
+							<td width="136"><input  type="text" name="minute" id="minute" size="5" maxlength="5" style="height:18px;"/>                          _(Minutes)_</td>
+						</tr>
+					</table>
+					<p>&nbsp;</p>
+					<p><strong><span id="part4"><strong>4</strong></span>. _(Set the DNS values.)_ </strong></p>
+					<table border="0" cellpadding="0" cellspacing="0">
+						<tr>
+							<td width="120">&nbsp;&nbsp;&nbsp;_(DNS Server 1)_:</td>
+						</tr>
+
+						<tr>
+							<td  nowrap="nowrap"  colspan="2">&nbsp;&nbsp;
+							<input  name="dns11" type="radio" id="dns11_default" value="dns11_default" checked="checked" onClick="radioClick(1)"/>  <span id="subrf27">_(DNS relay performed by Gateway (Default))_ </span></td>
+						</tr>
+
+
+						<tr>
+							<td nowrap="nowrap" colspan="2">&nbsp;&nbsp;
+							<input  name="dns11" type="radio" id="dns11_dynamic" value="dns11_dynamic" onClick="radioClick(1)"/>  <span id="subrf28">_(DNS directly from WAN connection)_ </span></td>
+						</tr>
+
+
+						<tr>
+							<td colspan="2">&nbsp;&nbsp;
+							<input  input  name="dns11" type="radio" id="dns11_static" value="dns11_static" onClick="radioClick(1)"/>                      _(Statically Assigned)_</td>
+						<td><input name="dnsPrimary" id="dnsPrimary" type="text" maxlength="15" style="height:18px;"/></td>
+						</tr>
+
+						<tr>
+							<td width="120">&nbsp;&nbsp;&nbsp;_(DNS Server 2)_:</td>
+						</tr>
+
+
+						<tr>
+							<td  nowrap="nowrap"  colspan="2">&nbsp;&nbsp;
+							<input  name="dns22" type="radio" id="dns22_default" value="dns22_default" checked="checked" onClick="radioClick(2)"/>  <span id="subrf29">_(DNS relay performed by Gateway (Default))_ </span></td>
+						</tr>
+
+						<tr>
+							<td nowrap="nowrap" colspan="2">&nbsp;&nbsp;
+							<input  name="dns22" type="radio" id="dns22_dynamic" value="dns22_dynamic" onClick="radioClick(2)"/>  <span id="subrf30">_(DNS directly from WAN connection)_ </span></td>
+						</tr>
+
+						<tr>
+							<td colspan="2">&nbsp;&nbsp;
+							<input name="dns22" type="radio" id="dns22_static" value="dns22_static" onClick="radioClick(2)"/>                      _(Statically Assigned)_</td>
+						<td><input name="dnsSecondary" id="dnsSecondary" type="text" maxlength="15" style="height:18px;"/></td>
+						</tr>
+					</table>
+                    </div>
+				<p>&nbsp;</p>
+				<p><strong><span id="part5"><strong>5</strong></span>. _(Click Apply to save changes.)_</strong></p>
+				<p><a class="button1" onclick="onApply2()" id="btn_apply"><span>_(Apply)_</span></a></p>
+<!-- -------------------------------------------- -->
+				</form>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(do_load);</SCRIPT></body>
+</html>

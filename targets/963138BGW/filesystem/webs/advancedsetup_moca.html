@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(IP Address)_ - _(MoCA LAN Setup - Basic)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+var sessionKey='<%ejGetOther(sessionKey)%>';
+var moca_status_v = '<%ejGetOther(lanMoca,status)%>'; //MoCA Status
+var moca_privacy_v = '<%ejGetOther(lanMoca,privacy)%>'; //MoCA Privacy
+var moca_password_v = htmlDecodeStr('<%ejGetOther(lanMoca,password)%>'); //Network Password
+function do_load()
+{
+    side_nav("advancedsetup_moca");
+
+    if(moca_status_v == "Connected")
+    {
+        document.getElementById("moca_sts").setAttribute("class", "font_green");
+        moca_status_v = "_(Connected)_";
+    }
+    else
+    {
+        document.getElementById("moca_sts").setAttribute("class", "font_red");
+        moca_status_v = "_(Disconnected)_";
+    }
+
+    document.getElementById("moca_sts").innerHTML = moca_status_v;
+    if(moca_privacy_v == '1')
+        document.getElementById("moca_privacyOn").checked = true;
+    else
+        document.getElementById("moca_privacyOff").checked = true;
+    document.getElementById("id_moca_password").value = moca_password_v;
+    choosePrivacy();
+    showPassword();
+}
+
+function choosePrivacy()
+{
+    if(document.getElementById("moca_privacyOn").checked)
+    {
+        document.getElementById("id_moca_password").disabled = false;
+        document.getElementById("moca_password_show").disabled = false;
+    }
+    else
+    {
+        document.getElementById("id_moca_password").disabled = true;
+        document.getElementById("moca_password_show").disabled = true;
+    }
+}
+
+function showPassword()
+{
+    if(document.getElementById("moca_password_show").checked)
+        document.getElementById("id_moca_password").type="text";
+    else
+        document.getElementById("id_moca_password").type="password";
+}
+
+function doApply() 
+{
+    var id_mocapwd = document.getElementById("id_moca_password");
+    if(document.getElementById("moca_privacyOn").checked)
+    {
+        if(trim(id_mocapwd.value) == "")
+        {
+            alert("_(Password should not be left blank.)_");
+            id_mocapwd.focus();
+            return;
+        }
+        else if((trim(id_mocapwd.value).length < 12) || (trim(id_mocapwd.value).length > 17))
+        {
+            alert("_(Password's length should be 12 Digits Min, 17 Digits Max.)_");
+            id_mocapwd.focus();
+            return;
+        }
+        else if(!isNumber(id_mocapwd.value))
+        {
+            alert("_(Password should be numeric.)_");
+            id_mocapwd.focus();
+            return;
+        }
+        document.getElementById("moca_privacy").value = '1';
+    }
+    else
+        document.getElementById("moca_privacy").value = '0';
+
+    document.getElementById("moca_password").value = document.getElementById("id_moca_password").value;
+    document.getElementById("sessionKey").value = sessionKey;
+
+    if(confirm("_(Equivalent changes must be applied to all other MoCA devices in your network after making this change.)_"))
+        document.getElementById("formSubmit").submit();
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <%ejInclude(top_btn_nav5.html)%>
+    <%ejInclude(adv_left.html)%>
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+        <div id="content_right_header"></div>
+        <div id="content_right_contentarea">
+            <h1 class="advancedsetup_security">_(MoCA LAN Setup - Basic)_ </h1>
+            <form method="post" id="formSubmit" action="advancedsetup_moca.cgi">
+                <input type="hidden" name="sessionKey" id="sessionKey"/>
+                <input type="hidden" name="moca_privacy" id="moca_privacy"/>
+                <input type="hidden" name="moca_password" id="moca_password"/>
+            </form>
+
+            <p><strong>1. _(Basic config settings for MoCA LAN.)_</strong></p>
+            <table border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                    <td>_(Status)_: </td>
+                    <td><span id="moca_sts" >_(Connected)_</span></td>
+                </tr>
+                <tr>
+                    <td>_(MoCA Privacy)_: </td>
+                    <td>
+                        <input type="radio" name="id_moca_privacy" id="moca_privacyOn" onclick="choosePrivacy();" checked/>_(Enable)_
+                        &nbsp;&nbsp;&nbsp;
+                        <input type="radio" name="id_moca_privacy" id="moca_privacyOff" onclick="choosePrivacy();"/>_(Disable)_
+                    </td>
+                </tr>
+                <tr>
+                    <td>_(Network Password)_: </td>
+                    <td>
+                    <input id="id_moca_password" type="password"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>_(Show Network Password)_: </td>
+                    <td>
+                    <input type="checkbox" id="moca_password_show" onclick="showPassword();" />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2"><span style="color:#FF0000;">_(WARNING: Enabling or modifying MoCA Privacy settings will result in loss of connectivity to all other MoCA devices on your network that do not have matching Privacy settings.  You must make equivalent changes on all MoCA devices in your network (refer to User Manual for those devices for instructions).)_</span></td>
+                </tr>
+            </table>
+            <p><strong>2. _(Click Apply to save changes.)_ </strong></p>
+            <p><a class="button1" onclick="doApply();" id="btn_apply"><span>_(Apply)_</span></a></p>
+            <p></p>
+            <p><strong>3. _(Click Advanced to set Advanced config settings for MoCA LAN.)_ </strong></p>
+            <p><a class="button1" href="advancedsetup_moca_advanced.html" id="btn_advanced"><span>_(Advanced)_</span></a></p>
+        </div>
+        <div id="content_right_footer"></div>
+    </div>
+    <div class="clear_left"></div>
+    <div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

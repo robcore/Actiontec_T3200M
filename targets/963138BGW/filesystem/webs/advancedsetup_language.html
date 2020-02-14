@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Language Settings)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+var lang_old=htmlDecodeStr("<%ejGet(langState)%>");
+function do_load()
+{
+    side_nav("advancedsetup_language");
+	document.getElementById("langState").value = lang_old;
+}
+function doApply() {
+
+	var lang_new = document.getElementById("langState").value;
+	if(lang_new == lang_old)
+		return;
+	document.forms[0].method= "post";
+	document.forms[0].submit();
+
+}
+
+
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="advancedsetup_security">_(Language Settings)_</h1>
+				<form method="post" action="advancedsetup_language.cgi">
+				<input type="hidden" id="indexChangeLang" value="0"/>
+
+                <input type="hidden" name="sessionKey" value='<%ejGetOther(sessionKey)%>' >
+
+					<p><strong>1. _(Select your preferred language)_</strong></p>
+					<p>
+						<select id="langState" name="langState" style=" margin:5px; width:140px">
+							<option value="0">Auto-detect</option>
+							<option value="1">English</option>
+							<option value="2">Français</option>
+						</select>
+					</p>
+					<p><strong>2. _(Click Apply to save changes.)_ </strong></p>
+					<p><a class="button1" onclick="doApply()" id="btn_apply"><span>_(Apply)_</span></a></p>
+				</form>
+		</div>
+		<div id="content_right_footer"></div>
+		<div id="formHidenDiv"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

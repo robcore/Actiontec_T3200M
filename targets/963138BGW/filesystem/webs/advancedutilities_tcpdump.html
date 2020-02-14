@@ -1,0 +1,341 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Tcpdump Debug)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="javascript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var storagedevice_info = '<%ejGetOther(storagedeviceinfo)%>';
+var netInterface = htmlDecodeStr('<%ejGet(netInterface)%>');
+var pktSize = htmlDecodeStr('<%ejGet(pktSize)%>');
+var pcapFileName = htmlDecodeStr('<%ejGet(pcapFileName)%>');
+var tcpDumpTimeOut = htmlDecodeStr('<%ejGet(tcpDumpTimeOut)%>');
+var tcpDumpTime = '<%ejGetOther(tcpDumpTime)%>';
+var tcpDumpInProgress = 0;
+var tcpDumpBegin = 0;
+var tcpDumpInterval = 0;
+var xmlhttp = null;
+var sessionKey='<%ejGetOther(sessionKey)%>';
+function do_load() {
+  document.getElementById("netInterface").value = netInterface;
+  document.getElementById("pktSize").value = pktSize;
+  document.getElementById("pcapFileName").value = pcapFileName;
+  document.getElementById("tcpDumpTimeOut").value = tcpDumpTimeOut;
+  if (tcpDumpInProgress)
+  {
+     document.getElementById("tcpdumpinprogress").innerHTML = "_(Tcpdump is being Carried on,and wait " + tcpDumpInterval +" second to finish.)_";
+		document.getElementById("test_off").style.display = "block";
+		document.getElementById("test_on").style.display = "none";
+  }
+  else
+  {
+		document.getElementById("test_off").style.display = "none";
+		document.getElementById("test_on").style.display = "block";
+  }
+     if (storagedevice_info != '')
+     {
+	     var usbs = storagedevice_info.split('|');
+
+	     if(usbs.length > 0)
+	     {
+		     var usbnames = usbs[0].split('/');
+		     document.getElementById("usbinfo").innerHTML = "_(pcap file location:)_ /mnt/" + usbnames[0];
+
+	     }
+     }
+	side_nav("advancedutilities_tcpdump");
+}
+
+function do_apply() {
+    var lochead='tcpdump.cmd?action=begin';
+	lochead += '&sessionKey=' + sessionKey;
+    var i = 0;
+     var form = document.forms[0];
+     var loc = '';
+	
+	  for(i=0;i < form.elements.length;i++)
+	  {
+
+	    if(form.elements[i].value!='')
+		{
+		   loc+="&";
+                     loc+=form.elements[i].name;
+                     loc+="=";
+                   loc+=form.elements[i].value;
+		}
+            else
+            {
+              if ("netInterface" == form.elements[i].name)
+              alert("_(TCPDump Interface should not be left blank.)_");
+              else if ("pktSize" == form.elements[i].name)
+              alert("_(Packet Size should not be left blank.)_");
+              else if ("pcapFileName" == form.elements[i].name)
+              alert("_(File Name should not be left blank.)_");
+              else if ("tcpDumpTimeOut" == form.elements[i].name)
+              alert("_(TCPDump Timeout should not be left blank.)_");
+              return;
+            }
+	  }
+
+    lochead += loc;
+
+       if(window.XMLHttpRequest)  //Mozilla
+       {
+         xmlhttp = new XMLHttpRequest();
+       }
+       else if(window.ActiveXObject) //IE
+       {
+          try
+          {
+            xmlhttp = new ActiveXObject("Msxml2.XMLHTTP"); //new IE
+          }
+          catch(e)
+          {
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP"); //old IE
+          }
+        }
+
+
+     if (storagedevice_info == '' || storagedevice_info.split('|').length == 0 )
+     {
+
+	  if(confirm("_(Please insert USB Flash,wait serval seconds then click OK.)_") )
+	  {
+
+            if(xmlhttp != null)
+	    {
+		xmlhttp.open("POST",lochead,true);
+		xmlhttp.onreadystatechange =function()
+		{
+			//if(xmlhttp.readyState==4)
+			//statusval = xmlhttp.responseText;
+		}
+		xmlhttp.send(null);
+	    }
+	  }
+    }
+    else
+    {
+           if(xmlhttp != null)
+	   {
+		xmlhttp.open("POST",lochead,true);
+		xmlhttp.onreadystatechange =function()
+		{
+			//if(xmlhttp.readyState==4)
+			//statusval = xmlhttp.responseText;
+		}
+		xmlhttp.send(null);
+	   }
+    }
+
+	document.getElementById("test_off").style.display = "block";
+	document.getElementById("test_on").style.display = "none";
+   tcpDumpInterval = document.getElementById("tcpDumpTimeOut").value;
+    document.getElementById("tcpdumpinprogress").innerHTML = "_(Tcpdump is being Carried on)_.";
+       setTimeout("http_refresh();", 3000);
+}
+
+function http_refresh()
+{
+	if(tcpDumpInterval > 0)
+	{
+	    document.getElementById("tcpdumpinprogress").innerHTML = "_(Tcpdump is being Carried on,please wait " + tcpDumpInterval +" second to finish.)_";
+		if(tcpDumpInterval%5 != 0)
+		{
+			tcpDumpInterval = tcpDumpInterval - 1;
+			    setTimeout("http_refresh();", 1000);
+			    return;
+		}
+		tcpDumpInterval = tcpDumpInterval - 1;
+	}
+	else
+	{
+	    document.getElementById("tcpdumpinprogress").innerHTML = "_(Tcpdump is ready to finish)_";
+	}
+    if(window.XMLHttpRequest)  //Mozilla
+    {
+        xmlhttp = new XMLHttpRequest();
+    }
+    else if(window.ActiveXObject) //IE
+    {
+        try
+        {
+            xmlhttp = new ActiveXObject("Msxml2.XMLHTTP"); //new IE
+        }
+        catch(e)
+        {
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP"); //old IE
+        }
+    }
+    if(!xmlhttp)
+    {
+        window.alert("_(Your broswer not support XMLHttpRequest!)_");
+    }
+    if(xmlhttp != null)
+    {
+        //SW-Bug #127719
+        var curTime = new Date();
+        curTime = curTime.getTime();
+        xmlhttp.open("GET","./advancedutilities_tcpdump_refresh.html?time="+curTime,true);
+        xmlhttp.onreadystatechange =function()
+        {
+            if(xmlhttp.readyState==4)
+            {
+                var info = xmlhttp.responseText.split('+');
+                var realusb = info[1];
+		var tcpDumpTime = parseInt(info[0]); 
+
+		if(tcpDumpTime > 0)
+                {
+		       tcpDumpBegin = 1;
+		       tcpDumpInProgress = 1;
+		       document.getElementById("usbinfo").innerHTML = "_(pcap file location:)_ /mnt/" + realusb;
+		       setTimeout("http_refresh();", 1000);
+                }
+                else
+                {
+                    tcpDumpInProgress = 0;
+                    document.getElementById("tcpdumpinprogress").innerHTML = "_(No TCPDump is in Progress)_";
+		document.getElementById("test_off").style.display = "none";
+		document.getElementById("test_on").style.display = "block";
+                    if (tcpDumpBegin)
+                    {
+		       tcpDumpBegin = 0;
+		       if(tcpDumpTime == -1)
+		       {
+			       if(confirm("_(Your USB Flash is full with data,please remove some data and try again.)_") )
+			       {
+				   var lochead='tcpdump.cmd?action=stop&usbfull=1';    
+               lochead += '&sessionKey=' + sessionKey;
+				   if(xmlhttp != null)
+				   {
+					xmlhttp.open("POST",lochead,true);
+					xmlhttp.onreadystatechange =function()
+					{
+						//if(xmlhttp.readyState==4)
+						//statusval = xmlhttp.responseText;
+					}
+					xmlhttp.send(null);
+				  }
+			      }
+		       }
+	               else if(confirm("_(TCPDump Stopped, You can remove USB Flash now.)_") )
+	               {
+			   storagedevice_info = '';
+                           var lochead='tcpdump.cmd?action=stop';    
+               lochead += '&sessionKey=' + sessionKey;
+			   if(xmlhttp != null)
+			   {
+				xmlhttp.open("POST",lochead,true);
+				xmlhttp.onreadystatechange =function()
+				{
+					//if(xmlhttp.readyState==4)
+					//statusval = xmlhttp.responseText;
+				}
+				xmlhttp.send(null);
+			     document.getElementById("usbinfo").innerHTML = "_(No USB Flash is inserted)_ ";
+			  }
+	              }
+                    }
+                    else
+                    {
+			    document.getElementById("tcpdumpinprogress").innerHTML = "_(USB Flash is not inserted,please insert and click test)_";
+                      return;
+                    }
+                }
+            }
+        }
+        xmlhttp.send(null);
+    }
+}
+
+/*
+function dom_load(){ do_load(); }
+
+*/
+function dom_load()
+{
+        do_load();
+}
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 class="advancedsetup_upnp">_(Tcpdump Debug)_</h1>
+            <form  name="myform" method="POST" action="advancedutilities_tcpdump.cgi" onSubmit="return do_apply();">
+ 				<p>_(TCPDump will copy the packet capture (pcap) file to the USB flash connected to the modem. Also, the CFE and wireless configuration files will be copied to the USB flash.)_</p>
+				<p>&nbsp;</p>
+    <p><strong> 1. _(Select the interface to debug.)_ </strong></p>
+    <table>
+	<tr >
+	<td style="width:150px">_(TCPDump Interface)_:</td>
+	<td><input name="netInterface" id="netInterface" type="text" maxlength="17" size="35" style="height:18px;" /></td>
+	</tr>
+    </table>
+    <p><strong> 2. _(Select the packet size to dump.)_ </strong></p>
+    <table>
+	<tr >
+	<td style="width:150px">_(Packet Size)_:</td>
+	<td><input name="pktSize" id="pktSize" type="text" maxlength="17" size="35" style="height:18px;"/></td>
+	</tr>
+    </table>
+    <p><strong> 3. _(Select the filename of dump file stored in the USB Flash.)_ </strong></p>
+    <table>
+	<tr >
+	<td style="width:150px">_(File Name)_:</td>
+	<td><input name="pcapFileName" id="pcapFileName" type="text" maxlength="17" size="35" style="height:18px;" /></td>
+	</tr>
+    </table>
+    <p><strong> 4. _(Select the duration of Dump.)_ </strong></p>
+    <table>
+	<tr >
+	<td style="width:150px">_(TCPDump Timeout(Seconds))_:</td>
+	<td><input name="tcpDumpTimeOut" id="tcpDumpTimeOut" type="text" maxlength="17" size="35" style="height:18px;" /></td>
+	</tr>
+    </table>
+<div id="test_off" style="display:block">
+				<p><a class="button2" id="btn_test_disable"><span>_(Test)_</span></a></p>
+</div>
+<div id="test_on" style="display:none">
+		<p><a class="button1" onclick="do_apply()" id="btn_test"><span id="my_button">_(Test)_</span></a></p>
+</div>
+	    <table width="48%" border="0" align="center" cellpadding="5" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;">
+	      <tr align="center">
+		<th>_(Test Status)_</th>
+	      </tr>
+	      <tr align="center">
+            <td id="usbinfo" text-align="center">_(No USB Flash is inserted)_</td>
+	      </tr>
+	      <tr align="center">
+            <td id="tcpdumpinprogress" text-align="center">_(No TCPDump is in Progress)_</td>
+	      </tr>
+	    </table>
+		</div>
+		<div id="content_right_contentarea">
+		</div>
+</form>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+
+</SCRIPT>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

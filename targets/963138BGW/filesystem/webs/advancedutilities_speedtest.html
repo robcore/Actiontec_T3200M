@@ -1,0 +1,401 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Speed Test)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/functions.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="JavaScript">
+
+var wanEthLinkSpeed ='<%ejGetOther(infSpeed, ewan0)%>';
+var down_rate = '<%ejGetOther(lineRate, 1, 0)%>';
+var up_rate = '<%ejGetOther(lineRate, 0, 0)%>';
+var test_status = '<%ejGetOther(speedTestInfo, testStatus)%>';
+var mtu = '<%ejGetOther(speedTestInfo, mtu)%>';
+var rwin = '<%ejGetOther(speedTestInfo, rwin)%>';
+var df = '<%ejGetOther(speedTestInfo, dfBit)%>';
+var ping_time = '<%ejGetOther(speedTestResult, pingTime)%>';
+var down_speed = '<%ejGetOther(speedTestResult, downAvgSpeed)%>';
+var up_speed = '<%ejGetOther(speedTestResult, upAvgSpeed)%>';
+var url = htmlDecodeStr('<%ejGetOther(speedTestInfo, testUrl)%>');
+
+var wanEthLinkStatus = '<%ejGetOther(wanEthLinkStatus)%>';
+var g_line1Info = '<%ejGetOther(dslLinkBondRate, 0)%>';
+var g_line2Info = '<%ejGetOther(dslLinkBondRate, 1)%>';
+
+var g_line1status = g_line1Info.split("|");
+var g_line2status = g_line2Info.split("|");
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+TestStatus = {
+  NoTest : 0,
+  InTesting : 1,
+  TestFailed : 2,
+  TestCompleted : 3
+}
+
+TestAction = {
+  NoTest : 0,
+  NewTest : 1,
+  NextTest : 2,
+  StopTest : 3
+}
+
+Time = {
+  Interval : 10,
+  MaxTime : 30
+}
+
+function updateResult()
+{
+    /* Train Rate Downstream */
+    if ( g_line1status[0] == "Up" || g_line2status[0] == "Up"  )
+        document.getElementById("down_train_rate").innerHTML = down_rate / 1000 + ' _(Mbps)_';
+    else if (wanEthLinkStatus == 'Up')
+        document.getElementById("down_train_rate").innerHTML = wanEthLinkSpeed + '_(bps)_';
+    else
+        document.getElementById("down_train_rate").innerHTML = '_(N/A)_';
+
+    /* Train Rate Upstream */
+    if ( g_line1status[0] == "Up" || g_line2status[0] == "Up"  )
+        document.getElementById("up_train_rate").innerHTML = up_rate / 1000 + ' _(Mbps)_';
+    else if (wanEthLinkStatus == 'Up')
+        document.getElementById("up_train_rate").innerHTML = wanEthLinkSpeed + '_(bps)_';
+    else
+        document.getElementById("up_train_rate").innerHTML = '_(N/A)_';
+
+    /* Test Status */
+    if ( test_status == top.TestStatus.InTesting )
+        document.getElementById("test_status").innerHTML = '<font color="#FF6319"><b>_(TESTING)_</b></font>';
+    else if ( test_status == top.TestStatus.TestCompleted )
+        document.getElementById("test_status").innerHTML = '<font color="#090"><b>_(TEST COMPLETE)_</b></font>';
+    else if ( test_status == top.TestStatus.TestFailed )
+        document.getElementById("test_status").innerHTML = '<font color="#F00"><b>_(TEST FAILED)_</b></font>';
+    else
+        document.getElementById("test_status").innerHTML = '_(NO TEST IN PROGRESS)_';
+
+    /* Ping Time */
+    if ( ping_time != '' )
+    {
+        if (ping_time == '0')
+            ping_time = '1';
+
+        document.getElementById("ping_time").innerHTML = ping_time + ' _(ms)_';
+    }
+    else
+        document.getElementById("ping_time").innerHTML = '_(N/A)_';
+
+    /* Average Downstream */
+    if ( down_speed != '' )
+        document.getElementById("down_avg_speed").innerHTML = 8 * parseInt(down_speed) / 1000 + ' _(Mbps)_';
+    else
+        document.getElementById("down_avg_speed").innerHTML = '_(N/A)_';
+
+    /* Average Upstream */
+    if ( up_speed != '' && isNumber(up_speed))
+        document.getElementById("up_avg_speed").innerHTML = 8 * parseInt(up_speed) / 1000 + ' _(Mbps)_';
+    else
+        document.getElementById("up_avg_speed").innerHTML = '_(N/A)_';
+
+    /*
+    * MTU Size, MSS Size:
+    * for ipv4, mss = mtu - 40
+    * for ipv6, mss = mtu - 60, if supported
+    */
+    if ( mtu != '' )
+    {
+        var mss = parseInt(mtu) - 40;
+        document.getElementById("mtu_size").innerHTML = mtu;
+        document.getElementById("mss_size").innerHTML = mss;
+    }
+    else
+    {
+        document.getElementById("mtu_size").innerHTML = "_(N/A)_";
+        document.getElementById("mss_size").innerHTML = "_(N/A)_";
+    }
+
+    /*
+    * TCP Connection:
+    * we always use tcp connection
+    */
+    document.getElementById("tcp_conn").innerHTML = '_(Yes)_';
+
+    /* RWIN Size */
+    if ( rwin != '' )
+        document.getElementById("rwin_size").innerHTML = rwin;
+    else
+        document.getElementById("rwin_size").innerHTML = '_(N/A)_';
+
+    /* Do Not Fragment Bit */
+    var dfInt = parseInt(df);
+    if ( dfInt == 0 )
+        document.getElementById("df_bit").innerHTML = '_(Disabled)_';
+    else if ( dfInt == 1 )
+        document.getElementById("df_bit").innerHTML = '_(Enabled)_';
+    else
+        document.getElementById("df_bit").innerHTML = '_(N/A)_';
+}
+
+function checkResult()
+{
+    http_refresh();
+    var result = test_status;
+
+    if (result == TestStatus.NoTest ||
+        result == TestStatus.TestCompleted ||
+        result == TestStatus.TestFailed)
+    {
+        window.location.href = "advancedutilities_speedtest.html";
+    }
+    else
+    {
+        setTimeout("checkResult()", Time.Interval * 1000);
+    }
+}
+
+function do_load()
+{
+    side_nav("advancedutilities_speedtest");
+    updateResult();
+
+    if (test_status == TestStatus.InTesting){
+        setTimeout("http_refresh()", Time.Interval * 1000);
+        setTimeout("checkResult()", Time.Interval * 1000);
+    }
+
+}
+
+function btnTest()
+{
+    var lochead='advancedutilities_speedtest.cgi?';
+    var loc="";
+    var key = '<%ejGetOther(encrypt_key, 0)%>';
+
+    if (document.getElementById("url").value == '')
+    {
+        alert("_(The URL is invalid.)_");
+        return false;
+    }
+    else
+    {
+        url = document.getElementById("url").value;
+    }
+
+    loc +="&";
+    loc +="speedTestUrl=";
+    loc +=url;
+    loc +="&";
+    loc +="speedTestAction=";
+    loc +=TestAction.NewTest;
+    loc +="&";
+    loc +="speedTestStatus=";
+    loc +=TestStatus.InTesting;
+    loc += '&sessionKey=' + sessionKey;
+    loc +="&";
+    loc +="nothankyou=1"
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+
+    postSubmit(lochead);
+}
+
+function result_refresh(values)
+{
+    var finish = 1;
+    if(values!="")
+    {
+        values = values.split('+');
+	test_status = values[0];
+	ping_time = values[1];
+	down_speed = values[2];
+	up_speed = values[3];
+
+        /* Ping Time */
+        if ( ping_time != '' )
+        {
+            if (ping_time == '0')
+                ping_time = '1';
+
+            document.getElementById("ping_time").innerHTML = ping_time + ' _(ms)_';
+        }
+        else {
+            document.getElementById("ping_time").innerHTML = '_(N/A)_';
+            finish = 0;
+        }
+
+        /* Average Downstream */
+        if ( down_speed != '' )
+            document.getElementById("down_avg_speed").innerHTML = 8 * parseInt(down_speed) / 1000 + ' _(Mbps)_';
+        else {
+            document.getElementById("down_avg_speed").innerHTML = '_(N/A)_';
+            finish = 0;
+        }
+
+        /* Average Upstream */
+        if ( up_speed != '' )
+            document.getElementById("up_avg_speed").innerHTML = 8 * parseInt(up_speed) / 1000 + ' _(Mbps)_';
+        else{
+            document.getElementById("up_avg_speed").innerHTML = '_(N/A)_';
+            finish = 0;
+        }
+
+        if (!finish)
+        {
+            setTimeout("http_refresh();", 5000);
+            return;
+        }
+
+        /* Test Status */
+        if ( test_status == top.TestStatus.InTesting )
+            document.getElementById("test_status").innerHTML = '<font color="#FF6319"><b>_(TESTING)_</b></font>';
+        else if ( test_status == top.TestStatus.TestCompleted )
+            document.getElementById("test_status").innerHTML = '<font color="#090"><b>_(TEST COMPLETE)_</b></font>';
+        else if ( test_status == top.TestStatus.TestFailed )
+            document.getElementById("test_status").innerHTML = '<font color="#F00"><b>_(TEST FAILED)_</b></font>';
+    }
+}
+
+function http_refresh()
+{
+    var xmlhttp = null;
+    if(window.XMLHttpRequest)  //Mozilla
+    {
+        xmlhttp = new XMLHttpRequest();
+    }
+    else if(window.ActiveXObject) //IE
+    {
+        try
+        {
+            xmlhttp = new ActiveXObject("Msxml2.XMLHTTP"); //new IE
+        }
+        catch(e)
+        {
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP"); //old IE
+        }
+    }
+
+    if(!xmlhttp)
+    {
+        window.alert("_(Your broswer not support XMLHttpRequest!)_");
+    }
+    if(xmlhttp != null)
+    {
+        xmlhttp.open("GET","./advancedutilities_speedtest_refresh.html",true);
+        xmlhttp.onreadystatechange =function()
+        {
+            if(xmlhttp.readyState==4)
+            {
+                var statusval= xmlhttp.responseText;
+
+                if(statusval == "")
+                    setTimeout("http_refresh();", 5000);
+                else{
+                    // If GUI is locked, return it to avoid parameters undefined error.
+                    if(statusval.indexOf("Lock error")!=-1)
+                        setTimeout("http_refresh();", 5000);
+                    else {
+                        //test_status=statusval;
+                        result_refresh(statusval)
+                    }
+                }
+            }
+        }
+        xmlhttp.send(null);
+    }
+}
+
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+        <div id="content_right_header"></div>
+        <div id="content_right_contentarea">
+            <h1 class="advancedutilities_speedtest">_(Speed Test)_</h1>
+            <form name="showform">
+                <p><strong>1. _(Click "Test" to begin the speed test.)_</strong></p>
+                <table border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td><label for="url">_(URL)_:</label></td>
+                        <td><input name="url" type="text" id="url" size="35" style="height:18px;" value=""/></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><a onclick="btnTest()" style="cursor:pointer" class="button1" id="btn_test"><span>_(Test)_</span></a></td>
+                    </tr>
+                </table>
+                <div id="testResults">
+                    <table width="80%" border="0" cellpadding="10" cellspacing="0" class="defaultstyle" style="margin-top:10px;">
+                        <tr>
+                            <th colspan="2" style="text-align:center;"><strong>_(Speed Test Results)_</strong></th>
+                        </tr>
+                        <tr style="text-align:center;">
+                            <th width="50%"><strong>_(Test)_</strong></th>
+                            <th><strong>_(Results)_</strong></th>
+                        </tr>
+                        <tr>
+                            <td width="50%">_(Train Rate Downstream)_:</td>
+                            <td><span id="down_train_rate"></span></td>
+                        </tr>
+                        <tr>
+                            <td width="50%">_(Train Rate Upstream)_:</td>
+                            <td><span id="up_train_rate"></span></td>
+                        </tr>
+                        <tr>
+                            <td width="50%">_(Test Status)_: </td>
+                            <td><span id="test_status">_(NO TEST IN PROGRESS)_</span></td>
+                        </tr>
+                        <tr>
+                            <td width="50%">_(Average Downstream)_: </td>
+                            <td><span id="down_avg_speed"></span></td>
+                        </tr>
+                        <tr>
+                            <td width="50%">_(Average Upstream)_: </td>
+                            <td><span id="up_avg_speed"></span></td>
+                        </tr>
+                        <tr>
+                            <td width="50%">_(Ping Time)_: </td>
+                            <td><span id="ping_time"></span></td>
+                        </tr>
+                        <tr>
+                            <td width="50%">_(MTU Size)_: </td>
+                            <td><span id="mtu_size"></span></td>
+                        </tr>
+                        <tr>
+                            <td width="50%">_(MSS Size)_: </td>
+                            <td><span id="mss_size"></span></td>
+                        </tr>
+                        <tr>
+                            <td width="50%">_(TCP Connection)_: </td>
+                            <td><span id="tcp_conn"></span></td>
+                        </tr>
+                        <tr>
+                            <td width="50%">_(RWIN Size)_: </td>
+                            <td><span id="rwin_size"></span></td>
+                        </tr>
+                        <tr>
+                            <td width="50%">_(Do Not Fragment Bit)_: </td>
+                            <td><span id="df_bit"></span></td>
+                        </tr>
+                    </table>
+                </div>
+            </form>
+        </div>
+        <div id="content_right_footer"></div>
+    </div>
+    <div class="clear_left"></div>
+    <div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(do_load);
+</SCRIPT>
+</body>
+</html>

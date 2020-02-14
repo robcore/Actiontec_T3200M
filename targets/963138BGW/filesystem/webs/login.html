@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Login)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/functions.js" ></script>
+<script language="JavaScript" src="js/BigInt.js"></script>
+<script language="JavaScript" src="js/Barrett.js"></script>
+<script language="JavaScript" src="js/RSA_Stripped.js"></script>
+<script language="Javascript">
+var key; 
+
+var inputUserName=htmlDecodeStr('<%ejGet(inputUserName)%>');
+var remGuiLocked=htmlDecodeStr('<%ejGet(remGuiLocked)%>');
+var maxGuiFailedAttempts=htmlDecodeStr('<%ejGet(maxGuiFailedAttempts)%>');
+var remainRemGuiLockTime=htmlDecodeStr('<%ejGet(remainRemGuiLockTime)%>');
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function do_load()
+{
+  setMaxDigits(262);key=new RSAKeyPair("10001","10001","EDA017EBA532CD23754813203F4026C78EB9089FB7DA16ABBC5220C87BEC3B3C9684E8181AE8AE56CBAEE40BA5B2778A9BA4B59FF6C4FFFEB086E4BC288CC00E970C4CE0BEFAD7ED23FFD6D86F5B2B400ED11F20CCFF67D9DF6DA8620EE5CA20741265A5AF51AE2EF0B1D3834F3E90D5545D12CA67B629332F349020C9A5789B01BA147870108FC436CEEB401DD0BEADA4E2F0DB6AB6D506E7D0AD1C947FCEF38346E82F6D6048D2683494DE8E515243FD1C750C6E6195436BB6FA1F0E4BF86471AB30B34C2FCEEB1DAE8937C0B8DB265AC1067FF6EC46402AA2853B8D69C157C3B08F165C1976E799801F29FBD18516AAAC3B94901284202DF1E941EB9FB86F",2048);
+	value=location.href.split("msg=");
+
+	document.getElementById("err_lock").innerHTML="<strong>_(Remote GUI is forbidden in)_ " + remainRemGuiLockTime + " _(seconds due to)_ " + maxGuiFailedAttempts + " _( times failed login attempt.)_</strong>";
+	if (value[1]==null)
+    {
+		document.getElementById("err_msg").style.display = "none";
+		document.getElementById("err_lock").style.display = "none";
+    }
+    else if(1==remGuiLocked && inputUserName == "root")
+    {
+		document.getElementById("err_msg").style.display = "none";
+		document.getElementById("err_lock").style.display = "block";
+    }
+}
+
+function doApply()
+{
+    var loc = 'login.cgi?';
+
+    with ( document.forms[0] ) {
+	new_username = admin_user_name.value;
+	new_password = admin_password.value;
+
+	var str = new String();
+	str = admin_password.value;
+	if ( str.length < 1 ) {
+	    alert("_(Password should not be left blank.)_");
+	    return;
+	}
+	if ( str.length > 15 ) {
+	    alert("_(The password should cannot be longer than 15 characters.)_");
+	    return;
+	}
+	if ( str.indexOf(' ') != -1 ) {
+	    alert("_(The password cannot contain a space.)_");
+	    return;
+	}
+
+	if ( new_username.length < 1 ) {
+	    alert("_(The username cannot be left blank.)_");
+	    return;
+	}
+	if ( new_username.length > 15 ) {
+	    alert("_(Username cannot be longer than 15 characters.)_");
+	    return;
+	}
+	if (new_username.search("[^A-Za-z0-9\-.]") != -1)
+	{
+	    alert("_(The username is invalid. You must enter a valid username.)_");
+	    return;
+	}
+	if (isValidName(new_username) == false)
+	    return;
+
+	loc += 'inputUserName=' + encodeUrl(new_username);
+	var ciphertext=encryptedString(key,new_password,RSAAPP.PKCS1Padding,RSAAPP.RawEncoding);
+	var submitext = base64_btoa(ciphertext);
+	loc += '&inputPassword=' + encodeUrl(submitext);
+    }
+
+    loc += '&sessionKey=' + sessionKey;
+    loc += '&nothankyou=1';
+    //var code = 'location="' + loc + '"';
+    //eval(code);
+    postSubmit(loc);
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+<body >
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <div id="logo"></div>
+		<div id="top_nav">
+
+	</div>
+
+
+
+    <!-- END TOP NAV -->
+
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+		<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 >_(Login)_ </h1>
+				<form>
+				 <p><span id="err_msg" ><strong>_(You have no right to access this page.)_</strong></span></p>
+                 <p><span id="err_lock" style="display:none"><strong>_(Remote GUI is forbidden for a while due to frequent login failure)_</strong></span></p>
+				  <p><strong>1. _(Enter your username and password.)_</strong></p>
+
+					<table border="0" cellspacing="0" cellpadding="0">
+						<tr>
+							<td>&nbsp;&nbsp;&nbsp;_(Username)_: </td>
+							<td><input name="admin_user_name" id="admin_user_name" type="text" /></td>
+						</tr>
+						<tr>
+							<td>&nbsp;&nbsp;&nbsp;_(Password)_: </td>
+							<td><input name="admin_password" id="admin_password" type="password" /></td>
+						</tr>
+					</table>
+					<p>&nbsp;</p>
+					<p><strong>2. _(Click Apply to login.)_ </strong></p>
+				<p><a class="button1" onclick="doApply();" ><span>_(Apply)_</span></a></p>
+
+				</form>
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	<div class="clear_left"></div>
+	<div id="footer"></div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+
+</SCRIPT>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

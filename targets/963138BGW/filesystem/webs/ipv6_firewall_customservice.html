@@ -1,0 +1,786 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Firewall)_ - _(Ipv6 Firewall Custom Service)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="Javascript" src="js/jquery.min.js" type="text/javascript"></script>
+<script language="Javascript" src="js/jquery.popupWindow.js" type="text/javascript"></script>
+<script language="javascript"  src="js/jquery.js" type="text/javascript"></script>
+<script language="Javascript" src="js/functions.js" type="text/javascript"></script>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/ipv6_util.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+
+
+<script language="Javascript">
+
+// var CustomFwList="name/type/sourceaddres::sdf:/dfsd/source,dest port/portocol/traffic|";
+var CustomFwList="<%ejGetOther(ipv6_firewall_sevlist)%>";
+ var key = "<%ejGetOther(encrypt_key, 0)%>";
+ var service_name = new Array();
+ var service_type = new Array();
+ var service_source_addr=new Array();
+ var service_destination_addr=new Array();
+ var service_lan_addr=new Array();
+ var service_port_type=new Array();
+ var service_protocol=new Array();
+ var service_traffic=new Array();
+ var host_gua = new Array();
+
+ var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function get_host_gua()
+{
+    var form = document.forms[0];
+    if(0 == form.lan_device.selectedIndex)
+    {
+        return form.lan_port_gua.value;
+    }
+
+    return host_gua[form.lan_device.selectedIndex-1];
+}
+
+function show_host_gua()
+{
+	var form = document.forms[0];
+
+	if (form.lan_device.selectedIndex > 0)
+	{
+		form.lan_port_gua.disabled = 1; // disable
+		form.lan_port_gua.value = get_host_gua(); // show the select device gua
+	}
+	else
+	{
+		form.lan_port_gua.disabled = 0; // enable
+	}
+}
+
+function changeAddrType()
+{
+    if(document.getElementById("ipv6_enteraddr").checked)
+    {
+		document.getElementById("ipv6_souraddr").style.display = "";
+        document.getElementById("ipv6_dstaddr").style.display = "";
+		document.getElementById("ipv6_landev").style.display = "none";
+        document.getElementById("ipv6_clientgua").style.display = "none";
+    }
+    else
+    {
+        document.getElementById("ipv6_souraddr").style.display = "none";
+        document.getElementById("ipv6_dstaddr").style.display = "none";
+		document.getElementById("ipv6_landev").style.display = "";
+        document.getElementById("ipv6_clientgua").style.display = "";
+        show_host_gua();
+    }
+}
+
+function do_apply()
+{
+/***
+      var defaultconservice="<%ejGetOther(ipv6_parameter, fwd_defaultconn)%>";
+	  if(defaultconservice=="")
+	  {
+         msg='The ipv6 wan is not conneted,you must connet it first.';
+	   pop_up(msg,0);
+	   return;
+	  }
+***/
+     var form = document.forms[0];
+     var i=0;
+    var lochead = 'ipv6_firewall_customservice.cgi?';
+	var loc="";
+	 if(form.ipv6_servicename.value=='')
+	 {
+	   msg = "_(Please input the  Service Name.)_";
+	   pop_up(msg,0);
+	   return;
+	  }
+	 if(hasHTMLTags(form.ipv6_servicename.value))
+	 {
+	   msg="_(The Service Name is invalid. Please enter a valid one.)_";
+	   pop_up(msg,0);
+	   return;
+	 }
+      if (form.ipv6_servicename.value.length > 48)
+      {
+         tips = "_(The Service Name  entered in step 1 cannot be longer than 48 characters.)_";
+         pop_up(tips,0);
+         return;
+      }
+	 if(form.ipv6_servicetype.value=='')
+	  {
+	     msg = "_(Please input the  Service Type.)_";
+		 pop_up(msg,0);
+         return;
+	  }
+	  if(hasHTMLTags(form.ipv6_servicetype.value))
+	 {
+	   msg="_(The Service Type is invalid. Please enter a valid one.)_";
+	   pop_up(msg,0);
+	   return;
+	 }
+      if (form.ipv6_servicetype.value.length > 48)
+      {
+         tips = "_(The Service Type  entered in step 2 cannot be longer than 48 characters.)_";
+         pop_up(tips,0);
+         return;
+      }
+
+	if(form.ipv6_servsourceaddr.value!="")
+	{
+        msg="_(The IP Source Address inserted in step 3 is invalid. You must enter a valid IP Address.)_";
+        var server_sour_addr = form.ipv6_servsourceaddr.value;
+        if (server_sour_addr.split('/').length < 2)
+        {
+            var a_server_sour_addr = server_sour_addr;
+        }
+        else
+        {
+            server_sour_addr = form.ipv6_servsourceaddr.value.split('/');
+            var a_server_sour_addr = server_sour_addr[0];
+            if (!isValidIPv6PrefixLen(server_sour_addr[1]))
+            {
+                pop_up(msg, 0);
+                return;
+            }
+        }
+        if(!isipv6(a_server_sour_addr)|| (a_server_sour_addr.toLowerCase().substr(0, 2) == "fc") || (a_server_sour_addr.toLowerCase().substr(0, 2) == "fd")||isLLA(a_server_sour_addr))
+		{
+	        pop_up(msg,0);
+	        return;
+		}
+	    if((a_server_sour_addr.toLowerCase().substr(0, 3) == "ff0")||(a_server_sour_addr.toLowerCase().substr(0, 3) == "ff1"))
+		{
+	        pop_up(msg,0);
+	        return;
+	    }
+	}
+
+	if(form.ipv6_servdestaddr.value!="")
+	{
+        msg="_(The IP Destination Address inserted in step 3 is invalid. You must enter a valid IP Address.)_";
+        var server_dest_addr = form.ipv6_servdestaddr.value;
+        if (server_dest_addr.split('/').length < 2)
+        {
+            var a_server_dest_addr = server_dest_addr;
+        }
+        else
+        {
+            server_dest_addr = form.ipv6_servdestaddr.value.split('/');
+            var a_server_dest_addr = server_dest_addr[0];
+            if (!isValidIPv6PrefixLen(server_dest_addr[1]))
+            {
+                pop_up(msg, 0);
+                return;
+            }
+        }
+        if(!isipv6(a_server_dest_addr)|| (a_server_dest_addr.toLowerCase().substr(0, 2) == "fc") || (a_server_dest_addr.toLowerCase().substr(0, 2) == "fd")||isLLA(a_server_dest_addr))
+		{
+	        pop_up(msg,0);
+	        return;
+		}
+	    if((a_server_dest_addr.toLowerCase().substr(0, 3) == "ff0")||(a_server_dest_addr.toLowerCase().substr(0, 3) == "ff1"))
+		{
+	        pop_up(msg,0);
+	        return;
+	    }
+	}
+
+    if(form.lan_port_gua.value!="")
+	{
+        if(!isipv6(form.lan_port_gua.value)|| (form.lan_port_gua.value.toLowerCase().substr(0, 2) == "fc") || (form.lan_port_gua.value.toLowerCase().substr(0, 2) == "fd")||isLLA(form.lan_port_gua.value))
+		{
+            msg="_(The select LAN IP Address inserted in step 3 is invalid. You must enter a valid IP Address.)_";
+	        pop_up(msg,0);
+	        return;
+		}
+	    if((form.lan_port_gua.value.toLowerCase().substr(0, 3) == "ff0")||(form.lan_port_gua.value.toLowerCase().substr(0, 3) == "ff1"))
+        {
+            msg="_(The select LAN IP Address inserted in step 3 is invalid. You must enter a valid IP Address.)_";
+	        pop_up(msg,0);
+	        return;
+	    }
+	}
+
+	if(form.ipv6_servsourceaddr.value==form.ipv6_servdestaddr.value && form.ipv6_servdestaddr.value!="")
+	{
+          msg="_(The IP Destination Address shouldn't equal to The IP Source Address.)_";
+	   pop_up(msg,0);
+	   return;
+	}
+
+     if(document.getElementById("ipv6_servprotocol").value!=4)
+      {
+		if(form.ipv6_servsourceport.value!="")
+		{
+	        if(isNaN(form.ipv6_servsourceport.value)||parseInt(form.ipv6_servsourceport.value)<1||parseInt(form.ipv6_servsourceport.value)>65535)
+			{
+	            msg="_(The Source Port inserted in step 5 is invalid. You must enter a valid Source Port.)_";
+		   pop_up(msg,0);
+		   return;
+			}
+		}
+		if(form.ipv6_servdestport.value!="")
+		{
+	        if(isNaN(form.ipv6_servdestport.value)||parseInt(form.ipv6_servdestport.value)<1||parseInt(form.ipv6_servdestport.value)>65535)
+			{
+	            msg="_(The Destination Port inserted in step 5 is invalid. You must enter a valid Destination Port.)_";
+		   pop_up(msg,0);
+		   return;
+			}
+		}
+	}
+	else
+	{
+         if(form.ipv6_icmptype.value!="")
+		{
+	        if(isNaN(form.ipv6_icmptype.value)||parseInt(form.ipv6_icmptype.value)<1||parseInt(form.ipv6_icmptype.value)>255)
+			{
+	            msg="_(The ICMPv6 Type inserted in step 5 is invalid. You must enter a valid ICMPv6 Type.)_";
+		   pop_up(msg,0);
+		   return;
+			}
+		}
+	}
+
+	if(!(document.getElementById("ipv6_servtrafficinbox").checked)&&!(document.getElementById("ipv6_servtrafficoutbox").checked))
+		{
+       msg="_(You must select at least one checkbox in step 6.)_";
+		   pop_up(msg,0);
+		   return;
+	}
+
+
+	  var ipv6_servicename_value=document.getElementById("ipv6_servicename").value;
+	  var ipv6_servicetype_value=document.getElementById("ipv6_servicetype").value;
+	  var ipv6_servsourceaddr_value=document.getElementById("ipv6_servsourceaddr").value;
+	  var ipv6_servdestaddr_value=document.getElementById("ipv6_servdestaddr").value;
+      var lan_port_gua_value=document.getElementById("lan_port_gua").value;
+	  var ipv6_servprotocol_value=document.getElementById("ipv6_servprotocol").value;
+	  var ipv6_servsourceport_value=document.getElementById("ipv6_servsourceport").value;
+	  var ipv6_servdestport_value=document.getElementById("ipv6_servdestport").value;
+	  var ipv6_icmptype_value=document.getElementById("ipv6_icmptype").value;
+	  var ipv6_traffictype_value="";
+
+	  if((document.getElementById("ipv6_servtrafficinbox").checked)&&!(document.getElementById("ipv6_servtrafficoutbox").checked))
+	   ipv6_traffictype_value="1";
+	  else if(!(document.getElementById("ipv6_servtrafficinbox").checked)&&(document.getElementById("ipv6_servtrafficoutbox").checked))
+	   ipv6_traffictype_value="2";
+	  else if((document.getElementById("ipv6_servtrafficinbox").checked)&&(document.getElementById("ipv6_servtrafficoutbox").checked))
+	   ipv6_traffictype_value="3";
+
+	  var ipv6_trafficin_value="";
+	  var ipv6_trafficout_value="";
+	  if(ipv6_traffictype_value=="1")
+		{
+		if(document.getElementById("ipv6_servinaccept").checked)
+		 ipv6_trafficin_value="accept";
+		else
+			ipv6_trafficin_value="drop";
+		      ipv6_trafficout_value="";
+		}
+	  if(ipv6_traffictype_value=="2")
+		{
+		if(document.getElementById("ipv6_servoutaccept").checked)
+		 ipv6_trafficout_value="accept";
+		else
+			ipv6_trafficout_value="drop";
+		      ipv6_trafficin_value="";
+		}
+	  if(ipv6_traffictype_value=="3")
+		{
+		if(document.getElementById("ipv6_servoutaccept").checked)
+		 ipv6_trafficout_value="accept";
+		else
+			ipv6_trafficout_value="drop";
+	      if(document.getElementById("ipv6_servinaccept").checked)
+		 ipv6_trafficin_value="accept";
+		else
+			ipv6_trafficin_value="drop";
+		}
+
+
+//:rrr/rrr/fbb::1/fbc::2/,88;/4/3;accept,accept/InternetGatewayDevice.X_AEI_COM_Firewall.X_AEI_CO``````
+	  var rule=CustomFwList.split('|');
+	  var port_type_value="";
+	  var traffic_permission=ipv6_traffictype_value+';'+ipv6_trafficin_value+','+ipv6_trafficout_value;
+	if(ipv6_servprotocol_value=="4")
+	   port_type_value=','+ipv6_icmptype_value;
+	else
+	   port_type_value=ipv6_servsourceport_value+','+ipv6_servdestport_value;
+	  if(rule.length <0)
+            return;
+	  for(i=0;i<rule.length-1;i++)
+	  {
+	     if(form.ipv6_servicename.value==service_name[i])
+		{
+		pop_up("_(The Service Name has been used please input another.)_",0);
+		 return;
+		}
+
+		 if((ipv6_servsourceaddr_value==service_source_addr[i]) && (ipv6_servdestaddr_value==service_destination_addr[i]) &&
+                 (lan_port_gua_value == service_lan_addr[i]) && (port_type_value==service_port_type[i]))
+		{
+		  if((ipv6_servprotocol_value==service_protocol[i])||(service_protocol[i]=="3"&&(ipv6_servprotocol_value=="1"||ipv6_servprotocol_value=="2"))||((service_protocol[i]=="1"||service_protocol[i]=="2")&&ipv6_servprotocol_value=="3"))
+		  {
+		    if((traffic_permission==service_traffic[i])
+				||(service_traffic[i].split(';')[0]=="3"&&(ipv6_traffictype_value!="3")&&((ipv6_trafficin_value==service_traffic[i].split(';')[1].split(',')[0])||(ipv6_trafficout_value==service_traffic[i].split(';')[1].split(',')[1])))
+				||(ipv6_traffictype_value=="3"&&(service_traffic[i].split(';')[0]!="3")&&((ipv6_trafficin_value==service_traffic[i].split(';')[1].split(',')[0])||(ipv6_trafficout_value==service_traffic[i].split(';')[1].split(',')[1])))
+		      )
+			{
+			pop_up("_(The Rule has been used please input another.)_",0);
+			 return;
+			}
+		  }
+		}
+
+	  }
+
+
+	loc+="ipv6_servicename"+"="+ipv6_servicename_value;
+	loc+="&"+"ipv6_servicetype"+"="+ipv6_servicetype_value;
+    if (document.getElementById("ipv6_enteraddr").checked)
+    {
+        loc+="&ipv6_lanhost=0";
+	    loc+="&"+"ipv6_servsourceaddr"+"="+ipv6_servsourceaddr_value;
+	    loc+="&"+"ipv6_servdestaddr"+"="+ipv6_servdestaddr_value;
+    }
+    else if (document.getElementById("ipv6_selectaddr").checked)
+    {
+        loc+="&ipv6_lanhost=1";
+        loc+="&"+"lan_port_gua"+"="+lan_port_gua_value;
+    }
+	loc+="&"+"ipv6_servprotocol"+"="+ipv6_servprotocol_value;
+	loc+="&"+"ipv6_servsourceport"+"="+ipv6_servsourceport_value;
+	if(ipv6_servprotocol_value=="4")
+		loc+="&"+"ipv6_servdestport"+"="+ipv6_icmptype_value;
+	else
+	      loc+="&"+"ipv6_servdestport"+"="+ipv6_servdestport_value;
+	loc+="&"+"ipv6_traffictype"+"="+ipv6_traffictype_value;
+	loc+="&"+"ipv6_trafficin"+"="+ipv6_trafficin_value;
+	loc+="&"+"ipv6_trafficout"+"="+ipv6_trafficout_value;
+	loc+="&"+"ipv6_firewallrmidx"+"=0";
+	loc+="&ipv6_dmzhostrmidx=0";
+
+    loc += '&sessionKey=' + sessionKey;
+
+   // loc += '&needthankyou=ipv6_firewall_customservice.html';
+   loc=encrypt_query(loc,key);
+    lochead+=loc;
+	//alert(lochead);
+ postSubmit(lochead);
+
+}
+
+function changeType()
+{
+var  protocolType = document.getElementById("ipv6_servprotocol").value;
+	if(protocolType == 4)
+	{
+		document.getElementById("ipv6_icmpv6").style.display = "block";
+		document.getElementById("ipv6_port").style.display = "none";
+		document.getElementById("ipv6_servsourceport").value="";
+		document.getElementById("ipv6_servdestport").value="";
+	}
+	else
+	{
+        document.getElementById("ipv6_icmpv6").style.display = "none";
+		document.getElementById("ipv6_port").style.display = "block";
+		document.getElementById("ipv6_icmptype").value="";
+	}
+
+}
+
+
+function RemoveSev(idx)
+{
+	document.form1.ipv6_firewallrmidx.value = idx;
+	document.form1.submit();
+}
+
+
+function doRemove(rule_id)
+{
+
+   var lochead = 'ipv6_firewall_customservice.cgi?';
+   var loc = '';
+    loc+="&ipv6_dmzhostrmidx=0";
+    loc+="&ipv6_firewallrmidx"+"="+rule_id;
+	loc += '&sessionKey=' + sessionKey;
+    loc=encrypt_query(loc,key);
+    lochead+=loc;
+    postSubmit(lochead);
+
+
+}
+
+
+function show_rules()
+{
+ var i,j,count=0;
+ var cols = new Array();
+  var rule="";
+ var table_id = document.getElementById("result_tbl");
+ var rulesource=CustomFwList.split('|');
+ var rulesource_len=rulesource.length;
+     for(i=0;i<rulesource_len-1;i++)
+	{
+          if(rulesource[i].split('/')[6]!='5')
+		 rule+=rulesource[i]+'|';
+	 }
+
+    if(rule=="")
+	{
+	 var blank = "_(No Entries Defined)_";
+        appendTableEmptyRow(table_id , "center", "6", blank);
+       return;
+	}
+	var table = document.getElementById("result_tbl");
+	var rule_len=rule.split('|').length;
+	rule=rule.split('|');
+    for(i=0;i<rule_len-1;i++)
+    {
+       cols=rule[i].split('/');
+       var cols_len = rule[i].split('/').length;
+	   var cols0tem;
+	   var cols1tem;
+	   var cols2tem;
+	   var cols3tem;
+	   var cols4tem;
+	   var cols5tem;
+	   var cols6tem;
+       var cols7tem;
+	   var temp;
+	   cols0tem=htmlDecodeStr(cols[0]);
+	   cols1tem=htmlDecodeStr(cols[1]);
+	   cols2tem=htmlDecodeStr(cols[2]);
+	   cols3tem=htmlDecodeStr(cols[3]);
+	   cols4tem=htmlDecodeStr(cols[4]);
+	   cols5tem=htmlDecodeStr(cols[5]);
+	   cols6tem=htmlDecodeStr(cols[6]);
+       cols7tem=htmlDecodeStr(cols[7]);
+
+//:rrr/rrr/fbb::1/fbc::2/,88;/4/3;accept,accept/InternetGatewayDevice.X_AEI_COM_Firewall.X_AEI_COM_Firewall_Rules.6|
+//:df/tcp///,;/1/1;accept,/InternetGatewayDevice.X_AEI_COM_Firewall.X_AEI_COM_Firewall_Rules.2
+//:qqq/qqq/fa::11/fa::12/123,456;/1/3;accept,accept/InternetGatewayDevice.X_AEI_COM_Firewall.X_AEI_COM_Firewall_Rules.5|
+	service_name[i]= htmlDecodeStr(cols[0]);
+    service_type[i]= htmlDecodeStr(cols[1]);
+	service_source_addr[i]=htmlDecodeStr(cols[2]);
+	service_destination_addr[i]=htmlDecodeStr(cols[3]);
+    service_lan_addr[i]=htmlDecodeStr(cols[4]);
+	service_port_type[i]=htmlDecodeStr(cols[5].split(';')[0]);
+	service_protocol[i]=htmlDecodeStr(cols[6]);
+	service_traffic[i]=htmlDecodeStr(cols[7]);
+
+         if(cols0tem.length>12&&cols0tem.length<=24)
+		{
+		temp = cols0tem.substring(0,12);
+				temp += "<br>";
+				temp += cols0tem.substring(12);
+			cols[0] = temp;
+		}
+         if(cols0tem.length>24&&cols0tem.length<=36)
+		{
+		temp = cols0tem.substring(0,12);
+				temp += "<br>";
+				temp += cols0tem.substring(12,24);
+				temp+="<br>";
+			cols[0] = temp;
+		}
+	    if(cols0tem.length>36)
+		{
+		temp = cols0tem.substring(0,12);
+				temp += "<br>";
+				temp += cols0tem.substring(12,24);
+				temp+="<br>";
+				temp += cols0tem.substring(24,36);
+				temp+="<br>";
+			cols[0] = temp;
+		}
+
+	  if(cols1tem.length>12&&cols1tem.length<=24)
+		{
+		temp = cols1tem.substring(0,12);
+				temp += "<br>";
+				temp += cols1tem.substring(12);
+			cols[1] = temp;
+		}
+         if(cols1tem.length>24&&cols1tem.length<=36)
+		{
+		temp = cols1tem.substring(0,12);
+				temp += "<br>";
+				temp += cols1tem.substring(12,24);
+				temp+="<br>";
+			cols[1] = temp;
+		}
+	    if(cols1tem.length>36)
+		{
+		temp = cols1tem.substring(0,12);
+				temp += "<br>";
+				temp += cols1tem.substring(12,24);
+				temp+="<br>";
+				temp += cols1tem.substring(24,36);
+				temp+="<br>";
+			cols[1] = temp;
+		}
+
+	  if(cols2tem.length>20)
+		{
+		temp = cols2tem.substring(0,20);
+				temp += "<br>"
+				temp += cols2tem.substring(20);
+			cols[2] = temp;
+		}
+
+	  if(cols3tem.length>20)
+		{
+		temp = cols3tem.substring(0,20);
+				temp += "<br>"
+				temp += cols3tem.substring(20);
+			cols[3] = temp;
+		}
+
+       if(cols4tem.length>20)
+		{
+		temp = cols4tem.substring(0,20);
+				temp += "<br>"
+				temp += cols4tem.substring(20);
+			cols[4] = temp;
+		}
+
+ if(cols6tem=="4")
+	    cols[5]="icmptype:"+cols5tem.split(';')[0].split(',')[1];
+ else
+	cols[5]=cols5tem.split(';')[0];
+
+	  if(cols6tem=="1")
+		cols[6]="_(TCP)_";
+	  if(cols6tem=="2")
+		cols[6]="_(UDP)_";
+	  if(cols6tem=="3")
+		cols[6]="_(TCP,UDP)_";
+	  if(cols6tem=="4")
+		cols[6]="_(ICMPV6)_";
+
+      if(cols7tem.split(';')[0]=="1")
+		cols[7]="In:"+cols7tem.split(';')[1].split(',')[0];
+	  if(cols7tem.split(';')[0]=="2")
+		cols[7]="Out:"+cols7tem.split(';')[1].split(',')[1];
+	  if(cols7tem.split(';')[0]=="3")
+		cols[7]="In:"+cols7tem.split(';')[1].split(',')[0]+"<br>Out:"+cols7tem.split(';')[1].split(',')[1];
+
+
+	  var a_idx = cols[cols.length-1].split('.');
+			var idx = a_idx[a_idx.length-1];
+		var btn_remove = 'btn_remove_'+idx;
+        cols[cols.length-1]='<a style="text-decoration:none;" class="button1" id="remove_btn" onClick="doRemove(\'' + idx + '\')" id="'+btn_remove+'"><span>_(Remove)_</span></a>';
+        appendTableRow(table,"center",cols);
+    }
+
+}
+
+
+function do_load()
+{
+    //highlight the button after user click on it.
+    side_nav("ipv6_firewallsettings");
+    var i;
+    var form = document.forms[0];
+    var hostinfo = '<%ejGetOther(ipv6_client)%>';
+    var info = hostinfo.split('|');
+    if (info != '')
+    {
+        for ( i = 0; i < info.length; i++)
+        {
+            var details = info[i].split('/');
+            details[0] = htmlDecodeStr(details[0]);
+            details[1] = htmlDecodeStr(details[1]);
+            host_gua[i] = details[0];
+            form.lan_device[i+1] = new Option(details[0]+" ("+details[1]+")", details[0]);
+        }
+    }
+    changeAddrType();
+    show_rules();
+}
+
+</script>
+</head>
+<body id="ipv6_firewall_customservice">
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav4.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(fw_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+		<div id="content_right">
+		<div id="content_right_header"></div>
+			<div id="content_right_contentarea">
+			<h1 id="content_title" class="advancedsetup_firewallsettings">_(Ipv6 Firewall Custom Service)_</h1>
+			<p>_(Fields marked with * are mandatory)_.</p>
+
+			  <form name="custom_rule_form">
+                         <input type="hidden" name="ipv6_firewallrmidx" value="0">
+			  <div class="stepWrapper_header"></div>
+			    <div class="stepWrapper">
+                  <p><strong>*1. _(Enter the service name)_.</strong></p>
+
+                    <table>
+                      <tr>
+                        <td width="155">_(Service Name)_ :</td>
+                        <td><input name="ipv6_servicename" id="ipv6_servicename" type="text" size="35"/></td>
+                      </tr>
+                    </table>
+                </div>
+                <div class="stepWrapper_footer"></div>
+
+
+                <div class="stepWrapper_header"></div>
+                  <div class="stepWrapper">
+                    <p><strong>*2. _(Enter the service type)_.</strong></p>
+                    <table>
+                      <tr>
+                        <td width="155">_(Service Type)_: </td>
+                        <td><input name="ipv6_servicetype" id="ipv6_servicetype" type="text" size="35"/></td>
+                      </tr>
+                    </table>
+                </div>
+               <div class="stepWrapper_footer"></div>
+
+		<div class="stepWrapper_header"></div>
+                  <div class="stepWrapper">
+                    <p><strong>3. _(Enter the Source Address  and Destination Address)_.</strong></p>
+                    <table>
+                      <tr>
+                        <td width="150"><input type="radio" name="ipv6_lanhost" id="ipv6_enteraddr" value="0" onclick="changeAddrType();" checked="checked" />_(Enter IP Address)_</td>
+                        <td ><input type="radio" name="ipv6_lanhost" id="ipv6_selectaddr"  value="1" onclick="changeAddrType();" />_(Select IP Address)_</td>
+                      </tr>
+                      <tr id="ipv6_souraddr">
+                        <td width="155">_(Source Address)_: </td>
+                        <td><input name="ipv6_servsourceaddr" id="ipv6_servsourceaddr" type="text" size="35"/></td>
+                      </tr>
+                      <tr id="ipv6_dstaddr">
+                        <td width="155">_(Destination Address)_: </td>
+                        <td><input name="ipv6_servdestaddr" id="ipv6_servdestaddr" type="text" size="35"/></td>
+                      </tr>
+                      <tr id="ipv6_landev">
+                        <td width="155">_(Select LAN Device)_: </td>
+                        <td><select name="lan_device" id="lan_device" onchange="show_host_gua()">
+                              <option>_(Select the Client IP address)_</option>
+			                </select>
+			            </td>
+                      </tr>
+                      <tr id="ipv6_clientgua">
+                        <td width="155">_(LAN Global Address)_:</td>
+                        <td><input name="lan_port_gua" id="lan_port_gua" type="text" size="35"/></td>
+                      </tr>
+                    </table>
+                </div>
+               <div class="stepWrapper_footer"></div>
+
+                  <p><strong>*4. _(Select the Protocol)_.</strong></p>
+                    <table>
+                      <tr>
+                        <td width="155">Protocol:</td>
+                        <td width="152"><select name="ipv6_servprotocol" id="ipv6_servprotocol" style=" width:100px" onchange="changeType();" >
+                          <option value="1" selected="selected">TCP</option>
+                          <option value="2">_(UDP)_</option>
+                          <option value="3">_(TCP,UDP)_</option>
+                          <option value="4">_(ICMPv6)_</option>
+                        </select></td>
+                      </tr>
+			</table>
+
+
+         <div id="ipv6_port" style="display:block">
+		<div class="stepWrapper_header"></div>
+                  <div class="stepWrapper">
+                    <p><strong>5. _(Enter the Source Port  and Destination Port)_.</strong></p>
+                    <table>
+                      <tr>
+                        <td width="150">_(Source Port)_: </td>
+                        <td><input name="ipv6_servsourceport" id="ipv6_servsourceport" type="text" size="35"/></td>
+                      </tr>
+                       <tr>
+                        <td width="150">_(Destination Port)_: </td>
+                        <td><input name="ipv6_servdestport" id="ipv6_servdestport" type="text" size="35"/></td>
+                      </tr>
+                    </table>
+                </div>
+               <div class="stepWrapper_footer"></div>
+        </div>
+
+        <div id="ipv6_icmpv6" style="display:none">
+		<div class="stepWrapper_header"></div>
+                  <div class="stepWrapper">
+                    <p><strong>5. _(Enter the ICMPv6 Type)_.</strong></p>
+                    <table>
+                      <tr>
+                        <td width="150">_(ICMPv6 Type)_: </td>
+                        <td><input name="ipv6_icmptype" id="ipv6_icmptype" type="text" size="35"/></td>
+                      </tr>
+                    </table>
+                </div>
+               <div class="stepWrapper_footer"></div>
+        </div>
+
+               <div class="stepWrapper_header"></div>
+			<p><strong>*6. _(Select the Incoming/Outbound Traffic)_.</strong></p>
+                    <table>
+                      <tr>
+                        <td  width="150"><input type="checkbox" name="ipv6_servtrafficinbox" id="ipv6_servtrafficinbox" />_(In)_</td>
+                        <td ><input type="radio" name="ipv6_servpacketin" id="ipv6_servinaccept"  value="accept" checked="checked"/>_(Accept)_</td>
+                        <td ><input type="radio" name="ipv6_servpacketin" id="ipv6_servindrop"  value="drop"/>_(Drop)_</td>
+                      </tr>
+
+                      <tr>
+                         <td  width="150"><input type="checkbox" name="ipv6_servtrafficoutbox"  id="ipv6_servtrafficoutbox"/>_(Out)_</td>
+                        <td ><input type="radio" name="ipv6_servpacketout" id="ipv6_servoutaccept" value="accept" checked="checked"/>_(Accept)_</td>
+                        <td ><input type="radio" name="ipv6_servpacketout" id="ipv6_servoutdrop"  value="drop"/>_(Drop)_</td>
+                      </tr>
+			</table>
+
+                    <p><strong>7. _(Click Apply to save changes.)_ </strong></p>
+                  <p><a class="button1" onClick='do_apply()' id="btn_apply"><span>_(Apply)_</span></a></p>
+                   <div class="stepWrapper_footer"></div>
+
+
+                  <div id="test_results">
+                 <div class="stepWrapperdark_header"></div>
+                  <div class="stepWrapperdark">
+
+			 <p align="center"><strong>_(Firewall Custom Service List)_</strong></p>
+
+                     <table width="90%" border="0" align="center" cellpadding="0" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;" id="result_tbl" name="result_tbl">
+                      <tr>
+                        <th align="center">_(NAME)_</th>
+                        <th >_(TYPE)_</th>
+                        <th >_(SOURCE ADDR)_</th>
+                        <th >_(DEST ADDR)_</th>
+                        <th >_(LAN ADDR)_</th>
+                        <th ><strong id="col">_(PORT/ICMPtype)_</strong></th>
+                        <th >_(PROTOCOL)_</th>
+                        <th >_(TRAFFIC)_</th>
+                        <th>_(EDIT)_</th>
+                      </tr>
+                    </table>
+                    <p>&nbsp;</p>
+                </div>
+                <div class="stepWrapperdark_footer"></div>
+               </div>
+		 </form>
+			</div>
+		<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+	</div>
+
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(do_load);
+</SCRIPT>
+</body>
+</html>

@@ -1,0 +1,2 @@
+#! /bin/sh
+./configure --host=arm-unknown-linux-uclibcgnueabi CC="/opt/toolchains/crosstools-arm-gcc-4.6-linux-3.4-uclibc-0.9.32-binutils-2.21-NPTL/usr/bin/arm-unknown-linux-uclibcgnueabi-gcc" --libdir="/home/hayes/work/bcm_xxx/1501_2014-4-1/brcm-sdk-1501/bcmcpe2/targets/963138BGW/fs.build/public/" --includedir="/home/hayes/work/bcm_xxx/1501_2014-4-1/brcm-sdk-1501/bcmcpe2/targets/963138BGW/fs.build/public/include /home/hayes/work/bcm_xxx/1501_2014-4-1/brcm-sdk-1501/bcmcpe2/userspace/public/libs/libpcap/libpcap/pcap"

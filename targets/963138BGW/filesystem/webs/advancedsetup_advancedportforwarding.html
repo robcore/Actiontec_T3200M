@@ -1,0 +1,546 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Firewall)_ - _(Port Forwarding)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/util.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="Javascript">
+
+var list_dhcp_ip = new Array();
+var list_dhcp_pc = new Array();
+
+var rule_list_all = new Array();
+rule_list_all = "<%ejGetOther(PortForwarding)%>".split("|");
+var len;
+len = rule_list_all.length - 1;
+var modify_rule_num;
+var modify_flag = 0;
+var old_lan_port_ipaddress;
+var old_remote_starting_port;
+var old_remote_ending_port;
+var old_lan_starting_port;
+var old_lan_ending_port;
+var old_remote_port_ipaddress;
+var old_lan_port_protocol;
+
+var ethIpAddress= htmlDecodeStr('<%ejGetOther(IPInterfaceIPAddress)%>');
+var ethSubnetMask = htmlDecodeStr('<%ejGetOther(IPInterfaceSubnetMask)%>');
+
+var sessionKey='<%ejGetOther(sessionKey)%>';
+
+function get_host_ip()
+{
+    var form = document.forms[0];
+    if(0 == form.lan_device.selectedIndex)
+    {
+        return form.lan_port_ipaddress.value;
+    }
+
+    return list_dhcp_ip[form.lan_device.selectedIndex-1];
+}
+
+function show_host_ip()
+{
+	var form = document.forms[0];
+
+	if (form.lan_device.selectedIndex > 0)
+	{
+		form.lan_port_ipaddress.disabled = 1; // disable
+		form.lan_port_ipaddress.value = get_host_ip(); // show the select device ip address
+	}
+	else
+	{
+		form.lan_port_ipaddress.disabled = 0; // enable
+	}
+}
+
+
+function doLoad()
+{
+    var i;
+    var form = document.forms[0];
+    table = document.getElementById("rule_table");
+
+    var hostinfo = '<%ejGetOther(hostinfo)%>';
+    var info = hostinfo.split('|');
+    if (info != '')
+    {
+        for ( i = 0; i < info.length; i++)
+        {
+            var details = info[i].split('/');
+
+            details[0] = htmlDecodeStr(details[0]);
+            details[1] = htmlDecodeStr(details[1]);
+
+			var strhostName = details[0];
+			list_dhcp_pc[i] = strhostName;
+			list_dhcp_ip[i] = details[1];
+			form.lan_device[i+1] = new Option(strhostName+"("+details[1]+")", strhostName);
+        }
+    }
+
+    if (len == 0)
+    {
+        var blank = "_(No Entries Defined)_";
+        appendTableEmptyRow(table, "center", "6", blank);
+    }
+
+    for (i=0; i<len; i++)
+    {
+	var records = rule_list_all[i].split(',');
+
+    records[1] = htmlDecodeStr(records[1]);
+    records[2] = htmlDecodeStr(records[2]);
+
+    var cols = new Array();
+    var iports = records[0].split('/');
+    var eports = records[3].split('/');
+        if(iports[1]== '0')
+        cols[0] =iports[0]+'/'+iports[0]; //iport
+        else
+        cols[0] = records[0]; //iport
+        cols[1] = records[1]; //protocol
+	if (records[1] == "GRE")
+	    cols[0] = "-"; //iport
+        cols[2] = records[2]; //iip
+        if(eports[1]=='0')
+        cols[3] =eports[0]+'/'+eports[0]; //eport
+        else
+        cols[3] = records[3]; //eport
+//        cols[4] = records[4]; //wanip
+        var btn_modify = "btn_modify_"+i;
+        var btn_remove = "btn_remove_"+i;
+        cols[4] = '<a style="text-decoration:none;" class="button1" type="button" onClick=doModify("'+ i + '") id="'+btn_modify+'"><span>_(Modify)_</span></a>'; //edit button
+        cols[5] = '<a style="text-decoration:none;" class="button1" type="button" onClick=doRemove("'+ i + '") id="'+btn_remove+'"><span>_(Remove)_</span></a>'; //remove button
+	appendTableRow(table, "center", cols);
+    }
+
+	//highlight the button after user click on it
+	side_nav("advancedsetup_advancedportforwarding");
+}
+
+
+function doAdd(){
+    var form = document.forms[0];
+    var lochead = 'scvrtsrv.cmd?';
+    if (modify_flag == 1)
+    {
+        var loc = 'action=modify';
+    }
+    else
+    {
+        var loc = 'action=add';
+    }
+    var srvName, srvAddr, eStart, eEnd, proto, iStart, iEnd, srvWanAddr;
+    srvName = "aDv_PoRt_FoRwArDiNg";
+    
+    with(form){
+	proto = lan_port_protocol.value;
+	if (proto != "7")
+	{
+	    iStart = lan_starting_port.value;
+	    iEnd = lan_ending_port.value;
+	}
+	else
+	{ // set to "0" to escape port check, just throw them away in cgi
+	    iStart = "0";
+	    iEnd = "0";
+	}
+	//srvAddr = lan_port_ipaddress.value;
+	srvAddr = get_host_ip();
+
+    if(remote_starting_port.value != "")
+	eStart = remote_starting_port.value;
+    else
+	eStart = lan_starting_port.value;
+    if(remote_ending_port.value != "")
+        eEnd = remote_ending_port.value;
+    else
+        eEnd = lan_ending_port.value;
+	srvWanAddr = "";
+
+	/*port check*/
+	if(proto != '7') { //check TCP&UDP port
+		if ( isValidPort(iStart) == false ) {
+	            alert("_(LAN Starting Port is invalid.)_");
+	            return;
+	         }
+		if ( isValidPort(iEnd) == false ) {
+	            alert("_(LAN Ending Port is invalid.)_");
+	            return;
+	         }
+		if(parseInt(iStart) > parseInt(iEnd)) {
+	            alert("_(LAN port range [" + iStart + "-" + iEnd + "] is invalid.)_");
+			return;
+		}
+	}
+	/* LAN ip check */
+	if ( !isValidIpAddress(srvAddr) || compareSubNet(srvAddr, ethSubnetMask, ethIpAddress, ethSubnetMask) != 0 ){
+	    //alert ("Please input a valid LAN IP Address!");
+	    alert ("_(The IP Address is invalid.)_");
+	    return;
+	}
+	if(srvAddr == ethIpAddress)
+	{
+	    alert ("_(The IP Address is invalid.)_");
+	    return;
+	}
+
+	if ( isValidPort(eStart) == false ) {
+            alert("_(Remote Starting Port is invalid.)_");
+            return;
+         }
+	if ( isValidPort(eEnd) == false ) {
+            alert("_(Remote Ending Port is invalid.)_");
+            return;
+         }
+	if(parseInt(eStart) > parseInt(eEnd)) {
+            alert("_(Remote port range [" + eStart + "-" + eEnd + "] is invalid.)_");
+		return;
+	}
+	/*remote ip check*/
+	if (srvWanAddr == "")
+	    srvWanAddr = "0.0.0.0";
+
+	if ( srvWanAddr != "0.0.0.0" && !isValidIpAddress(srvWanAddr)){
+	    //alert ("Please input a valid WAN IP Address!");
+	    alert ("_(The IP Address is invalid.)_");
+	    return;
+	}
+
+	/* port check */
+	if(iStart.match(/[^0-9]/) || iEnd.match(/[^0-9]/) || eStart.match(/[^0-9]/) || eEnd.match(/[^0-9]/))
+	{
+	    //alert("Please input valid port number.");
+	    alert("_(The IP port range is invalid.)_");
+	    return;
+	}
+	iStart=parseInt(iStart,10);
+	iEnd=parseInt(iEnd,10);
+	eStart=parseInt(eStart,10);
+	eEnd=parseInt(eEnd,10);
+	if(iStart.length==0 || iEnd.length==0 || eStart.length==0 || eEnd.length==0)
+	{
+	    //alert("Please input valid port number.");
+	    alert("_(The IP port range is invalid.)_");
+	    return;
+	}
+	if (iStart < 0 || iEnd > 65535 || iStart > iEnd
+	    || eStart < 0 || eEnd > 65535 || eStart > eEnd)
+	{
+	    //alert("Please input valid port number.");
+	    alert("_(The IP port range is invalid.)_");
+	    return;
+	}
+    //Protect same remote port being added
+    var i=0;
+    var protocol="TCP";
+    if(lan_port_protocol.value == 1 )
+        protocol="TCP";
+    else if(lan_port_protocol.value == 2 )
+        protocol="UDP";
+    else if(lan_port_protocol.value == 7 )
+        protocol="GRE";
+    else
+        protocol="TCP";
+	if (modify_flag == 1)
+	{
+		for (i=0; i<modify_rule_num; i++)
+	{
+		var records = rule_list_all[i].split(',');
+        records[1] = htmlDecodeStr(records[1]);
+		var eports  = records[3].split('/');
+		if((protocol == records[1]) && (( eEnd >= eports[1] && eStart <= eports[0]  ) || ( eStart >= eports[0] && eStart <= eports[1] ) || (eEnd >= eports[0] && eEnd <= eports[1] ) ))
+		{
+		alert("_(Remote port range [" + eStart + "-" + eEnd + "] is in used. You must select other ports.)_");
+		return;
+		}
+		}
+		for (i=modify_rule_num+1; i<len; i++)
+		{
+		var records = rule_list_all[i].split(',');
+        records[1] = htmlDecodeStr(records[1]);
+		var eports  = records[3].split('/');
+		if((protocol == records[1]) && (( eEnd >= eports[1] && eStart <= eports[0]  ) || ( eStart >= eports[0] && eStart <= eports[1] ) || (eEnd >= eports[0] && eEnd <= eports[1] ) ))
+		{
+		alert("_(Remote port range [" + eStart + "-" + eEnd + "] is in used. You must select other ports.)_");
+		return;
+		}
+	}
+
+
+	}
+	else
+	{
+	for (i=0; i<len; i++)
+	{
+		var records = rule_list_all[i].split(',');
+        records[1] = htmlDecodeStr(records[1]);
+		var eports  = records[3].split('/');
+		if((protocol == records[1]) && (( eEnd >= eports[1] && eStart <= eports[0]  ) || ( eStart >= eports[0] && eStart <= eports[1] ) || (eEnd >= eports[0] && eEnd <= eports[1] ) ))
+		{
+		alert("_(Remote port range [" + eStart + "-" + eEnd + "] is in used. You must select other ports.)_");
+		return;
+		}
+	}
+    }
+    }
+if (modify_flag == 1)
+{
+    loc += '&rmLst='
+    loc += old_lan_port_ipaddress;
+    loc += '|' + old_remote_starting_port;
+    loc += '|' + old_remote_ending_port;
+    loc += '|' + old_lan_port_protocol;
+    loc += '|' + old_lan_starting_port;
+    loc += '|' + old_lan_ending_port;
+    loc += '|' + old_remote_port_ipaddress;
+
+    loc += '&newsrvName=' + srvName;
+    loc += '&newsrvAddr=' + srvAddr;
+    loc += '&neweStart=' + eStart + ',';
+    loc += '&neweEnd=' + eEnd + ',';
+    loc += '&newproto=' + proto + ',';
+    loc += '&newiStart=' + iStart + ',';
+    loc += '&newiEnd=' + iEnd + ',';
+    loc += '&newsrvWanAddr=' + srvWanAddr;
+}
+else
+{
+
+    loc += '&srvName=' + srvName;
+    loc += '&srvAddr=' + srvAddr;
+    loc += '&eStart=' + eStart + ',';
+    loc += '&eEnd=' + eEnd + ',';
+    loc += '&proto=' + proto + ',';
+    loc += '&iStart=' + iStart + ',';
+    loc += '&iEnd=' + iEnd + ',';
+    loc += '&srvWanAddr=' + srvWanAddr;
+}
+    loc += '&sessionKey=' + sessionKey;
+    loc += '&needthankyou=advancedsetup_advancedportforwarding.html';
+    lochead+=loc;
+    //var code = 'location="' + loc + '"';
+    //eval(code);
+    postSubmit(lochead);
+
+}
+
+function doRemove(num){
+    var lochead = 'scvrtsrv.cmd?';
+    var loc = 'scvrtsrv.cmd?action=remove_port_forwarding&rmLst=';
+    var i = parseInt(num, 10);
+    var records = rule_list_all[i].split(',');
+    var iports = records[0].split('/');
+    var eports = records[3].split('/');
+    proto = htmlDecodeStr(records[1]); //protocol
+    lanip = htmlDecodeStr(records[2]); //iip
+    wanip = htmlDecodeStr(records[4]); //wanip
+    loc += lanip;
+    loc += '|' + eports[0];
+    loc += '|' + eports[1];
+    loc += '|' + proto;
+    loc += '|' + iports[0];
+    loc += '|' + iports[1];
+    loc += '|' + wanip;
+    loc += '&sessionKey=' + sessionKey;
+    loc += '&needthankyou=advancedsetup_advancedportforwarding.html';
+    lochead+=loc;
+    //var code = 'location="' + loc + '"';
+    //eval(code);
+	postSubmit(lochead);
+}
+
+function doModify(num){
+    var i = parseInt(num, 10);
+    modify_rule_num = i;
+    modify_flag = 1;
+    var records = rule_list_all[i].split(',');
+    var iports = records[0].split('/');
+    var eports = records[3].split('/');
+    proto = htmlDecodeStr(records[1]); //protocol
+    lanip = htmlDecodeStr(records[2]); //iip
+    wanip = htmlDecodeStr(records[4]); //wanip
+    document.getElementById("lan_port_ipaddress").value = lanip;
+    old_lan_port_ipaddress = lanip;
+
+    document.getElementById("remote_starting_port").value = eports[0];
+    old_remote_starting_port= eports[0];
+
+    document.getElementById("remote_ending_port").value = eports[1];
+    old_remote_ending_port = eports[1];
+    document.getElementById("lan_starting_port").value = iports[0];
+    old_lan_starting_port = iports[0];
+    document.getElementById("lan_ending_port").value = iports[1];
+    old_lan_ending_port = iports[1];
+    //document.getElementById("remote_port_ipaddress").value = wanip;
+    old_remote_port_ipaddress = wanip;
+    if(proto == "TCP" )
+    {
+        document.getElementById("lan_port_protocol").value = 1;
+    }
+    if(proto == "UDP" )
+    {
+        document.getElementById("lan_port_protocol").value = 2;
+    }
+    if(proto == "GRE" )
+    {
+        document.getElementById("lan_port_protocol").value = 7;
+    }
+     old_lan_port_protocol = proto;
+}
+
+function checkProtocol()
+{
+    var form = document.forms[0];
+    with(form){
+	proto = lan_port_protocol.value;
+	if (proto == "7") {
+	    lan_starting_port.value = "";
+	    lan_ending_port.value = "";
+	    lan_starting_port.disabled = true;
+	    lan_ending_port.disabled = true;
+	}
+	else {
+	    lan_starting_port.disabled = false;
+	    lan_ending_port.disabled = false;
+	}
+    }
+}
+
+function dom_load(){ doLoad(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav4.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(fw_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+	<div id="content_right_header"></div>
+	<div id="content_right_contentarea">
+		<h1 class="advancedsetup_advancedportforwarding">_(Port Forwarding)_ </h1>
+		<form>
+		<p>_(Enter ports or port ranges required to forward Internet applications to a LAN device below.)_ </p>
+		<p><strong>1. _(Set the LAN/WAN port and IP information.)_</strong></p>
+
+		<table border="0" cellspacing="0" cellpadding="0">
+
+		  <tr>
+                        <td width="175">&nbsp;&nbsp;_(Select LAN Device)_:</td>
+                  <!--       <td>&nbsp;</td> -->
+                        <td><select name="lan_device" id="lan_device" onchange="show_host_ip()">
+                              <option>_(Manually enter the IP address)_</option>
+			    </select>
+			</td>
+		  </tr>
+
+		  <tr>
+                        <td width="175">&nbsp;&nbsp;_(LAN IP Address)_:</td>
+<!--                    <td>&nbsp;</td> -->
+         <td><input type="text" name="lan_port_ipaddress" id="lan_port_ipaddress" maxlength="15" size="15" style="height:18px;"/></td>
+                  </tr>
+
+<!--
+		     <tr>
+			    <td>&nbsp;&nbsp;Select Device: <br />&nbsp;
+                                <select name="lan_device" id="lan_device" onchange=show_host_ip()>
+                                    <option>Manually enter the IP address</option>
+			        </select>
+                            </td>
+		            <td>&nbsp;</td>
+                            <td>Enter IP Address: <br />
+                                 <input type="text" name="lan_port_ipaddress" id="lan_port_ipaddress"/>
+                            </td>
+                     </tr>
+-->
+                    <tr>
+                      <td width="175">&nbsp;&nbsp;_(External (WAN) Start Port)_:</td>
+                      <td><input name="remote_starting_port" id="remote_starting_port" type="text" maxlength="5" size="15" style="height:18px;"/></td>
+                    </tr>
+                    <tr>
+                      <td width="175">&nbsp;&nbsp;_(External (WAN) End Port)_:</td>
+                      <td><input name="remote_ending_port" id="remote_ending_port" type="text" maxlength="5" size="15" / style="height:18px;"></td>
+                    </tr>
+                     <tr>
+                        <td width="175">&nbsp;&nbsp;_(Internal (LAN) Start Port)_:</td>
+<!--                    <td>&nbsp;</td> -->
+                        <td>
+                     <input name="lan_starting_port" id="lan_starting_port" type="text" maxlength="5" size="15" style="height:18px;"/>
+                       </td>
+                      </tr>
+                      <tr>
+                        <td width="175">&nbsp;&nbsp;_(Internal (LAN) End Port)_:</td>
+<!--                    <td>&nbsp;</td> -->
+                        <td><input name="lan_ending_port" id="lan_ending_port" type="text" maxlength="5" size="15" style="height:18px;"/></td>
+                      </tr>
+                      <tr>
+                        <td width="175">&nbsp;&nbsp;_(Protocol)_:</td>
+<!--                    <td>&nbsp;</td> -->
+                        <td><strong>
+                          <select name="lan_port_protocol" id="lan_port_protocol" onchange="checkProtocol()">
+                            <option value="1">TCP</option>
+                            <option value="2">UDP</option>
+                            <option value="7">GRE</option>
+			    <!-- 1:TCP 2:UDP 6:ESP 7:GRE other:TCP/UDP -->
+                          </select>
+                        </strong></td>
+                      </tr>
+
+                      <!--
+                      <tr>
+                        <td width="150">&nbsp;&nbsp;LAN IP Address:</td>
+                        <td><input name="lan_port_ipaddress" id="lan_port_ipaddress" type="text" size="15" /></td>
+                      </tr>
+                      -->
+                    </table>
+				    <p>&nbsp;</p>
+<!--
+				  <p><strong>2. _(Set the remote port and IP information.)_ </strong>(_(Optional)_)</p>
+				  <table border="0">
+
+                    <tr>
+                      <td width="150">&nbsp;&nbsp;_(Set Remote IP Address)_:</td>
+                      <td><input name="remote_port_ipaddress" id="remote_port_ipaddress" type="text" size="15" style="height:18px;"/>
+                      (_(0.0.0.0 will use any IP Address)_)</td>
+                    </tr>
+                  </table>
+				  <p>&nbsp;</p>
+-->
+				  <p><strong>2.</strong><strong> _(Click Apply to save changes.)_</strong></p>
+				  <p><a class="button1" onclick="doAdd();" id="btn_apply"><span>_(Apply)_</span></a></p>
+                   <p align="center"><strong>_(Applied Port Forwarding Rules)_</strong></p>
+					<table width="85%" border="0" align="center" cellpadding="0" cellspacing="0" class="defaultstyle" style="margin:10px auto 0 auto;" id="rule_table" name="rule_table">
+		    <tr>
+                        <th align="center">_(LAN START/ END PORT)_</th>
+                        <th>_(PROTOCOL)_</th>
+                        <th>_(LAN IP ADDRESS)_ </th>
+                        <th>_(WAN START/END PORT)_</th>
+<!--
+                        <th>_(REMOTE IP ADDRESS)_</th>
+-->
+                        <th>_(MODIFY)_</th>
+                        <th>_(REMOVE)_</th>
+                      </tr>
+                    </table>
+				  <p>&nbsp;</p>
+			  </form>
+			</div>
+			<div id="content_right_footer"></div>
+		</div>
+		<div class="clear_left"></div>
+		<div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT></body>
+</html>

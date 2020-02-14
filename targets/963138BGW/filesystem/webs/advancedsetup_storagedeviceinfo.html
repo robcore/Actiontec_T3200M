@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Storage Service)_ - _(Storage Device Info)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="Javascript">
+
+function do_load()
+{
+    //highlight the button after user click on it
+	side_nav("advancedsetup_storagedeviceinfo");
+}
+function dom_load(){ do_load(); }
+
+</script>
+</head>
+
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav5.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(adv_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+        <div id="content_right_header"></div>
+        <div id="content_right_contentarea">
+            <h1 class="advancedutilities_storageservice">_(Storage Service)_ </h1>
+            <p>_(The Storage service allows storage devices connected to the modem to be more easily accessed.)_</p>
+            <table id="storagedeviceDetails" width="85%" border="0" align="center" cellpadding="5" cellspacing="0" class="storagedevice_style">
+                <tr align="left">
+                    <th style="padding:10px;">_(Volumename)_</th>
+                    <th style="padding:10px;">_(FileSystem)_</th>
+                    <th style="padding:10px;">_(Total Space)_</th>
+                    <th style="padding:10px;">_(Used Space)_</th>
+                </tr>
+                <script>
+                    {
+                        var sdinfo = document.getElementById("storagedeviceDetails");
+                        var storagedevice_info = '<%ejGetOther(storagedeviceinfo)%>';
+                        var storagedevice_item = storagedevice_info.split('|');
+                        var i = 0;
+                        if (storagedevice_item != '')
+                        {
+                            for (i=0; i<storagedevice_item.length; i++)
+                            {
+                                var details = storagedevice_item[i].split('/');
+
+                                document.writeln("<tr align=\"center\" class\"storagedeviceinfo\">");
+                                //show Volumename
+                                document.writeln("<td style=\"padding:10px;\">" + details[0] + "</td>");
+                                //show FileSystem
+                                document.writeln("<td style=\"padding:10px;\">" + details[1] + "</td>");
+                                //show Total Space
+                                document.writeln("<td style=\"padding:10px;\">" + details[2] + "</td>");
+                                //show Used Space
+                                document.writeln("<td style=\"padding:10px;\">" + details[3] + "</td>");
+                                document.writeln("</tr>");
+                            }
+                        }
+                        else
+                        {
+                            var blank = "_(No Storage Device Found)_";
+                            appendTableEmptyRow(sdinfo, "center", "4", blank);
+                        }
+                    }
+                </script>
+            </table>
+            <p></p>
+        </div>
+        <div id="content_right_footer"></div>
+    </div>
+    <div class="clear_left"></div>
+    <div id="footer">&nbsp;</div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(dom_load);
+</SCRIPT>
+</body>
+</html>

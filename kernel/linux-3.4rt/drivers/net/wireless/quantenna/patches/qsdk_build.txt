@@ -1,0 +1,5 @@
+tar zxvf quantenna-sdk-v36.3.0.2.tar.gz
+cd quantenna-sdk-v36.3.0.2
+patch -p1 < ../static_ip.patch
+make topaz_pcie_config
+make fromscratch

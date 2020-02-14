@@ -1,0 +1,702 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(IPv6 Ping Test)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="js/nav.js"></script>
+<script type="text/javascript" src="js/util.js"></script>
+<script type="text/javascript" src="js/functions.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<%ejInclude("ipv6_common.html")%>
+
+<script language="javascript">
+
+var no_response = 0;
+
+var ipv6_hostName = htmlDecodeStr("<%ejGet(ipv6_hostName)%>");
+var ipv6_packetSize = htmlDecodeStr("<%ejGet(ipv6_packetSize)%>");
+
+function refresh_result(values)
+{
+    var form = document.forms[0];
+    var res = "";
+    var table = document.getElementById("result_tbl");
+    var table_2 = document.getElementById("statistics_tbl");
+
+    var i=0 , j=0;
+    var show_line = new Array();
+
+	var seg = 0;
+	var tmp = "";
+	var packetsize = "";
+    var lastRow=1;
+    var tbody1 = table.getElementsByTagName("TBODY")[0];
+
+	document.getElementById("test_off").style.display = "block";
+    document.getElementById("test_on").style.display = "none";
+
+	lastRow = tbody1.rows.length;
+
+	for ( i = lastRow; i > 1 ; i-- ) {
+		tbody1.removeChild(tbody1.rows[i - 1]);
+	}
+
+    tbody1 = table_2.getElementsByTagName("TBODY")[0];
+
+	lastRow = tbody1.rows.length;
+	for ( i = lastRow; i > 1 ; i-- ) {
+		tbody1.removeChild(tbody1.rows[i - 1]);
+	}
+
+    if(values!="")
+    {
+	    values = values.split('+');
+	    seg = htmlDecodeStr(values[2]);
+	    tmp = htmlDecodeStr(values[1]);
+	    packetsize = htmlDecodeStr(values[0]);
+    }
+
+	if(seg == 1)
+	{
+		setTimeout("http_refresh()", 1000);
+	}
+
+	//When a invalid domain name to be set,It will be cycle all along,and consume the CPU.
+	if(tmp != "" && tmp != "0")
+        res = tmp.split('|');
+
+	if(seg != 1)
+    {
+        document.myform.ipv6_pingSign.value = 0;
+        document.getElementById("packet_size").value=32;
+    }
+
+    if(res != "" && res.length  > 1)
+    {
+        var details = res[0].split(" ");
+        show_line[0]= details[1]+"<br>"+ details[2];
+        show_line[1]= packetsize;
+
+        if(res.length < 4 || res.length == 4)    // Ping fail
+        {
+            j = 2;
+            if (seg == 1)
+                show_line[2] = "_(N/A)_";
+            else
+                show_line[2] = "_(Timeout)_" ;
+
+            show_line[3] = "_(N/A)_" ;
+
+            for(i=0; i<4; i++)
+            {
+                appendTableRow(table, "center", show_line);
+            }
+        }
+        else  // Ping Success
+        {
+            for(i=1,j=1;;i++,j++)
+            {
+                details = res[i].split(" ");
+                if(details.length != 8 )
+                    break;
+
+                show_line[2] = details[6].split("=")[1] + "ms";
+                show_line[3] = details[5].split("=")[1] ;
+                appendTableRow(table, "center", show_line);
+            }
+
+            for(; i<4; i++)
+            {
+				var details = ["_(N/A)_", "_(N/A)_", "_(Timeout)_", "_(N/A)_"];
+                appendTableRow(table, "center", details);
+            }
+        }
+
+		if(res[j] != undefined) {
+	        var details = res[j].split(" ");
+
+	        while(details.length != 9){
+	          j++;
+
+			  if(res[j] != undefined) {
+		          details = res[j].split(" ");
+
+		          if(details.length == 9 || details.length == 10)
+		          {
+			           show_line[0] = details[0];
+			           show_line[1] = details[3];
+
+					   if(details[3] == 0)
+							show_line[2] = "100%";
+					   else if(details[3] == details[0])
+							show_line[2] = "0%";
+					   else if(details[0] != 0)
+						show_line[2] = (((details[0] - details[3])/details[0])*100) + "%";
+
+			           j=j+1;
+			           if(res[j])
+			           {
+			               details = res[j].split(" ");
+			               show_line[3] = details[3].split("/")[0] + "ms";
+			               show_line[4] = details[3].split("/")[2] + "ms";
+			               show_line[5] = details[3].split("/")[1] + "ms";
+			           }
+			           else
+			           {
+			               show_line[3] = "_(N/A)_" ;
+			               show_line[4] = "_(N/A)_" ;
+			               show_line[5] = "_(N/A)_" ;
+			           }
+		               appendTableRow(table_2, "center", show_line);
+		               break;
+			  }
+			 }
+			 else
+				break;
+	      }
+	  }
+      document.getElementById("packet_size").value=packetsize;
+    }
+    else
+    {
+		if(seg != 1)
+		{
+			pop_up("_(Unknown host, or the network is currently unavailable.)_",0);
+		}
+		var details = ["_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_"];
+		var details_2 = ["_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_"];
+
+		document.getElementById("test_off").style.display = "block";
+		document.getElementById("test_on").style.display = "none";
+
+		for( i=0 ; i<4; i++){
+			appendTableRow(table, "center", details);
+		}
+        appendTableRow(table_2, "center", details_2);
+    }
+
+	if(seg != 1)
+    {
+        document.getElementById("simple_result").innerHTML = "_(No Test in Progress)_";
+		document.getElementById("test_off").style.display = "none";
+	document.getElementById("test_on").style.display = "block";
+    }
+	else
+	{
+		document.getElementById("test_off").style.display = "block";
+	document.getElementById("test_on").style.display = "none";
+    }
+}
+
+function do_load()
+{
+	htmlDecode();
+
+	document.getElementById("url").value = ipv6_hostName;
+	document.getElementById("packet_size").value = ipv6_packetSize;
+
+    var form = document.forms[0];
+    var res = "";
+    var table = document.getElementById("result_tbl");
+    var table_2 = document.getElementById("statistics_tbl");
+    var i=0 , j=0;
+
+    var show_line = new Array() ;
+	var values = "";
+	var seg = htmlDecodeStr('<%ejGet(ipv6_pingSign)%>');
+    var tmp="<%ejGetOther(ipv6_pingTestResult)%>";
+	var packetsize = htmlDecodeStr("<%ejGet(ipv6_packetSize)%>");
+    var lastRow=1;
+
+    side_nav("ipv6_ping");
+
+    var tbody1 = table.getElementsByTagName("TBODY")[0];
+
+	if(seg != 1)
+    {
+		document.getElementById("test_off").style.display = "none";
+	document.getElementById("test_on").style.display = "block";
+    }
+	else
+	{
+        document.getElementById("simple_result").innerHTML = '<font color="#006600">_(Test is in progress)_ ...</font>';
+		document.getElementById("test_off").style.display = "block";
+	document.getElementById("test_on").style.display = "none";
+    }
+
+	lastRow = tbody1.rows.length;
+	for ( i = lastRow; i > 1 ; i-- ) {
+		tbody1.removeChild(tbody1.rows[i - 1]);
+	}
+
+    tbody1 = table_2.getElementsByTagName("TBODY")[0];
+	lastRow = tbody1.rows.length;
+
+	for ( i = lastRow; i > 1 ; i-- ) {
+		tbody.removeChild(tbody1.rows[i - 1]);
+	}
+
+	if(seg == "1")
+	{
+		document.myform.ipv6_pingSign.value = 0;
+		setTimeout("http_refresh()", 2000);
+    }
+
+	if(tmp != "" && tmp != "0")
+		res = tmp.split('|');
+
+	if(seg != "1")
+    {
+        document.myform.ipv6_pingSign.value = 0;
+        document.getElementById("packet_size").value=32;
+    }
+
+    if(res != "" && res.length  > 1)
+    {
+        var details = res[0].split(" ");
+
+        show_line[0]= details[1]+"<br>"+ details[2];
+
+        show_line[1]= packetsize;
+
+        if(res.length < 4 || res.length == 4)  // Ping fail
+        {
+            j = 2;
+            show_line[2] = "_(TIMEOUT)_" ;
+            show_line[3] = "_(N/A)_" ;
+
+            for(i=0; i<4; i++)
+            {
+                appendTableRow(table, "center", show_line);
+            }
+        }
+        else                                  // Ping Success
+        {
+            for(i=1,j=1;;i++,j++)
+            {
+                details = res[i].split(" ");
+
+                if(details.length != 8 )
+                    break;
+
+                show_line[2] = details[6].split("=")[1] + "ms";
+                show_line[3] = details[5].split("=")[1] ;
+                appendTableRow(table, "center", show_line);
+            }
+
+            for(; i<4; i++)
+            {
+                var details = ["_(N/A)_", "_(N/A)_", "_(TIMEOUT)_", "_(N/A)_"];
+                appendTableRow(table, "center", details);
+            }
+        }
+
+		if(res[j] != undefined) {
+	        var details = res[j].split(" ");
+	        while(details.length != 9  ){
+	          j++;
+
+			  if(res[j] != undefined) {
+		          details = res[j].split(" ");
+
+		          if(details.length == 9 || details.length == 10)
+		          {
+					   show_line[0] = details[0];
+					   show_line[1] = details[3];
+					   if(details[3] == 0)
+							show_line[2] = "100%";
+					   else if(details[3] == details[0])
+							show_line[2] = "0%";
+					   else if(details[0] != 0)
+							show_line[2] = (((details[0] - details[3])/details[0])*100) + "%";
+
+					   j=j+1;
+					   if(res[j] )
+					   {
+						   details = res[j].split(" ");
+						   show_line[3] = details[3].split("/")[0] + "ms";
+						   show_line[4] = details[3].split("/")[2] + "ms";
+						   show_line[5] = details[3].split("/")[1] + "ms";
+					   }
+					   else
+					   {
+						   show_line[3] = "N/A" ;
+						   show_line[4] = "N/A" ;
+						   show_line[5] = "N/A" ;
+					   }
+		               appendTableRow(table_2, "center", show_line);
+		               break;
+		           }
+			    }
+			    else
+					break;
+	        }
+		}
+	document.getElementById("packet_size").value=packetsize;
+    }
+    else
+    {
+      var details = ["_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_"];
+      var details_2 = ["_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_", "_(N/A)_"];
+
+	  document.getElementById("test_off").style.display = "block";
+      document.getElementById("test_on").style.display = "none";
+
+      for( i=0 ; i<4; i++){
+        appendTableRow(table, "center", details);
+      }
+        appendTableRow(table_2, "center", details_2);
+    }
+
+	if(seg != "1")
+    {
+		document.getElementById("test_off").style.display = "none";
+	document.getElementById("test_on").style.display = "block";
+    }
+	else
+	{
+		document.getElementById("test_off").style.display = "block";
+	document.getElementById("test_on").style.display = "none";
+    }
+
+	var lan_ifname = htmlDecodeStr('<%ejGetOther(ipv6_wanparameter, lan_ifname)%>');
+	var fwd_defaultconn = htmlDecodeStr('<%ejGetOther(ipv6_wanparameter, fwd_defaultconn)%>');
+
+    var interface_name = document.getElementById("interface_name");
+    interface_name.options.length = 0;
+
+    interface_name.options[0] = new Option("_(None)_", "N");
+
+    if(lan_ifname != "")
+		interface_name.options[1] = new Option(lan_ifname, lan_ifname);
+
+    if(fwd_defaultconn != "")
+	interface_name.options[2] = new Option(fwd_defaultconn, fwd_defaultconn);
+
+    var ipv6_interfaceName = htmlDecodeStr('<%ejGet(ipv6_interfaceName)%>');
+    if(ipv6_interfaceName != "")
+	interface_name.value = ipv6_interfaceName;
+}
+
+function checkInvalidchar(Address)
+{
+    var s = Address;
+    var num = /^\d+/;
+    var web_rule = /^([A-Za-z0-9]|-)+(\.([A-Za-z0-9]|-)+)*\.[a-z]{2,6}$/;
+    var isIp = false;
+    var isUrl = false;
+
+    if (s=="" || s==null)
+    {
+		tips = "_(You must enter a valid entry.)_";
+		pop_up(tips,0);
+        return false;
+    }
+
+	if (isipv6(s))
+		isIp = true;
+    else
+		isUrl = true;
+
+	tips = "_(The IP Address or URL inserted in step 1 is invalid. You must enter a valid IP Address or URL.)_";
+	page = '0';
+
+    if (isIp)
+    {
+		if (!isipv6(s))
+		{
+			pop_up(tips,page);
+			return false;
+		}
+    }
+
+    if (isUrl)
+    {
+		if (!web_rule.test(s) || s.indexOf('(')!=-1 || s.indexOf(')')!=-1)
+		{
+			pop_up(tips,page);
+			return false;
+		}
+    }
+    return true;
+}
+
+function PingTest()
+{
+    var form = document.forms[0];
+    var i = 0;
+    var lochead='ipv6_ping.cgi?';
+    var loc="";
+    var key = '<%ejGetOther(encrypt_key, 0)%>';
+    var pcktSize = document.getElementById("packet_size").value;
+
+    if(!checkInvalidchar(document.getElementById("url").value))
+    {
+        return false;
+    }
+
+    if(isNaN(pcktSize) == true )
+    {
+		tips = "_(The packets size must be a number.)_";
+		pop_up(tips,0);
+        document.getElementById("packet_size").value=32;
+        return false;
+    }
+
+    if(pcktSize < 32 || pcktSize > 65507 )
+    {
+		tips = "_(The packets size must be between 32 and 65507.)_";
+		pop_up(tips,0);
+        document.getElementById("packet_size").value=32;
+        return false;
+    }
+
+    document.getElementById("test_off").style.display = "block";
+    document.getElementById("test_on").style.display = "none";
+    form.elements[1].value = 1;
+    form.elements[0].value = document.getElementById("url").value;
+    form.elements[2].value = document.getElementById("packet_size").value;
+    form.elements[3].value = 4; // The ping number is 4
+    form.elements[5].value = document.getElementById("interface_name").value;
+
+    form.elements[0].disabled = false;
+    form.elements[2].disabled = false;
+    form.elements[3].disabled = false;
+    form.elements[5].disabled = false;
+
+    for(i=0;i<form.elements.length;i++)
+    {
+          if(form.elements[i].type == "hidden" && form.elements[i].disabled == false)
+          {
+              if(i!=0)
+                loc+="&";
+              loc+=form.elements[i].name;
+              loc+="=";
+              loc+=form.elements[i].value;
+          }
+      }
+      loc=encrypt_query(loc,key);
+      lochead+=loc;
+      //var code = 'location="' + lochead + '"';
+      //eval(code);
+
+      //postSubmit(lochead);
+      document.getElementById("simple_result").innerHTML = '<font color="#006600">_(Test is in progress)_ ...</font>';
+      document.getElementById("test_off").style.display = "block";
+      document.getElementById("test_on").style.display = "none";
+      if(xmlhttp != null)
+     {
+      xmlhttp.open("POST",lochead,true);
+      xmlhttp.send(null);
+      setTimeout("http_refresh()", 2000);
+     }
+}
+
+function Watch_Dog () {
+	if ( no_response ) {
+		http_refresh();
+	}
+}
+
+function http_refresh()
+{
+	var statusval = "";
+	if(xmlhttp != null)
+	{
+		//SW-Bug #127719
+		var curTime = new Date();
+		curTime = curTime.getTime();
+		xmlhttp.open("GET","./ipv6_ping_refresh.html?time="+curTime,true);
+		xmlhttp.onreadystatechange =function()
+		{
+		if(xmlhttp.readyState==4)
+            {
+                no_response = 0;
+				document.getElementById("test_off").style.display = "block";
+			document.getElementById("test_on").style.display = "none";
+                statusval = xmlhttp.responseText;
+
+                if(statusval == "")
+                {
+                    setTimeout("http_refresh();", 5000);
+                }
+                else if(statusval.indexOf("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd") != -1)
+                    return;
+                else
+                {
+                    refresh_result(statusval);
+                }
+			}
+        }
+
+        xmlhttp.send(null);
+        no_response = 1;
+		setTimeout("Watch_Dog();", 5000);
+	}
+	return statusval;
+}
+</script>
+
+</head>
+
+<body>
+
+<form name="myform" action="ipv6_ping.cgi" method="POST">
+
+<!--0--><input type="hidden" name="ipv6_hostName" value="<%ejGet(ipv6_hostName)%>" disabled="disabled"/>
+
+<!--1--><input type="hidden" name="ipv6_pingSign" value="<%ejGet(ipv6_pingSign)%>"/>
+
+<!--2--><input type="hidden" name="ipv6_packetSize" value="<%ejGet(ipv6_packetSize)%>" disabled="disabled"/>
+
+<!--3--><input type="hidden" name="ipv6_pingNum" value="<%ejGet(ipv6_pingNum)%>" disabled="disabled"/>
+
+<!--4--><input type="hidden" name="nothankyou" value="1"/>
+
+<!--5--><input type="hidden" name="ipv6_interfaceName" value="<%ejGet(ipv6_interfaceName)%>" disabled="disabled"/>
+
+<input type="hidden" name="sessionKey" value='<%ejGetOther(sessionKey)%>' >
+
+</form>
+
+<div id="wrapper">
+
+<!-- TOP NAV -->
+
+<%ejInclude(top_btn_nav5.html)%>
+
+<!-- END TOP NAV -->
+
+<!-- SIDE NAV -->
+
+<%ejInclude(adv_left.html)%>
+
+<!-- END SIDE NAV -->
+
+
+
+<!-- MAIN CONTENT AREA -->
+
+<div id="content_right">
+	<div id="content_right_header"></div>
+	<div id="content_right_contentarea">
+
+	<h1 class="utilities_pingtest">_(IPv6 Ping Test)_</h1>
+	<p>_(Test the Modem's Internet connectivity to a specific host using the Ping Test, below.)_</p>
+
+	<form>
+		<div class="stepWrapper_header"></div>
+		<div class="stepWrapper">
+			<p><strong>1. _(Insert a URL or IP address below.)_ </strong></p>
+			<table>
+				<tr>
+					<td width="150"><label for="url">_(URL or IP)_:</label></td>
+					<td><input name="url" type="text" id="url" size="35" style="height:18px;"/></td>
+				</tr>
+			</table>
+		</div>
+		<div class="stepWrapper_footer"></div>
+
+		<div class="stepWrapper_header"></div>
+		<div class="stepWrapper">
+			<p><strong>2. _(Select the interface)_. </strong></p>
+			<table>
+				<tr>
+					<td width="150"><label for="interface_name">_(Interface Name)_:</label></td>
+					<td><select id="interface_name" name="interface_name"></select></td>
+				</tr>
+			</table>
+		</div>
+		<div class="stepWrapper_footer"></div>
+
+		<div class="stepWrapper_header"></div>
+		<div class="stepWrapper">
+			<p><strong>3. _(Select the packet size.)_ </strong></p>
+			<table>
+				<tr>
+					<td width="150"><label for="packet_size">_(Packet size (bytes))_:</label></td>
+					<td><input type="text" name="packet_size" id="packet_size" size="10"/></td>
+				</tr>
+			</table>
+		</div>
+		<div class="stepWrapper_footer"></div>
+
+		<div id="test_off" style="display:block">
+			<div class="stepWrapper_header"></div>
+			<div class="stepWrapper">
+				<div class="stepWrapper greyed_out">
+					<p><strong>4. _(Select test.)_</strong></p>
+					<p><a class="button2" id="btn_test_disable"><span>_(Test)_</span></a></p>
+				</div>
+			</div>
+			<div class="stepWrapper_footer"></div>
+		</div>
+
+		<div id="test_on" style="display:none">
+			<div class="stepWrapper_header"></div>
+			<div class="stepWrapper">
+				<p><strong>4. _(Select test.)_</strong></p>
+				<p><a class="button1" onclick="PingTest()" id="btn_test"><span>_(Test)_</span></a></p>
+			</div>
+			<div class="stepWrapper_footer"></div>
+		</div>
+
+		<div id="test_results">
+			<div class="stepWrapperdark_header"></div>
+			<div class="stepWrapperdark">
+            <table width="48%" border="0" align="center" cellpadding="5" cellspacing="0" class="defa
+ultstyle" style="margin:10px auto 0 auto;">
+                <tr align="center">
+                    <th>_(Test Status)_</th>
+                </tr>
+                <tr align="center">
+                    <td id="simple_result" text-align="center">_(No Test in Progress)_</td>
+                </tr>
+            </table>
+            <p>&nbsp;</p>
+				<p align="center"><strong>_(Ping test results)_</strong></p>
+				<table id="result_tbl" class="defaultstyle">
+					<tbody>
+						<tr align="center">
+							<th width="200">_(Reply From)_</th>
+							<th width="200">_(Bytes)_</th>
+							<th width="200">_(Time)_</th>
+							<th width="100">_(TTL)_</th>
+						</tr>
+					</tbody>
+				</table>
+
+				<p>&nbsp;</p>
+				<p align="center"><strong>_(Ping Statistics)_</strong></p>
+				<table id="statistics_tbl" class="defaultstyle">
+					<tbody>
+						<tr align="center">
+							<th width="60">_(Packets Sent)_</th>
+							<th width="69">_(Packets Received)_</th>
+							<th width="66">_(Packet Loss)_</th>
+							<th width="67">_(Round Trip Minimum)_</th>
+							<th width="71">_(Round Trip Maximum)_</th>
+							<th width="80">_(Round Trip Average)_</th>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="stepWrapperdark_footer"></div>
+		</div>
+	</form>
+    </div>
+    <div id="content_right_footer"></div>
+</div>
+
+<div class="clear_left"></div>
+
+</div>
+
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(do_load);
+</SCRIPT>
+
+</body>
+</html>

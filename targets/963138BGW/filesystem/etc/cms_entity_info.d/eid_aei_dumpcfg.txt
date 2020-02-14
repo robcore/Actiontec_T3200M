@@ -1,0 +1,5 @@
+BEGIN
+  eid         = EID_DUMPCFG
+  name        = dumpcfg
+  flags       = EIF_MDM|EIF_MESSAGING_CAPABLE
+END

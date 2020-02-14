@@ -1,0 +1,407 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>_(Advanced Setup)_ - _(Modem Utilities)_ - _(Upgrade Firmware)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<SCRIPT LANGUAGE="JavaScript" SRC="js/functions.js" TYPE="text/javascript"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript" SRC="js/util.js" TYPE="text/javascript"></SCRIPT>
+<SCRIPT LANGUAGE="JavaScript" SRC="js/nav.js" TYPE="text/javascript"></SCRIPT>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="javascript">
+<!-- hide
+
+var doing= 0;
+
+//==============================================
+var wait=0;
+var TimeWait=70000;
+var RefreshTime=1000;
+var timeout=(TimeWait/RefreshTime)*10;
+var loadedcolor='red' ;       // PROGRESS BAR COLOR
+var unloadedcolor='#175e8d';     // COLOR OF UNLOADED AREA
+var barheight=15;              // HEIGHT OF PROGRESS BAR IN PIXELS
+var barwidth=320;              // WIDTH OF THE BAR IN PIXELS
+var waitTime=190;               // NUMBER OF SECONDS FOR PROGRESSBAR
+var percent=0;
+var Pid=0;
+var ns4=(document.layers)?true:false;
+var ie4=(document.all)?true:false;
+var blocksize=(barwidth-2)/waitTime/10;
+var loaded=0;
+var seconds=0;
+var PBouter;
+var PBdone;
+var PBper;
+var PBbckgnd;
+var Title;
+var txt='';
+if(ns4){
+txt+='<table border=0 cellpadding=0 cellspacing=0><tr><td>';
+txt+='<ilayer name="PBouter" visibility="hide" height="'+barheight+'" width="'+barwidth+'">';
+txt+='<layer width="'+barwidth+'" height="'+barheight+'" top="0" left="0"></layer>';
+txt+='<layer width="'+(barwidth-2)+'" height="'+(barheight-2)+'" bgcolor="'+unloadedcolor+'" top="1" left="1"></layer>';
+txt+='<layer name="PBdone" width="'+(barwidth-2)+'" height="'+(barheight-2)+'" bgcolor="'+loadedcolor+'" top="1" left="1"></layer>';
+txt+='</ilayer>';
+txt+='</td></tr></table>';
+}else{
+txt+='<div id="PBouter" style="position:relative; visibility:hidden; height:'+barheight+'px;">';
+txt+='<div id="title" style="position:absolute; top:0px; left:50px; visibility:hidden;"><font face=verdana size=2>Progress:</font></div>';
+txt+='<div style="position:absolute; top:1px; left:130px; width:'+(barwidth-2)+'px; height:'+(barheight-2)+'px; background-color:'+unloadedcolor+'; font-size:1px;"></div>';
+txt+='<div id="PBdone" style="position:absolute; top:1px; left:130px; width:0px; height:'+(barheight-2)+'px; background-color:'+loadedcolor+'; font-size:1px;"></div>';
+txt+='<div id="PBper" style="position:absolute; top:0px; left:450px; visibility:hidden;"><font face=verdana size=2>%</font></div>';
+txt+='</div>';
+}
+//====================================================
+var show_id= "firmware_updating";
+
+
+
+function offEl(id) {
+    if (ns4) {
+	document.getElementById(id).style.visibility = "hide";
+    }
+    else
+	document.getElementById(id).style.visibility = "hidden";
+}
+
+function onEl(id) {
+    if (ns4) {
+	document.getElementById(id).style.visibility = "show";
+    }
+    else
+	document.getElementById(id).style.visibility = "visible";
+}
+
+function Blink(){
+    seconds++;
+    if ((seconds % 30) == 0) {
+        onEl(show_id);
+    }
+    else if ((seconds % 30) == 20) {
+        offEl(show_id);
+    }
+}
+
+function refreshSub0()
+{
+    var progress;
+    if(percent >= 99)
+       percent=100;
+    percent = parseInt(percent/10)*10;
+    if (percent > 90)
+    {
+        percent = 100;
+
+        clearInterval(Pid);
+        onEl(show_id);
+        document.getElementById("percentage").innerHTML= "<strong>_(Firmware upgrade is complete.)_</strong>";
+        setTimeout('refreshSub();',1000);
+        return;
+    }
+    else if(percent >= 0)
+    {
+        progress =  "<strong>_(Firmware upgrade in progress…)_  " + percent + "%</strong>";
+        document.getElementById("percentage").className = "upgrading_firmware";
+        document.getElementById("percentage").innerHTML= progress;
+    }
+    setTimeout('refreshSub0();', RefreshTime);
+    setTimeout("refreshPercent();", RefreshTime);
+}
+
+function refreshSub1()
+{
+    parent.location.href = "uploadinfo_success.html";
+    return;
+}
+
+function refreshSub()
+{
+	document.getElementById("percentage").className = "connected";
+	document.getElementById("percentage").innerHTML = "<strong>_(The modem is rebooting. After the modem has rebooted, you will be taken back to the Main page.)_</strong>"
+
+	if(wait == 0)
+	{
+	    wait = 1;
+	    setTimeout('refreshSub();', 80000);
+		return;
+	}
+	var ipAddress= htmlDecodeStr('<%ejGetOther(IPInterfaceIPAddress)%>');
+
+	if(ipAddress != '')
+	{
+	    refreshSub1();
+	}
+	else
+	{
+	    setTimeout("refreshSub();", RefreshTime);
+	}
+
+	return;
+}
+
+function refreshPercent()
+{
+    if (xmlhttp != null)
+    {
+        var myDate=new Date();
+        xmlhttp.open("GET","./getUpgradePercent.cgi" + "?" + myDate.getTime(),true);
+
+        xmlhttp.onreadystatechange = function()
+        {
+            if (xmlhttp.readyState == 4)
+            {
+                resp = xmlhttp.responseText;
+                if (resp != "")
+                {
+                    // resp < 0, means httpd restarted, thus firmware upgrading completed
+                    if (parseInt(resp) < 0 && percent != 0){
+			refreshSub1();
+                        //percent = 100;
+			}
+                    else
+                    {
+			var value;
+			value = parseInt(resp);
+			if (percent <= value)
+				percent = value;
+                       }
+                }
+		else if(percent >=90 ){
+                        percent = 100;
+		}
+            }
+        }
+        xmlhttp.send(null);
+
+    }
+}
+
+function do_load()
+{
+	//highlight the button after user click on it
+	side_nav("upgradefirmware");
+}
+
+function upgrade_progress()
+{
+    var per;
+    onEl(show_id);
+    document.getElementById("firmware_updating_tb").style.display="block";
+    document.getElementById("percentage").className = "upgrading_firmware";
+       
+    Pid = setInterval('Blink()',100);
+
+    setTimeout('refreshSub0();', 2000);
+}
+
+function getMsgIndex(val)
+{
+	var idxNum = parseInt(val);
+	if((!isNaN(idxNum)) && (idxNum < 0 || idxNum > 6) && (idxNum != 9007))
+	idxNum = 4;
+
+	return idxNum;
+}
+
+function http_refresh()
+{
+	var statusval = "";
+	var msg1 = "_(Image uploading failed. The system is out of memory. The Modem will reboot.)_";
+	var msg2 = "_(Image uploading failed. No image file was selected.)_";
+	var msg3 = "_(Image uploading failed. The selected file contains an illegal image.)_";
+	var msg4 = "_(Fatal error during image uploading.)_";
+
+	if(xmlhttp != null)
+	{
+		//SW-Bug #127719
+		var curTime = new Date();
+		curTime = curTime.getTime();
+		xmlhttp.open("GET","./utilities_upgradefirmware_refresh.html?time="+curTime,true);
+		xmlhttp.onreadystatechange =function()
+		{
+		if(xmlhttp.readyState==4)
+            {
+                statusval = xmlhttp.responseText;
+                //alert(statusval);
+                if(statusval == "")
+                {
+                    setTimeout("http_refresh();", 5000);
+                }
+                else
+                {
+                    var indx = getMsgIndex(statusval);
+                    if (indx == 9007)
+                    {
+						setTimeout("http_refresh();", 5000);
+						return;
+					}
+					if (indx == 1)
+					{
+						alert(msg1);
+						doing = 0;
+						return;
+					}
+					else if (indx == 2)
+					{
+						alert(msg2);
+						doing = 0;
+						return;
+					}
+					else if (indx == 3)
+					{
+						alert(msg3);
+						doing = 0;
+						return;
+					}
+					else if (indx == 4)
+					{
+						alert(msg4);
+						doing = 0;
+						return;
+					}
+					else //indx == 0
+					{
+						doing = 1;
+						upgrade_progress();
+					}
+                }
+			}
+        }
+        xmlhttp.send(null);
+	}
+	return statusval;
+}
+
+function upgrade()
+{
+    form = document.myform;
+    form.action = "upload.cgi";
+    form.target = "hidepage";
+    if ( form.filename.value == "" )
+    {
+        alert("_(Select an image file.)_");
+        return ;
+    }
+    if ( doing == 0 )  {
+         doing = 1;
+         form.fileshow.disabled = true;
+         form.submit();
+         document.getElementById("percentage").innerHTML= "_(Selected image being uploaded, please wait...)_";
+         http_refresh();
+         //upgrade_progress();
+    }
+    else
+    {
+        alert("_(Upload software is in progress. You must wait until the process is complete.)_");
+        return ;
+    }
+
+}
+
+function getuploadfile(filename)
+{
+    document.getElementById("fileshow").value = filename;
+}
+
+function chooseFile()
+{
+    document.getElementById("filename").click();
+}
+// done hiding -->
+function dom_load(){ do_load(); }
+</script>
+</head>
+
+<body>
+    <iframe id="hidepage" name="hidepage" src="utilities_upgradefirmware_hide.html" width="0" height="0" scrolling=no  border="0" frameborder="0"  ></iframe>
+    <div id="wrapper">
+        <!-- TOP NAV -->
+        <%ejInclude(top_btn_nav5.html)%>
+        <!-- END TOP NAV -->
+        <!-- SIDE NAV -->
+        <%ejInclude(adv_left.html)%>
+        <!-- END SIDE NAV -->
+
+        <!-- MAIN CONTENT AREA -->
+        <div id="content_right">
+            <div id="content_right_header"></div>
+            <div id="content_right_contentarea">
+
+                <h1 class="utilities_upgradefirmware">_(Upgrade Firmware)_ </h1>
+                <p>_(To upgrade the firmware on the modem, use the following instructions:)_ </p>
+
+                <div id="firmware_uptodate" style="display:block;">
+                    <table border="0" cellspacing="0" cellpadding="0" width="85%" class="defaultstyle" >
+                        <tr>
+                            <th  width="15%"></th>
+                            <td width="30%" nowrap><strong>_(Current Firmware Version)_: </strong></td>
+                            <td width="40%"><span class="status_text_big"> <%ejGet(sysVersion)%></span></td>
+                            <th  width="15%"></th>
+                        </tr>
+                    </table>
+                    <p>&nbsp;</p>
+                    <!--p class="connected"><strong>Current Firmware Version: <%ejGet(sysVersion)%> </strong></p-->
+                    <!--p class="connected"><strong>Firmware is Up to Date! </strong></p-->
+                </div>
+
+                <div id="firmware_notuptodate" style="display:block;">
+                    <form name="myform" method="post" ENCTYPE="multipart/form-data" action='upload.cgi'>
+                        <div id="firewareversion" style="display:none">
+                            <p class="notconnected" style="text-decoration:block;"><strong>_(Current Firmware Version)_: <%ejGet(sysVersion)%>(Upgrade Available)</strong></p>
+                            <p class="notconnected" style="text-decoration:block;"><strong>_(Upgrade the firmware, below.)_ </strong></p>
+                        </div>
+                        <p><strong>1. _(Download the firmware file to your computer desktop.)_ </strong></p>
+                        <p>&nbsp;</p>
+                        <p><strong>2. _(Click Browse, then select the downloaded file.)_</strong></p>
+                        <!--QA-Bug #127607: Add a style for type=file-->
+                        <table border="0" cellspacing="0" cellpadding="0" style="padding-bottom:0px;">
+                            <tr>
+                                <td >
+                                    <div class="fileinputs">
+                                        <input name='filename' id="filename" type="file" class="filehidden" onchange="getuploadfile(this.value)" size="1"/>
+                                        <table border="0" cellspacing="0" cellpadding="0" class="fileinputs_tab">
+                                            <tr>
+                                                <td><input id="fileshow" name="fileshow" style="width:260px; height:16px;" type="text" onclick="chooseFile()" readonly/></td>
+                                                <td><a class="button1" onclick="chooseFile()" id="btn_browse"><span>_(Browse)_</span></a></td>
+                                            </tr>
+                                        </table>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                        <p>&nbsp;</p>
+                        <p><strong>3. _(Click Upgrade Firmware to begin the upgrade.)_</strong></p>
+                        <p><a class="button1" href="#"  onclick="upgrade()" id="btn_upgrade"><span>_(Upgrade)_</span></a>
+                        <p>
+                        <div id="firmware_updating_tb" style="display:block">
+                            <table border="0" cellspacing="0" cellpadding="0" width="85%" class="defaultstyle" >
+                                <tr>
+                                    <th width="5%"></th>
+                                    <td width="90%">
+                                        <div id="firmware_updating" >
+                                            <span id="percentage" ><strong>_(Upgrade Status)_:</strong>  _(No Upgrade in Progress)_</span>
+                                        </div>
+                                    </td>
+                                    <th width="5%"></th>
+                                </tr>
+                            </table>
+                        </div>
+                        <!--p class="notconnected"  id="firmware_updating" style="text-decoration:block;"><strong>Upgrading Firmware. Please wait.</strong></p>
+                        <div align="center"><script language="JavaScript">document.write(txt);</script>
+                        </div>
+                        <p class="connected"  id="firmware_updatecomplete"><strong>Firmware update complete.</strong></p-->
+                        <p></p>
+                    </form>
+                </div>
+            </div>
+            <div id="content_right_footer"></div>
+
+        </div>
+        <div class="clear_left"></div>
+        <div id="footer">&nbsp;</div>
+    </div>
+    <SCRIPT LANGUAGE="JavaScript">var foobar = new domFunction(dom_load);</SCRIPT>
+</body>
+</html>

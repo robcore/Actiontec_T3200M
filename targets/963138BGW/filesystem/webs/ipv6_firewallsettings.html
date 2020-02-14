@@ -1,0 +1,862 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>_(Firewall)_ - _(IPv6 Firewall)_</title>
+<link href="css/basic.css" rel="stylesheet" type="text/css" />
+<script language="JavaScript" src="js/nav.js"></script>
+<script language="JavaScript" src="js/htmldecode.js"></script>
+<script language="javascript" src="js/util.js" type="text/javascript"></script>
+<%ejInclude("ipv6_common.html")%>
+
+<script language="Javascript">
+
+var ipv6_firewallenable = htmlDecodeStr("<%ejGetOther(ipv6_parameter, fw_stealthmode)%>");
+var fwlevel = htmlDecodeStr("<%ejGetOther(ipv6_parameter, fw_level)%>").toLowerCase();
+var fwInValue = htmlDecodeStr("<%ejGetOther(ipv6_parameter, fw_invalue)%>");
+var fwOutValue = htmlDecodeStr("<%ejGetOther(ipv6_parameter, fw_outvalue)%>");
+
+var fwip = htmlDecodeStr("<%ejGetOther(ipv6_parameter, fw_ip)%>");
+
+var unnummode = htmlDecodeStr("<%ejGet(enblLan2)%>");
+
+
+/* to synchronize firewall info each time, do not remove this line*/
+//var fwInfo = "ejGetOther(firewallInfo, all)";
+
+/* for unnumbered mode */
+
+
+var flt = new Array(49);
+var LEN = 49;
+
+flt[ 0]=new iFlt("directx_in", "directx_out", 2);
+flt[ 1]=new iFlt("stb1_in", "stb1_out", 1);
+flt[ 2]=new iFlt("stb2_in", "stb2_out", 1);
+flt[ 3]=new iFlt("stb3_in", "stb3_out", 1);
+flt[ 4]=new iFlt("dns_in", "dns_out", 1);
+flt[ 5]=new iFlt("dns_qw_in", "dns_qw_out", 2);
+flt[ 6]=new iFlt("ftp_in", "ftp_out", 1);
+flt[ 7]=new iFlt("ftps_in", "ftps_out", 1);
+flt[ 8]=new iFlt("h323_in", "h323_out", 1);
+flt[ 9]=new iFlt("http_in", "http_out", 1);
+flt[10]=new iFlt("https_in", "https_out", 1);
+flt[11]=new iFlt("icmp1_in", "icmp1_out", 1);
+flt[12]=new iFlt("icmp2_in", "icmp2_out", 1);
+flt[13]=new iFlt("icmp3_in", "icmp3_out", 1);
+flt[14]=new iFlt("icmp4_in", "icmp4_out", 1);
+flt[15]=new iFlt("imap_in", "imap_out", 1);
+flt[16]=new iFlt("imaps_in", "imaps_out", 1);
+flt[17]=new iFlt("ipp_in", "ipp_out", 1);
+flt[18]=new iFlt("ipsec_in", "ipsec_out", 3);
+flt[19]=new iFlt("irc_in", "irc_out", 1);
+flt[20]=new iFlt("l2tp_in", "l2tp_out", 1);
+flt[21]=new iFlt("msn_gaming_in", "msn_gaming_out", 1);
+flt[22]=new iFlt("mysql_in", "mysql_out", 1);
+flt[23]=new iFlt("nntp_in", "nntp_out", 1);
+flt[24]=new iFlt("ntp_in", "ntp_out", 1);
+flt[25]=new iFlt("oracle_in", "oracle_out", 1);
+flt[26]=new iFlt("pcanywhere_in", "pcanywhere_out", 2);
+flt[27]=new iFlt("pptp_in", "pptp_out", 2);
+flt[28]=new iFlt("pop3_in", "pop3_out", 1);
+flt[29]=new iFlt("pop3s_in", "pop3s_out", 1);
+flt[30]=new iFlt("ps23_in", "ps23_out", 1);
+flt[31]=new iFlt("rip_in", "rip_out", 1);
+flt[32]=new iFlt("real_av_in", "realav_out", 1);
+flt[33]=new iFlt("realserver_in", "realserver_out", 2);
+flt[34]=new iFlt("sftp_in", "sftp_out", 1);
+flt[35]=new iFlt("sip_in", "sip_out", 1);
+flt[36]=new iFlt("sling_in", "sling_out", 1);
+flt[37]=new iFlt("smtp_in", "smtp_out", 1);
+flt[38]=new iFlt("sql_in", "sql_out", 1);
+flt[39]=new iFlt("ssh_in", "ssh_out", 1);
+flt[40]=new iFlt("t120_in", "t120_out", 1);
+flt[41]=new iFlt("telnet_in", "telnet_out", 1);
+flt[42]=new iFlt("vnc_in", "vnc_out", 1);// 48 bit
+flt[43]=new iFlt("gmail_in", "gmail_out", 2);
+flt[44]=new iFlt("wm_in", "wm_out", 1);
+flt[45]=new iFlt("ws_in", "ws_out", 1);
+flt[46]=new iFlt("xbox_in", "xbox_out", 2);
+flt[47]=new iFlt("yahoo_in", "yahoo_out", 1);
+flt[48]=new iFlt("all_other_ports_in", "all_other_ports_out", 1);
+
+
+function iFlt(inbox, outbox, slot_num){
+    this.inbox = inbox;
+    this.outbox = outbox;
+    this.slot_num = slot_num;
+}
+
+
+function do_load()
+{
+    side_nav("ipv6_firewallsettings");
+    if (ipv6_firewallenable == 1)
+		document.getElementById("ipv6_firewall_on").checked = true;
+    else
+		document.getElementById("ipv6_firewall_off").checked = true;
+	
+    RadioSet(document.forms[0]);
+    changeFwSta();
+    fw_unum_onload();
+}
+
+
+function RadioSet(form)
+{
+    if(fwlevel == "basic")
+    	form.ipv6_fwlevel[0].selected = true;
+    else if(fwlevel == "high")
+    {
+		form.ipv6_fwlevel[3].selected = true;
+    }
+	else if(fwlevel == "medium")
+	{
+		form.ipv6_fwlevel[2].selected = true;
+	}
+	else if(fwlevel == "low")
+	{
+		form.ipv6_fwlevel[1].selected = true;
+	}
+	else //basic =Off
+		form.ipv6_fwlevel[0].selected = true;    
+
+	SetCheckbox(fwlevel, fwInValue, fwOutValue);
+}
+
+function SetCheckbox(level, inVal, outVal)
+{
+    //if inVal/value is empty, get default value
+    var val_l, val_h, val1_l, val1_h;
+
+    if(level == "basic" || level == " " )
+    {
+		//val_l = 0; val_h=0;
+		//val1_l = 0; val1_h=0;
+		val_l = 0xFFFFF23;		//0xFFFFFFF;
+		val_h = 0x3CFFFFFF;		//0xF3FFFFF;
+		val1_l = 0xFFFFFFF;
+		val1_h = 0x3FFFFFFF;
+		
+		
+		disable_items();
+		document.getElementById("content_title").className = "advancedsetup_firewallsettings";
+		document.getElementById("step4").style.display = "none";
+		document.getElementById("step_no").innerHTML = '<strong>4. _(Click Apply to save changes.)_ </strong>';
+    }
+    else 
+	{
+		document.getElementById("content_title").className = "advancedsetup_firewallsettings";
+		document.getElementById("step4").style.display = "block";
+		document.getElementById("step_no").innerHTML = '<strong>5. _(Click Apply to save changes.)_ </strong>';
+		enable_items();
+		
+		if(inVal == "") {
+		    if(level == "low"){
+				val_l = 0xFFFFF23;		//0xFFFFFFF;
+				val_h = 0x1CFFFFFF;		//0xF3FFFFF;
+		    }
+		    else if(level == "medium"){
+				val_l = 0x0;		//0x1E0FC;//00011110 00001111 1011
+				val_h = 0x0;
+		    }
+		    else if(level == "high"){
+				val_l = 0x1C000;		//00011110 00001100 1011
+				val_h = 0x0;
+		    }
+		}
+		else{
+		    if(inVal.length > 7){
+				val_h = parseInt(inVal.substring(0, inVal.length-7), 16);
+				val_l = parseInt(inVal.substring(inVal.length-7, inVal.length), 16); //shift right 8 chars to HEX
+		    }
+		    else{
+				val_h = 0;
+				val_l = parseInt(inVal, 16);
+		    }
+		}
+	
+		if(outVal == "") {
+		    if(level == "low"){
+				val1_l = 0xFFFFFFF;
+				val1_h = 0x3FFFFFFF;
+		    }
+		    else if(level == "medium"){
+				val1_l = 0xFFFFFFF;
+				val1_h = 0x3FFFFFFF;
+		    }
+		    else if(level == "high"){
+				val1_l = 0xFFFFFFF;
+				val1_h = 0x3FFFFFFF;
+		    }
+		}
+		else{
+		    if(outVal.length > 7){
+				val1_h = parseInt(outVal.substring(0, outVal.length-7), 16);
+				val1_l = parseInt(outVal.substring(outVal.length-7, outVal.length), 16);
+		    }
+		    else{
+				val1_h = 0;
+				val1_l = parseInt(outVal, 16);
+		    }
+		}
+    }
+    
+    SetCheckbox2(val_l, val_h, val1_l, val1_h);
+}
+
+function SetCheckbox2(inVal_l, inVal_h, outVal_l, outVal_h) {
+    var i;
+    var mask;
+    
+    var bp=0;
+    for(i=0; bp<28; i++){
+        mask = ((1 << flt[i].slot_num) - 1) << bp;
+        bp += flt[i].slot_num;
+        if(inVal_l & mask)
+            document.getElementById(flt[i].inbox).checked = true;
+        else
+            document.getElementById(flt[i].inbox).checked = false;
+        if(outVal_l & mask)
+            document.getElementById(flt[i].outbox).checked = true;
+        else
+            document.getElementById(flt[i].outbox).checked = false;
+    }
+    
+    bp=0;
+    for(; i<LEN; i++){
+        mask = ((1 << flt[i].slot_num) - 1) << bp;
+        bp += flt[i].slot_num;
+        if(inVal_h & mask)
+            document.getElementById(flt[i].inbox).checked = true;
+        else
+            document.getElementById(flt[i].inbox).checked = false;
+        if(outVal_h & mask)
+            document.getElementById(flt[i].outbox).checked = true;
+        else
+            document.getElementById(flt[i].outbox).checked = false;
+    }
+}
+
+function changeFwSta()
+{
+    if( unnummode == "1" ) // unmunber mode
+		document.getElementById("fw_unum_ip").disabled = false;
+}
+
+function fw_unum_onload()
+{
+    var i;
+    var form= document.forms[0];
+    var ip_list = form.fw_unum_ip;
+
+    if( unnummode != "1" ) { // unmunber mode
+		ip_list.disabled = true;
+		return;
+    }
+    for (i = 0; i < ip_list.length; i++)
+    {
+		if (ip_list.options[i].value == fwip)
+		{
+		   ip_list.selectedIndex = i;
+		   break;
+		}
+    }
+}
+
+
+function disable_items()
+{
+    for(i=0; i<LEN; i++){
+        document.getElementById(flt[i].inbox).disabled = true;
+        document.getElementById(flt[i].outbox).disabled = true;
+    }
+}
+
+function enable_items()
+{
+    for(i=0; i<LEN; i++){
+        document.getElementById(flt[i].inbox).disabled = false;
+        document.getElementById(flt[i].outbox).disabled = false;
+    }
+}
+
+
+function onSelect(form) 
+{
+    var level;
+    var val,val1;
+    
+    if(form.ipv6_fwlevel[0].selected == true)
+		level = "basic";
+    else if(form.ipv6_fwlevel[1].selected == true)
+    {
+		level = "low";
+    }
+    else if(form.ipv6_fwlevel[2].selected == true)
+    {
+		level = "medium";
+    }
+    else
+	{
+		level = "high";
+    }
+	
+    if(level == fwlevel) {
+		val = fwInValue;
+		val1 = fwOutValue;
+    }
+    else {
+		val = "";
+		val1= "";
+    }
+    
+    SetCheckbox(level, val, val1);
+}
+
+
+function do_apply()
+{
+	document.form1.ipv6_fwinvalue.value = calInVal(document.form1);
+	document.form1.ipv6_fwoutvalue.value = calOutVal(document.form1);
+	
+	if (document.getElementById("fw_unum_ip").disabled == false)
+		document.form1.ipv6_fwip.value = document.form1.fw_unum_ip.value;
+	else
+		document.form1.ipv6_fwip.value = "0.0.0.0";
+
+	document.form1.submit();
+}
+ 
+function calInVal(form)
+{
+	var i;
+	var mask;
+	var bp=0;
+	var ret_l = 0;
+	var ret_h = 0;
+	for(i=0; bp<28; i++){
+		mask = ((1 << flt[i].slot_num) - 1) << bp;
+		bp += flt[i].slot_num;
+		
+		if(document.getElementById(flt[i].inbox).checked == true)
+			ret_l |= mask;
+	}
+	
+	bp=0;
+	for(; i<LEN; i++){
+		mask = ((1 << flt[i].slot_num) - 1) << bp;
+		bp += flt[i].slot_num;
+		if(document.getElementById(flt[i].inbox).checked == true)
+			ret_h |= mask;
+	}
+	
+	ret_h = ret_h.toString(16);
+	ret_l = ret_l.toString(16);
+	
+	return padding("0", 8-ret_h.length)+ret_h+padding("0", 7-ret_l.length)+ret_l;
+}
+
+function calOutVal(form)
+{
+	var i;
+	var mask;
+	var bp=0;
+	var ret_l = 0;
+	var ret_h = 0;
+	for(i=0; bp<28; i++){
+		mask = ((1 << flt[i].slot_num) - 1) << bp;
+		bp += flt[i].slot_num;
+		if(document.getElementById(flt[i].outbox).checked == true)
+			ret_l |= mask;
+	}
+	
+	bp=0;
+	for(; i<LEN; i++){
+		mask = ((1 << flt[i].slot_num) - 1) << bp;
+		bp += flt[i].slot_num;
+		if(document.getElementById(flt[i].outbox).checked == true)
+			ret_h |= mask;
+	}
+	
+	ret_h = ret_h.toString(16);
+	ret_l = ret_l.toString(16);
+	
+	return padding("0", 8-ret_h.length)+ret_h+padding("0", 7-ret_l.length)+ret_l;
+}
+
+function padding(c, len)
+{
+	s="";
+	for (i=0;i<len;i++) {s += c;}
+		return s;
+}
+
+</script>
+</head>
+<body>
+<div id="wrapper">
+    <!-- TOP NAV -->
+    <%ejInclude(top_btn_nav4.html)%>
+    <!-- END TOP NAV -->
+    <!-- SIDE NAV -->
+    <%ejInclude(fw_left.html)%>
+    <!-- END SIDE NAV -->
+
+    <!-- MAIN CONTENT AREA -->
+    <div id="content_right">
+    	<div id="content_right_header"></div>
+		<div id="content_right_contentarea">
+			<h1 id="content_title" class="advancedsetup_firewallsettings">_(IPv6 Firewall)_</h1>
+			<p>_(Activating the firewall is optional. When the firewall is activated, security is enhanced, but some network functionality may be lost)_. </span>
+			<form name="form1" method="POST" action="ipv6_firewallsettings.cgi">
+				<input type="hidden" name="ipv6_fwip" value="">
+				<input type="hidden" name="ipv6_fwinvalue" value="">
+                <input type="hidden" name="ipv6_fwoutvalue" value="">
+
+                <input type="hidden" name="sessionKey" value='<%ejGetOther(sessionKey)%>'>
+				<div class="stepWrapper_header"></div>
+                <div class="stepWrapper">
+                <p><strong>1. _(Select the stealth mode state. When stealth mode is enabled, the modem will not respond to unsoliciated WAN traffic, including pings.)_.</strong></p>
+                <table>
+                    <tr>
+                        <td width="150">_(Stealth Mode)_: </td>
+                        <td><label>
+                            <input name="ipv6_fwenable" id="ipv6_firewall_on" type="radio" value="1" onChecked />
+                            _(Enable)_</label>
+                        </td>
+                        <td><input name="ipv6_fwenable" id="ipv6_firewall_off" type="radio" value="0" checked="checked" />
+                            _(Disable)_</td>
+                    </tr>
+                </table>
+                </div>
+				<div class="stepWrapper_footer"></div>
+
+				<div class="stepWrapper_header"></div>
+                <div class="stepWrapper">
+                <p><strong>2. _(Select the IP address or IP addressing type to which the firewall rules will apply)_.</strong></p>
+                <table>
+                    <tr>
+                        <td width="150">_(Addressing Type)_: </td>
+                        <td>
+				    <select name="fw_unum_ip" id="fw_unum_ip">
+					<option value="1.1.1.1">_(All Dynamic IP Addresses)_</option>
+					<option value="0.0.0.0">_(All Static IP Addresses)_</option>
+					<%ejInsert("unum_ip_list")%>
+				    </select>
+                        </td>
+                    </tr>
+                </table>
+                </div>
+				<div class="stepWrapper_footer"></div>
+
+				<div class="stepWrapper_header"></div>
+                <div class="stepWrapper">
+                <p><strong>3. _(Set the Firewall Security Level.)_</strong></p>
+                <table>
+                    <tr>
+                        <td width="150">_(Security Level)_: </td>
+                        <td>
+				    <select name="ipv6_fwlevel" id="ipv6_fwlevel" onchange="onSelect(document.forms[0]);">
+					<option id="ipv6_fwlevel_off" value="basic"  selected="selected" />_(Off)_</option>
+					<option id="ipv6_fwlevel_low" value="low" />_(Low)_</option>
+					<option id="ipv6_fwlevel_medium" value="medium" />_(Medium)_</option>
+					<option id="ipv6_fwlevel_high" value="high" />_(High)_</option>
+				    </select>
+                        </td>
+                    </tr>
+                 </table> 
+                 <table>
+                   <tr>                    
+                     <p><a href="ipv6_firewall_customservice.html"  class="button1" id="btn_creatRule"><span>_(CreateRule)_</span></a></p>
+                   </tr>
+                 </table>
+                   
+                </div>
+				<div class="stepWrapper_footer"></div>
+
+				<br>
+
+				<!--start of step4-->
+				<div id="step4">
+					<div class="stepWrapper_header"></div>
+					<div class="stepWrapper" id="firewall_table">
+					<p><strong>4. _(Set the firewall table, below. Services checked are allowed)_. (_(optional)_)</strong></p>
+					<table width="85%" border="0" cellpadding="0" cellspacing="0" class="defaultstyle">
+						<tr>
+							<th>_(Service)_</th>
+							<th>_(Service Type)_ </th>
+							<th>_(Service Port)_ </th>
+							<th>_(Traffic In)_ </th>
+							<th>_(Traffic Out)_ </th>
+						</tr>
+						<tr>
+							<td>_(DirectX)_</td>
+							<td>_(Multimedia Control)_ </td>
+							<td>2300 _(through)_ 2400, 47624, 2300 _(through)_ 2400 _(UDP)_, 6073 _(UDP)_ </td>
+							<td class="checkbox"><input type="checkbox" id="directx_in" name="directx_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="directx_out" name="directx_out" value="out" /></td>
+						</tr>
+	                    <tr id="direct_stb1" style="display:none;">
+	                        <td>_(DirectTV STB)_ 1</td>
+	                        <td>_(Multimedia Service)_</td>                                                 
+	                        <td>27161 _(through)_ 27163</td>
+	                        <td class="checkbox"><input type="checkbox" id="stb1_in" name="stb1_in" value="in" /></td>
+	                        <td class="checkbox"><input type="checkbox" id="stb1_out" name="stb1_out" value="out" /></td>
+	                    </tr>
+	                    <tr id="direct_stb2" style="display:none;">
+	                        <td>_(DirectTV STB)_ 2</td>
+	                        <td>_(Multimedia Service)_</td>
+	                        <td>27164 _(through)_ 27166</td>
+	                        <td class="checkbox"><input type="checkbox" id="stb2_in" name="stb2_in" value="in" /></td>
+	                        <td class="checkbox"><input type="checkbox" id="stb2_out" name="stb2_out" value="out" /></td>
+	                    </tr>
+	                    <tr id="direct_stb3" style="display:none;">
+	                        <td>_(DirectTV STB)_ 3</td>
+	                        <td>_(Multimedia Service)_</td>
+	                        <td>27167 _(through)_ 27169</td>
+	                        <td class="checkbox"><input type="checkbox" id="stb3_in" name="stb3_in" value="in" /></td>
+	                        <td class="checkbox"><input type="checkbox" id="stb3_out" name="stb3_out" value="out" /></td>
+	                    </tr>
+						<tr>
+							<td>_(DNS)_</td>
+							<td>_(DNS)_</td>
+							<td>53</td>
+							<td class="checkbox"><input type="checkbox" id="dns_in" name="dns_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="dns_out" name="dns_out" value="out" /></td>
+						</tr>
+						<tr style="display:none;">
+							<td></td>
+							<td>_(FTP)_</td>
+							<td>2001:428::1<br>2001:428::2</td>	
+							<td class="checkbox"><input type="checkbox" id="dns_qw_in" name="dns_qw_
+							in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="dns_qw_out" name="dns_qw
+							_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(FTP)_</td>
+							<td>_(File Transfer)_</td>
+							<td>20, 21 </td>
+							<td class="checkbox"><input type="checkbox" id="ftp_in" name="ftp_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="ftp_out" name="ftp_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(FTPS)_</td>
+							<td>_(Secure File Transfer)_</td>
+							<td>990</td>
+							<td class="checkbox"><input type="checkbox" id="ftps_in" name="ftps_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="ftps_out" name="ftps_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(H323)_</td>
+							<td>_(Video)_</td>
+							<td>1720</td>
+							<td class="checkbox"><input type="checkbox" id="h323_in" name="h323_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="h323_out" name="h323_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(HTTP)_</td>
+							<td>_(Web Service)_</td>
+							<td>80</td>
+							<td class="checkbox"><input type="checkbox" id="http_in" name="http_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="http_out" name="http_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(HTTPS)_</td>
+							<td>_(Secure Web Service)_</td>
+							<td>443</td>
+							<td class="checkbox"><input type="checkbox" id="https_in" name="https_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="https_out" name="https_out" value="out" /></td>
+						</tr>
+	                    <tr>
+	                        <td>_(ICMP Echo Request)_</td>
+	                        <td>_(Web Service)_</td>
+	                        <td>_(N/A)_</td>
+	                        <td class="checkbox"><input type="checkbox" id="icmp1_in" name="icmp1_in" value="in" /></td>
+	                        <td class="checkbox"><input type="checkbox" id="icmp1_out" name="icmp1_out" value="out" /></td>
+	                    </tr>
+	                    <tr>
+	                        <td>_(ICMP Echo Reply)_</td>
+	                        <td>_(Web Service)_</td>
+	                        <td>_(N/A)_</td>
+	                        <td class="checkbox"><input type="checkbox" id="icmp2_in" name="icmp2_in" value="in" /></td>
+	                        <td class="checkbox"><input type="checkbox" id="icmp2_out" name="icmp2_out" value="out" /></td>
+	                    </tr>
+	                    <tr>
+	                        <td>_(ICMP Time Exceeded)_</td>
+	                        <td>_(Web Service)_</td>
+	                        <td>_(N/A)_</td>
+	                        <td class="checkbox"><input type="checkbox" id="icmp3_in" name="icmp3_in" value="in" /></td>
+	                        <td class="checkbox"><input type="checkbox" id="icmp3_out" name="icmp3_out" value="out" /></td>
+	                    </tr>
+	                    <tr>
+	                        <td>_(Trace route)_</td>
+	                        <td>_(Web Service)_</td>
+	                        <td>33434 _(UDP)_</td>
+	                        <td class="checkbox"><input type="checkbox" id="icmp4_in" name="icmp4_in" value="in" /></td>
+	                        <td class="checkbox"><input type="checkbox" id="icmp4_out" name="icmp4_out" value="out" /></td>
+	                    </tr>
+						<tr>
+							<td>_(IMAP)_</td>
+							<td>_(Mail Service)_</td>
+							<td>143</td>
+							<td class="checkbox"><input type="checkbox" id="imap_in" name="imap_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="imap_out" name="imap_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(IMAPS)_</td>
+							<td>_(Mail Service)_</td>
+							<td>993</td>
+							<td class="checkbox"><input type="checkbox" id="imaps_in" name="imaps_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="imaps_out" name="imaps_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(IPP)_</td>
+							<td>_(Remote Printing)_</td>
+							<td>631</td>
+							<td class="checkbox"><input type="checkbox" id="ipp_in" name="ipp_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="ipp_out" name="ipp_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(IPSEC)_</td>
+							<td>_(VPN Service)_</td>
+							<td>_(ESP)_(_(protocol)_ 50), _(AH)_(_(protocol)_ 51) _(and)_ 500 _(UDP)_ </td>
+							<td class="checkbox"><input type="checkbox" id="ipsec_in" name="ipsec_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="ipsec_out" name="ipsec_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(IRC)_</td>
+							<td>_(Chat Service)_</td>
+							<td>113, 194, 1024 _(through)_ 1034, 6661 _(through)_ 7000 </td>
+							<td class="checkbox"><input type="checkbox" id="irc_in" name="irc_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="irc_out" name="irc_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(L2TP)_</td>
+							<td>_(VPN Service)_</td>
+							<td>1701 _(UDP)_</td>
+							<td class="checkbox"><input type="checkbox" id="l2tp_in" name="l2tp_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="l2tp_out" name="l2tp_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(MSN Gaming)_</td>
+							<td>_(Gaming Service)_</td>
+							<td>28800 _(through)_ 29100 _(TCP/UDP)_ </td>
+							<td class="checkbox"><input type="checkbox" id="msn_gaming_in" name="msn_gaming_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="msn_gaming_out" name="msn_gaming_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(MySQL)_</td>
+							<td>_(Database Management)_</td>
+							<td>3306</td>
+							<td class="checkbox"><input type="checkbox" id="mysql_in" name="mysql_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="mysql_out" name="mysql_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(NNTP)_</td>
+							<td>_(Newsgroup)_</td>
+							<td>119</td>
+							<td class="checkbox"><input type="checkbox" id="nntp_in" name="nntp_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="nntp_out" name="nntp_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(NTP)_</td>
+							<td>_(Newtork Time)_</td>
+							<td>123</td>
+							<td class="checkbox"><input type="checkbox" id="ntp_in" name="ntp_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="ntp_out" name="ntp_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(Oracle SQL)_</td>
+							<td>_(Database Management)_</td>
+							<td>66, 1525 </td>
+							<td class="checkbox"><input type="checkbox" id="oracle_in" name="oracle_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="oracle_out" name="oracle_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(PC Anywhere)_</td>
+							<td>_(Remote Management)_</td>
+							<td>66, 1525 5631 _(TCP/UDP)_, 5532 _(TCP/UDP)_ </td>
+							<td class="checkbox"><input type="checkbox" id="pcanywhere_in" name="pcanywhere_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="pcanywhere_out" name="pcanywhere_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(PPTP)_</td>
+							<td>_(VPN Service)_</td>
+							<td>_(All GRE)_, 1723 </td>
+							<td class="checkbox"><input type="checkbox" id="pptp_in" name="pptp_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="pptp_out" name="pptp_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(POP3)_</td>
+							<td>_(Mail Service)_</td>
+							<td>110</td>
+							<td class="checkbox"><input type="checkbox" id="pop3_in" name="pop3_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="pop3_out" name="pop3_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(POP3S)_</td>
+							<td>_(Secure Mail Service)_</td>
+							<td>995</td>
+							<td class="checkbox"><input type="checkbox" id="pop3s_in" name="pop3s_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="pop3s_out" name="pop3s_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(PS2 / PS3)_</td>
+							<td>_(Game Console)_</td>
+							<td>4658 _(TCP/UDP)_, 4659 _(TCP/UDP)_ </td>
+							<td class="checkbox"><input type="checkbox" id="ps23_in" name="ps23_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="ps23_out" name="ps23_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(RIP)_</td>
+							<td>_(Web Service)_</td>
+							<td>520 _(UDP)_</td>
+							<td class="checkbox"><input type="checkbox" id="rip_in" name="rip_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="rip_out" name="rip_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(REAL A/V)_</td>
+							<td>_(Audio/ Video)_</td>
+							<td>7070</td>
+							<td class="checkbox"><input type="checkbox" id="real_av_in" name="realav_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="realav_out" name="realav_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(Real Server/ Quick Time)_</td>
+							<td>_(Audio/ Video)_</td>
+							<td>7070, 6970 _(through)_ 7170 _(UDP)_ </td>
+							<td class="checkbox"><input type="checkbox" id="realserver_in" name="realserver_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="realserver_out" name="realserver_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(SFTP)_</td>
+							<td>_(Secure File Transfer)_</td>
+							<td>22, 115</td>
+							<td class="checkbox"><input type="checkbox" id="sftp_in" name="sftp_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="sftp_out" name="sftp_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(SIP)_</td>
+							<td>_(Session Control)_</td>
+							<td>5060, 5061</td>
+							<td class="checkbox"><input type="checkbox" id="sip_in" name="sip_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="sip_out" name="sip_out" value="out" /></td>
+						</tr>
+	                    <tr>
+	                        <td>_(SlingBox)_</td>
+	                        <td>_(Media Service)_</td>
+	                        <td>5001</td>
+	                        <td class="checkbox"><input type="checkbox" id="sling_in" name="sling_in" value="in" /></td>
+	                        <td class="checkbox"><input type="checkbox" id="sling_out" name="sling_out" value="out" /></td>
+	                    </tr>
+						<tr>
+							<td>_(SMTP)_</td>
+							<td>_(Mail Service)_</td>
+							<td>25</td>
+							<td class="checkbox"><input type="checkbox" id="smtp_in" name="smtp_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="smtp_out" name="smtp_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(SQL)_</td>
+							<td>_(Database Management)_</td>
+							<td>1433</td>
+							<td class="checkbox"><input type="checkbox" id="sql_in" name="sql_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="sql_out" name="sql_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(SSH)_</td>
+							<td>_(Secure Remote Management)_</td>
+							<td>22</td>
+							<td class="checkbox"><input type="checkbox" id="ssh_in" name="ssh_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="ssh_out" name="ssh_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(T120)_</td>
+							<td>_(Conferencing Service)_</td>
+							<td>1503</td>
+							<td class="checkbox"><input type="checkbox" id="t120_in" name="t120_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="t120_out" name="t120_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(Telnet)_</td>
+							<td>_(Remote Management)_</td>
+							<td>23</td>
+							<td class="checkbox"><input type="checkbox" id="telnet_in" name="telnet_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="telnet_out" name="telnet_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(VNC)_</td>
+							<td>_(Remote Management)_</td>
+							<td>5500, 5800, 5801, 5900, 5901 </td>
+							<td class="checkbox"><input type="checkbox" id="vnc_in" name="vnc_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="vnc_out" name="vnc_out" value="out" /></td>
+						</tr>
+	                    <tr>
+	                        <td>_(Gmail)_</td>
+	                        <td>_(Mail Service)_</td>
+	                        <td>_(In)_ 995,_(Out)_ 465</td>
+	                        <td class="checkbox"><input type="checkbox" id="gmail_in" name="gmail_in" value="in" /></td>
+	                        <td class="checkbox"><input type="checkbox" id="gmail_out" name="gmail_out" value="out" /></td>
+	                    </tr>
+	                    <tr>
+	                        <td>_(Windows Messaging)_</td>
+	                        <td>_(Windows Messaging)_</td>
+	                        <td>1024 _(through)_ 1030</td>
+	                        <td class="checkbox"><input type="checkbox" id="wm_in" name="wm_in" value="in" /></td>
+	                        <td class="checkbox"><input type="checkbox" id="wm_out" name="wm_out" value="out" /></td>
+	                    </tr>
+	                    <tr>
+	                        <td>_(Windows Service)_</td>
+	                        <td>_(Windows Service)_</td>
+	                        <td>135 _(through)_ 139,445,1434</td>
+	                        <td class="checkbox"><input type="checkbox" id="ws_in" name="ws_in" value="in" /></td>
+	                        <td class="checkbox"><input type="checkbox" id="ws_out" name="ws_out" value="out" /></td>
+	                    </tr>
+						<tr>
+							<td>_(XBox)_</td>
+							<td>_(Gaming Console)_</td>
+							<td>53 _(TCP/UDP)_, 88 _(UDP)_, 3074 _(TCP/UDP)_ </td>
+							<td class="checkbox"><input type="checkbox" id="xbox_in" name="xbox_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="xbox_out" name="xbox_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(Yahoo Messenger with Client Directory)_</td>
+							<td>_(Chat Service)_</td>
+							<td>500 _(through)_ 5010, 5050, 5100, 6600 _(through)_ 6699 </td>
+							<td class="checkbox"><input type="checkbox" id="yahoo_in" name="yahoo_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="yahoo_out" name="yahoo_out" value="out" /></td>
+						</tr>
+						<tr>
+							<td>_(All Other Ports)_</td>
+							<td>_(Open or close all IP ports not defined in the firewall table.)_</td>
+							<td>_(All Undefined Ports)_</td>
+							<td class="checkbox"><input type="checkbox" id="all_other_ports_in" name="all_other_ports_in" value="in" /></td>
+							<td class="checkbox"><input type="checkbox" id="all_other_ports_out" name="all_other_ports_out" value="out" /></td>
+						</tr>
+					</table>	
+					</div>
+					<div class="stepWrapper_footer"></div>
+				</div>
+				<!--end of step4-->
+
+				<div class="stepWrapper_header"></div>
+                <div class="stepWrapper">
+					<p><span id="step_no"><strong>5. _(Click "Apply" to save changes.)_ </strong></span></p>
+					<br/>
+					<p><a class="button1" onclick="do_apply();" ><span>_(Apply)_</span></a></p>			
+				</div>
+				<div class="stepWrapper_footer"></div>			
+		</div>
+		<div id="content_right_footer"></div>
+	</div>
+	</form>
+	<div class="clear_left"></div>
+</div>
+<SCRIPT LANGUAGE="JavaScript">
+var foobar = new domFunction(do_load);
+</SCRIPT>
+</body>
+</html>
+
